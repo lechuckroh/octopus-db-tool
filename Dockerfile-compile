@@ -1,0 +1,9 @@
+FROM golang:1.12
+ARG userName
+ARG groupName
+RUN addgroup $groupName || true
+RUN adduser --disabled-password --gecos "" --force-badname --ingroup $groupName $userName || true
+USER $userName
+WORKDIR /app
+COPY . /app
+CMD ["make", "clean", "vendor", "compile"]

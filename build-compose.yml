@@ -1,0 +1,12 @@
+version: "3"
+
+services:
+  compile:
+    build:
+      context: .
+      dockerfile: Dockerfile-compile
+      args:
+        userName: ${USER_NAME}
+        groupName: ${GROUP_NAME}
+    volumes:
+      - .:/app
