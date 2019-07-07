@@ -19,7 +19,7 @@ type Column struct {
 	Nullable        bool       `json:"nullable,omitempty"`
 	PrimaryKey      bool       `json:"pk,omitempty"`
 	UniqueKey       bool       `json:"unique,omitempty"`
-	AutoIncremental bool       `json:"ai,omitempty"`
+	AutoIncremental bool       `json:"autoinc,omitempty"`
 	DefaultValue    string     `json:"default,omitempty"`
 	Ref             *Reference `json:"ref,omitempty"`
 }
@@ -29,12 +29,14 @@ type Table struct {
 	Columns     []*Column `json:"columns,omitempty"`
 	Description string    `json:"desc,omitempty"`
 	Group       string    `json:"group,omitempty"`
+	ClassName   string    `json:"className,omitempty"`
 }
 
 type Schema struct {
 	Version string   `json:"version,omitempty"`
 	Tables  []*Table `json:"tables,omitempty"`
 }
+
 
 // Normalize converts colume types to lowercase
 func (s *Schema) Normalize() {

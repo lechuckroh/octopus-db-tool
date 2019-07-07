@@ -1,6 +1,7 @@
 package main
 
 import (
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -29,4 +30,33 @@ func IsStringType(typ string) bool {
 		}
 	}
 	return false
+}
+
+type StringSet struct {
+	valueMap map[string]bool
+}
+
+func NewStringSet() *StringSet {
+	return &StringSet{
+		valueMap: make(map[string]bool),
+	}
+}
+
+func (s *StringSet) Add(value string) {
+	s.valueMap[value] = true
+}
+
+func (s *StringSet) AddAll(values []string) {
+	for _, value := range values {
+		s.valueMap[value] = true
+	}
+}
+
+func (s *StringSet) Slice() []string {
+	keys := make([]string, 0, len(s.valueMap))
+	for key := range s.valueMap {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	return keys
 }

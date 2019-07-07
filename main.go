@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"sort"
+	"strings"
 	"time"
 )
 
@@ -16,6 +17,13 @@ type Input struct {
 type Output struct {
 	Filename string
 	Format   string
+}
+
+type GenOutput struct {
+	Format           string
+	Directory        string
+	Package          string
+	PrefixesToRemove []string
 }
 
 func create(c *cli.Context) error {
@@ -69,9 +77,14 @@ func generate(c *cli.Context) error {
 		Filename: args.Get(0),
 		Format:   c.String("sourceFormat"),
 	}
-	output := &Output{
-		Filename: args.Get(1),
-		Format:   c.String("targetFormat"),
+
+	prefixesToRemove := strings.Split(c.String("removePrefix"), ",")
+
+	output := &GenOutput{
+		Directory:        args.Get(1),
+		Format:           c.String("targetFormat"),
+		Package:          c.String("package"),
+		PrefixesToRemove: prefixesToRemove,
 	}
 
 	cmd := &GenerateCmd{}
@@ -103,12 +116,12 @@ func main() {
 				cli.StringFlag{
 					Name:   "sourceFormat, sf",
 					Usage:  "set source format",
-					EnvVar: "OCTOPUS_CONVERT_SOURCE_FORMAT",
+					EnvVar: "OCTOPUS_SOURCE_FORMAT",
 				},
 				cli.StringFlag{
 					Name:   "targetFormat, tf",
 					Usage:  "set target format",
-					EnvVar: "OCTOPUS_CONVERT_TARGET_FORMAT",
+					EnvVar: "OCTOPUS_TARGET_FORMAT",
 				},
 			},
 			Action: convert,
@@ -121,12 +134,22 @@ func main() {
 				cli.StringFlag{
 					Name:   "sourceFormat, sf",
 					Usage:  "set source format",
-					EnvVar: "OCTOPUS_CONVERT_SOURCE_FORMAT",
+					EnvVar: "OCTOPUS_SOURCE_FORMAT",
 				},
 				cli.StringFlag{
 					Name:   "targetFormat, tf",
 					Usage:  "set target format",
-					EnvVar: "OCTOPUS_CONVERT_TARGET_FORMAT",
+					EnvVar: "OCTOPUS_TARGET_FORMAT",
+				},
+				cli.StringFlag{
+					Name:   "package, p",
+					Usage:  "set target package name",
+					EnvVar: "OCTOPUS_PACKAGE",
+				},
+				cli.StringFlag{
+					Name:   "removePrefix, rp",
+					Usage:  "set prefixes to remove. set multiple values with comma separated.",
+					EnvVar: "OCTOPUS_REMOVE_PREFIX",
 				},
 			},
 			Action: generate,
