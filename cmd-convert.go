@@ -6,6 +6,15 @@ import (
 	"log"
 )
 
+type FormatReader interface {
+	FromFile(filename string) error
+	ToSchema() (*Schema, error)
+}
+
+type FormatWriter interface {
+	ToFile(schema *Schema, filename string) error
+}
+
 type ConvertCmd struct {
 }
 
@@ -33,33 +42,42 @@ func (cmd *ConvertCmd) Convert(input *Input, output *Output) error {
 }
 
 func (cmd *ConvertCmd) inputToSchema(input *Input) (*Schema, error) {
+	var reader FormatReader
+
 	switch input.Format {
 	case FORMAT_OCTOPUS:
-		schema := &Schema{}
-		if err := schema.FromFile(input.Filename); err != nil {
-			return nil, nil
-		}
-		return schema, nil
-
+		reader = &Schema{}
+		break
 	case FORMAT_STARUML2:
-		staruml2 := &StarUML2{}
-		if err := staruml2.FromFile(input.Filename); err != nil {
-			return nil, err
-		}
-		return staruml2.ToSchema()
-	default:
-		return nil, fmt.Errorf("unhandled input format: %s", input.Format)
+		reader = &StarUML2{}
+		break
 	}
+
+	if reader == nil {
+		return nil, fmt.Errorf("unsupported input format: %s", input.Format)
+	}
+	if err := reader.FromFile(input.Filename); err != nil {
+		return nil, err
+	}
+	return reader.ToSchema()
 }
 
 func (cmd *ConvertCmd) schemaToOutput(schema *Schema, output *Output) error {
+	var writer FormatWriter
+
 	switch output.Format {
 	case FORMAT_OCTOPUS:
 		return schema.ToFile(output.Filename)
+	case FORMAT_DBDIAGRAM_IO:
+		writer = &DBDiagramIO{}
+		break
 	case FORMAT_QUICKDBD:
-		quickdbd := &QuickDBD{}
-		return quickdbd.ToFile(schema, output.Filename)
-	default:
-		return fmt.Errorf("unhandled output format: %s", output.Format)
+		writer = &QuickDBD{}
+		break
 	}
+
+	if writer == nil {
+		return fmt.Errorf("unsupported output format: %s", output.Format)
+	}
+	return writer.ToFile(schema, output.Filename)
 }

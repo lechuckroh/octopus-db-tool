@@ -25,6 +25,11 @@ func (f *QuickDBD) FromString(data []byte) error {
 	return errors.New("not implemented")
 }
 
+func (f *QuickDBD) ToSchema() (*Schema, error) {
+	// TODO
+	return nil, errors.New("not implemented")
+}
+
 func (f *QuickDBD) ToFile(schema *Schema, filename string) error {
 	data, err := f.ToString(schema)
 	if err != nil {

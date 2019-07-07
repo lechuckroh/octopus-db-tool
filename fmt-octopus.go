@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"io/ioutil"
+	"strings"
 )
 
 type Reference struct {
@@ -35,6 +36,19 @@ type Schema struct {
 	Tables  []*Table `json:"tables,omitempty"`
 }
 
+// Normalize converts colume types to lowercase
+func (s *Schema) Normalize() {
+	for _, table := range s.Tables {
+		for _, column := range table.Columns {
+			column.Type = strings.ToLower(column.Type)
+		}
+	}
+}
+
+func (s *Schema) ToSchema() (*Schema, error) {
+	return s, nil
+}
+
 func (s *Schema) ToFile(filename string) error {
 	data, err := s.ToJson()
 	if err != nil {
@@ -44,6 +58,7 @@ func (s *Schema) ToFile(filename string) error {
 }
 
 func (s *Schema) ToJson() ([]byte, error) {
+	s.Normalize()
 	return json.MarshalIndent(s, "", "  ")
 }
 

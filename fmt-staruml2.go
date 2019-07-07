@@ -82,7 +82,7 @@ func (f *StarUML2) ToSchema() (*Schema, error) {
 			column := &Column{
 				Name:        erdColumn.Name,
 				Type:        erdColumn.Type,
-				Size:        uint16(toInt(erdColumn.Length, 0)),
+				Size:        uint16(ToInt(erdColumn.Length, 0)),
 				Nullable:    erdColumn.Nullable,
 				PrimaryKey:  erdColumn.PrimaryKey,
 				UniqueKey:   erdColumn.Unique,
@@ -146,4 +146,9 @@ func (f *StarUML2) walkElements(elements []*StarUML2Element) {
 
 func (f *StarUML2) findById(id string) *StarUML2Element {
 	return f.mapById[id]
+}
+
+func (f *StarUML2) ToFile(schema *Schema, filename string) error {
+	// TODO
+	return errors.New("not implemented")
 }
