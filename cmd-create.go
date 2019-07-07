@@ -1,25 +1,17 @@
 package main
 
-import (
-	"errors"
-	"io/ioutil"
-)
+import "io/ioutil"
 
-type App struct {
+type CreateCmd struct {
 }
 
-func NewApp() *App {
-	return &App{}
-}
-
-func (app *App) Create(filename string) error {
-	schema := &Schema{
+func (cmd *CreateCmd) createDefaultSchema() *Schema {
+	return &Schema{
 		Version: "0.0.1",
 		Tables: []*Table{
 			{
 				Name:        "user",
 				Description: "User table",
-				Tags:        []string{"tag"},
 				Columns: []*Column{
 					{
 						Name:            "id",
@@ -40,9 +32,8 @@ func (app *App) Create(filename string) error {
 						Type:        "bigint",
 						Description: "group ID",
 						Ref: &Reference{
-							Table:    "group",
-							Column:   "id",
-							Nullable: true,
+							Table:  "group",
+							Column: "id",
 						},
 					},
 				},
@@ -69,20 +60,14 @@ func (app *App) Create(filename string) error {
 			},
 		},
 	}
-	bytes, err := schema.toJson()
+}
+
+func (cmd *CreateCmd) Create(target *Output) error {
+	schema := cmd.createDefaultSchema()
+	bytes, err := schema.ToJson()
 	if err != nil {
 		return err
 	}
 
-	return ioutil.WriteFile(filename, bytes, 0644)
-}
-
-func (app *App) Convert(source, sourceFormat, target, targetFormat string) error {
-	// TODO
-	return errors.New("not implemented")
-}
-
-func (app *App) Generate(source, target, format string) error {
-	// TODO
-	return errors.New("not implemented")
+	return ioutil.WriteFile(target.Filename, bytes, 0644)
 }

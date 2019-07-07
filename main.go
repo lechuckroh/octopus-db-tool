@@ -8,6 +8,16 @@ import (
 	"time"
 )
 
+type Input struct {
+	Filename string
+	Format   string
+}
+
+type Output struct {
+	Filename string
+	Format   string
+}
+
 func create(c *cli.Context) error {
 	args := c.Args()
 	argsCount := c.NArg()
@@ -18,8 +28,8 @@ func create(c *cli.Context) error {
 		filename = args.Get(0)
 	}
 
-	app := NewApp()
-	return app.Create(filename)
+	cmd := &CreateCmd{}
+	return cmd.Create(&Output{Filename: filename})
 }
 
 func convert(c *cli.Context) error {
@@ -32,13 +42,17 @@ func convert(c *cli.Context) error {
 		return cli.NewExitError("target is not set", 1)
 	}
 
-	source := args.Get(0)
-	target := args.Get(1)
-	sourceFormat := c.String("sourceFormat")
-	targetFormat := c.String("targetFormat")
+	input := &Input{
+		Filename: args.Get(0),
+		Format:   c.String("sourceFormat"),
+	}
+	output := &Output{
+		Filename: args.Get(1),
+		Format:   c.String("targetFormat"),
+	}
 
-	app := NewApp()
-	return app.Convert(source, sourceFormat, target, targetFormat)
+	cmd := &ConvertCmd{}
+	return cmd.Convert(input, output)
 }
 
 func generate(c *cli.Context) error {
@@ -51,12 +65,17 @@ func generate(c *cli.Context) error {
 		return cli.NewExitError("target is not set", 1)
 	}
 
-	source := args.Get(0)
-	target := args.Get(1)
-	format := c.String("format")
+	input := &Input{
+		Filename: args.Get(0),
+		Format:   c.String("sourceFormat"),
+	}
+	output := &Output{
+		Filename: args.Get(1),
+		Format:   c.String("targetFormat"),
+	}
 
-	app := NewApp()
-	return app.Generate(source, target, format)
+	cmd := &GenerateCmd{}
+	return cmd.Generate(input, output)
 }
 
 func main() {
@@ -74,7 +93,7 @@ func main() {
 			Name:    "create",
 			Aliases: []string{"c"},
 			Usage:   "create `filename`",
-			Action: create,
+			Action:  create,
 		},
 		{
 			Name:    "convert",
@@ -100,9 +119,14 @@ func main() {
 			Usage:   "generate `source` `target`",
 			Flags: []cli.Flag{
 				cli.StringFlag{
-					Name:   "format, f",
+					Name:   "sourceFormat, sf",
+					Usage:  "set source format",
+					EnvVar: "OCTOPUS_CONVERT_SOURCE_FORMAT",
+				},
+				cli.StringFlag{
+					Name:   "targetFormat, tf",
 					Usage:  "set target format",
-					EnvVar: "OCTOPUS_GENERATE_FORMAT",
+					EnvVar: "OCTOPUS_CONVERT_TARGET_FORMAT",
 				},
 			},
 			Action: generate,
