@@ -47,11 +47,11 @@ func (f *StarUML2) FromFile(filename string) error {
 	return f.FromJson(data)
 }
 
-func (f *StarUML2) FromJson(bytes []byte) error {
+func (f *StarUML2) FromJson(data []byte) error {
 	f.root = nil
 
 	root := &StarUML2Element{}
-	err := json.Unmarshal(bytes, root)
+	err := json.Unmarshal(data, root)
 	if err != nil {
 		return err
 	}

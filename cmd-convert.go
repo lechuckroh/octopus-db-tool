@@ -7,7 +7,6 @@ import (
 )
 
 type ConvertCmd struct {
-
 }
 
 func (cmd *ConvertCmd) Convert(input *Input, output *Output) error {
@@ -34,21 +33,33 @@ func (cmd *ConvertCmd) Convert(input *Input, output *Output) error {
 }
 
 func (cmd *ConvertCmd) inputToSchema(input *Input) (*Schema, error) {
-	if input.Format == FORMAT_STARUML2 {
+	switch input.Format {
+	case FORMAT_OCTOPUS:
+		schema := &Schema{}
+		if err := schema.FromFile(input.Filename); err != nil {
+			return nil, nil
+		}
+		return schema, nil
+
+	case FORMAT_STARUML2:
 		staruml2 := &StarUML2{}
 		if err := staruml2.FromFile(input.Filename); err != nil {
 			return nil, err
 		}
 		return staruml2.ToSchema()
+	default:
+		return nil, fmt.Errorf("unhandled input format: %s", input.Format)
 	}
-
-	return nil, fmt.Errorf("unhandled input format: %s", input.Format)
 }
 
 func (cmd *ConvertCmd) schemaToOutput(schema *Schema, output *Output) error {
-	if output.Format == FORMAT_OCTOPUS {
+	switch output.Format {
+	case FORMAT_OCTOPUS:
 		return schema.ToFile(output.Filename)
+	case FORMAT_QUICKDBD:
+		quickdbd := &QuickDBD{}
+		return quickdbd.ToFile(schema, output.Filename)
+	default:
+		return fmt.Errorf("unhandled output format: %s", output.Format)
 	}
-
-	return fmt.Errorf("unhandled output format: %s", output.Format)
 }

@@ -47,6 +47,14 @@ func (s *Schema) ToJson() ([]byte, error) {
 	return json.MarshalIndent(s, "", "  ")
 }
 
-func (s *Schema) FromJson(bytes []byte) error {
-	return json.Unmarshal(bytes, s)
+func (s *Schema) FromFile(filename string) error {
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return err
+	}
+	return s.FromJson(data)
+}
+
+func (s *Schema) FromJson(data []byte) error {
+	return json.Unmarshal(data, s)
 }
