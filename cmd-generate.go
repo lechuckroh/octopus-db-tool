@@ -12,7 +12,7 @@ func (cmd *GenerateCmd) Generate(input *Input, output *GenOutput) error {
 	}
 
 	switch output.Format {
-	case FORMAT_JPA_KOTLIN:
+	case FormatJpaKotlin:
 		jpa := &JPAKotlin{}
 		return jpa.Generate(schema, output)
 	}

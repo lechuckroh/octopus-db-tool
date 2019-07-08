@@ -21,6 +21,13 @@ func ToInt(value interface{}, defaultValue int) int {
 	}
 }
 
+func GetDefaultString(value string, defaultValue string) string {
+	if value == "" {
+		return defaultValue
+	}
+	return value
+}
+
 func IsStringType(typ string) bool {
 	lowerType := strings.ToLower(typ)
 	stringTypes := []string{"char", "string"}

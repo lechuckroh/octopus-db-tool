@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"io/ioutil"
+	"sort"
 	"strings"
 )
 
@@ -45,6 +46,16 @@ func (s *Schema) Normalize() {
 			column.Type = strings.ToLower(column.Type)
 		}
 	}
+}
+
+func (s *Schema) Groups() []string {
+	groupSet := NewStringSet()
+	for _, table := range s.Tables {
+		groupSet.Add(table.Group)
+	}
+	result := groupSet.Slice()
+	sort.Strings(result)
+	return result
 }
 
 func (s *Schema) ToSchema() (*Schema, error) {

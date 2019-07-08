@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
+	"strings"
 )
 
 type StarUML2 struct {
@@ -86,7 +87,7 @@ func (f *StarUML2) ToSchema() (*Schema, error) {
 				Nullable:    erdColumn.Nullable,
 				PrimaryKey:  erdColumn.PrimaryKey,
 				UniqueKey:   erdColumn.Unique,
-				Description: erdColumn.Documentation,
+				Description: strings.TrimSpace(erdColumn.Documentation),
 			}
 
 			if erdColumn.ReferenceTo != nil {

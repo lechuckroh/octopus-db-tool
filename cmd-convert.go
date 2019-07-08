@@ -45,12 +45,10 @@ func (cmd *ConvertCmd) inputToSchema(input *Input) (*Schema, error) {
 	var reader FormatReader
 
 	switch input.Format {
-	case FORMAT_OCTOPUS:
+	case FormatOctopus:
 		reader = &Schema{}
-		break
-	case FORMAT_STARUML2:
+	case FormatStaruml2:
 		reader = &StarUML2{}
-		break
 	}
 
 	if reader == nil {
@@ -66,14 +64,14 @@ func (cmd *ConvertCmd) schemaToOutput(schema *Schema, output *Output) error {
 	var writer FormatWriter
 
 	switch output.Format {
-	case FORMAT_OCTOPUS:
+	case FormatOctopus:
 		return schema.ToFile(output.Filename)
-	case FORMAT_DBDIAGRAM_IO:
+	case FormatDbdiagramIo:
 		writer = &DBDiagramIO{}
-		break
-	case FORMAT_QUICKDBD:
+	case FormatQuickdbd:
 		writer = &QuickDBD{}
-		break
+	case FormatXlsx:
+		writer = &Xlsx{}
 	}
 
 	if writer == nil {
