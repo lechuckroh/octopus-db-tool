@@ -18,6 +18,11 @@ octopus-db-tools provides:
 ```bash
 $ make vendor
 $ make compile
+
+# build os-specific binary
+$ make compile-windows
+$ make compile-linux
+$ make compile-macos
 ```
 
 ### Docker Build
