@@ -44,8 +44,25 @@ func (t *Table) AddColumn(column *Column) {
 	}
 }
 
+type TableSlice []*Table
+
+func (s TableSlice) Len() int { return len(s) }
+func (s TableSlice) Less(i, j int) bool {
+	if s[i].Group < s[j].Group {
+		return true
+	}
+	if s[i].Group == s[j].Group {
+		return s[i].Name < s[j].Name
+	}
+	return false
+}
+
+func (s TableSlice) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+
 // Normalize converts colume types to lowercase
 func (s *Schema) Normalize() {
+	sort.Sort(TableSlice(s.Tables))
+
 	for _, table := range s.Tables {
 		for _, column := range table.Columns {
 			column.Type = strings.ToLower(column.Type)

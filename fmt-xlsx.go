@@ -164,6 +164,10 @@ func (f *Xlsx) readGroupSheet(groupName string, sheet *xlsx.Sheet) ([]*Table, er
 		})
 	}
 
+	if !tableFinished && lastTable != nil {
+		tables = append(tables, lastTable)
+	}
+
 	return tables, nil
 }
 
@@ -188,6 +192,18 @@ func (f *Xlsx) ToFile(schema *Schema, filename string) error {
 			return err
 		}
 
+		sheet.SheetViews = []xlsx.SheetView{
+			{
+				Pane: &xlsx.Pane{
+					XSplit:      2,
+					YSplit:      1,
+					TopLeftCell: "C2",
+					ActivePane:  "bottomRight",
+					State:       "frozen",
+				},
+			},
+		}
+
 		if err = f.fillGroupSheet(sheet, schema, group); err != nil {
 			return err
 		}
@@ -197,6 +213,8 @@ func (f *Xlsx) ToFile(schema *Schema, filename string) error {
 }
 
 func (f *Xlsx) fillMetaSheet(sheet *xlsx.Sheet, schema *Schema) error {
+	_ = sheet.SetColWidth(0, 0, 10.5)
+	_ = sheet.SetColWidth(1, 1, 10.5)
 	font := f.defaultFont()
 	style := f.newStyle(nil, nil, nil, font)
 
@@ -259,10 +277,16 @@ func (f *Xlsx) newStyle(
 }
 
 func (f *Xlsx) fillGroupSheet(sheet *xlsx.Sheet, schema *Schema, group string) error {
+	_ = sheet.SetColWidth(0, 0, 15.5)
+	_ = sheet.SetColWidth(1, 1, 13.5)
+	_ = sheet.SetColWidth(2, 2, 9.5)
+	_ = sheet.SetColWidth(3, 3, 9.5)
+	_ = sheet.SetColWidth(4, 4, 50)
+
+
 	// alignment
 	leftAlignment := f.newAlignment("default", "center")
 	centerAlignment := f.newAlignment("center", "center")
-	rightAlignment := f.newAlignment("right", "center")
 
 	// border
 	border := f.newBorder("thin", "")
@@ -272,6 +296,8 @@ func (f *Xlsx) fillGroupSheet(sheet *xlsx.Sheet, schema *Schema, group string) e
 	boldFont := f.defaultFont()
 	boldFont.Bold = true
 	normalFont := f.defaultFont()
+	refFont := xlsx.NewFont(8, xlsxDefaultFontName)
+	refFont.Italic = true
 
 	headerStyle := f.newStyle(
 		f.newSolidFill("00CCFFCC"),
@@ -281,7 +307,7 @@ func (f *Xlsx) fillGroupSheet(sheet *xlsx.Sheet, schema *Schema, group string) e
 	tableStyle := f.newStyle(
 		f.newSolidFill("00CCFFFF"),
 		border,
-		leftAlignment,
+		centerAlignment,
 		boldFont)
 	normalStyle := f.newStyle(
 		nil,
@@ -291,8 +317,8 @@ func (f *Xlsx) fillGroupSheet(sheet *xlsx.Sheet, schema *Schema, group string) e
 	referenceStyle := f.newStyle(
 		nil,
 		lightBorder,
-		rightAlignment,
-		normalFont)
+		centerAlignment,
+		refFont)
 
 
 	// Header
