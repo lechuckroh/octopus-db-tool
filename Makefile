@@ -15,15 +15,13 @@ GOTEST_OPT=$(GO_VENDOR_OPT) -v
 TEST_DIR=./...
 BINARY=oct
 BINARY_WINDOWS=oct.exe
-BINARY_LINUX=oct-linux
-BINARY_MACOS=oct-macos
+BINARY_LINUX=oct
+BINARY_MACOS=oct
 BUILD_COMPOSE_FILE=build-compose.yml
 
 # Build
 compile:
 	@$(ENV_STATIC_BUILD) $(ENV_GOMOD_ON) $(GOBUILD) $(GOBUILD_OPT) -o $(BINARY)
-
-compile-all: compile-windows compile-linux compile-macos
 
 compile-windows:
 	@$(ENV_STATIC_BUILD) GOOS=windows GOARCH=amd64 $(ENV_GOMOD_ON) $(GOBUILD) $(GOBUILD_OPT) -o $(BINARY_WINDOWS)
@@ -37,6 +35,18 @@ compile-docker:
 
 compile-rmi:
 	@USER_NAME=`id -un` GROUP_NAME=`id -gn` docker-compose -f $(BUILD_COMPOSE_FILE) down --rmi local || true
+
+package: package-macos package-linux package-windows
+
+package-windows: compile-windows
+	upx -9 $(BINARY_WINDOWS)
+	zip -m oct-win64.zip $(BINARY_WINDOWS)
+package-linux: compile-linux
+	upx -9 $(BINARY_LINUX)
+	zip -m oct-linux64.zip $(BINARY_LINUX)
+package-macos: compile-macos
+	upx -9 $(BINARY_MACOS)
+	zip -m oct-darwin64.zip $(BINARY_MACOS)
 
 # Test
 test:

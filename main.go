@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"github.com/urfave/cli"
 	"log"
 	"os"
@@ -50,13 +51,25 @@ func convert(c *cli.Context) error {
 		return cli.NewExitError("target is not set", 1)
 	}
 
+	inputFilename := args.Get(0)
+	outputFilename := args.Get(1)
+
+	inputFormat := GetFileFormat(c.String("sourceFormat"), inputFilename)
+	if inputFormat == "" {
+		return errors.New("cannot find sourceFormat")
+	}
+	outputFormat := GetFileFormat(c.String("targetFormat"), outputFilename)
+	if outputFormat == "" {
+		return errors.New("cannot find targetFormat")
+	}
+
 	input := &Input{
-		Filename: args.Get(0),
-		Format:   c.String("sourceFormat"),
+		Filename: inputFilename,
+		Format:   inputFormat,
 	}
 	output := &Output{
-		Filename: args.Get(1),
-		Format:   c.String("targetFormat"),
+		Filename: outputFilename,
+		Format:   outputFormat,
 	}
 
 	cmd := &ConvertCmd{}
@@ -73,9 +86,15 @@ func generate(c *cli.Context) error {
 		return cli.NewExitError("target is not set", 1)
 	}
 
+	inputFilename := args.Get(0)
+	inputFormat := GetFileFormat(c.String("sourceFormat"), inputFilename)
+	if inputFormat == "" {
+		return errors.New("cannot find sourceFormat")
+	}
+
 	input := &Input{
-		Filename: args.Get(0),
-		Format:   c.String("sourceFormat"),
+		Filename: inputFilename,
+		Format:   inputFormat,
 	}
 
 	prefixesToRemove := strings.Split(c.String("removePrefix"), ",")

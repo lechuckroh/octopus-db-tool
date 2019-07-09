@@ -1,6 +1,7 @@
 package main
 
 import (
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -38,6 +39,29 @@ func IsStringType(typ string) bool {
 	}
 	return false
 }
+
+func GetFileFormat(fileFormat string, filename string) string {
+	if fileFormat != "" {
+		return fileFormat
+	}
+
+	ext := filepath.Ext(filename)
+	switch strings.ToLower(ext) {
+	case ".mdj":
+		return FormatStaruml2
+	case ".ojson":
+		return FormatOctopus
+	case ".plantuml":
+		return FormatPlantuml
+	case ".schema":
+		return FormatSchemaConverter
+	case ".xlsx":
+		return FormatXlsx
+	default:
+		return ""
+	}
+}
+
 
 type StringSet struct {
 	valueMap map[string]bool
