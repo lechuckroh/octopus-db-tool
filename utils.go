@@ -29,6 +29,14 @@ func GetDefaultString(value string, defaultValue string) string {
 	return value
 }
 
+func BoolToString(value bool, trueStr, falseStr string) string {
+	if value {
+		return trueStr
+	} else {
+		return falseStr
+	}
+}
+
 func IsStringType(typ string) bool {
 	lowerType := strings.ToLower(typ)
 	stringTypes := []string{"char", "string"}

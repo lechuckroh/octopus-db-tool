@@ -100,8 +100,10 @@ func (f *Xlsx) readGroupSheet(groupName string, sheet *xlsx.Sheet) ([]*Table, er
 		}
 
 		typeValue := strings.TrimSpace(f.getCellValue(row, 2))
-		attrValue := strings.TrimSpace(f.getCellValue(row, 3))
-		description := strings.TrimSpace(f.getCellValue(row, 4))
+		keyValue := strings.TrimSpace(f.getCellValue(row, 3))
+		nullableValue := strings.TrimSpace(f.getCellValue(row, 4))
+		attrValue := strings.TrimSpace(f.getCellValue(row, 5))
+		description := strings.TrimSpace(f.getCellValue(row, 6))
 
 		// create new table
 		if tableFinished {
@@ -155,9 +157,9 @@ func (f *Xlsx) readGroupSheet(groupName string, sheet *xlsx.Sheet) ([]*Table, er
 			Type:            typeValue,
 			Description:     description,
 			Size:            0,
-			Nullable:        attrSet.ContainsAny([]string{"null", "nullable"}),
-			PrimaryKey:      attrSet.Contains("pk"),
-			UniqueKey:       attrSet.Contains("unique"),
+			Nullable:        nullableValue == "O",
+			PrimaryKey:      keyValue == "P",
+			UniqueKey:       keyValue == "U",
 			AutoIncremental: attrSet.ContainsAny([]string{"ai", "autoinc", "auto_inc", "auto_incremental"}),
 			DefaultValue:    defaultValue,
 			Ref:             ref,
@@ -280,8 +282,10 @@ func (f *Xlsx) fillGroupSheet(sheet *xlsx.Sheet, schema *Schema, group string) e
 	_ = sheet.SetColWidth(0, 0, 15.5)
 	_ = sheet.SetColWidth(1, 1, 13.5)
 	_ = sheet.SetColWidth(2, 2, 9.5)
-	_ = sheet.SetColWidth(3, 3, 9.5)
-	_ = sheet.SetColWidth(4, 4, 50)
+	_ = sheet.SetColWidth(3, 3, 4.0)
+	_ = sheet.SetColWidth(4, 4, 4.0)
+	_ = sheet.SetColWidth(5, 5, 9.5)
+	_ = sheet.SetColWidth(6, 6, 50)
 
 
 	// alignment
@@ -299,31 +303,17 @@ func (f *Xlsx) fillGroupSheet(sheet *xlsx.Sheet, schema *Schema, group string) e
 	refFont := xlsx.NewFont(8, xlsxDefaultFontName)
 	refFont.Italic = true
 
-	headerStyle := f.newStyle(
-		f.newSolidFill("00CCFFCC"),
-		border,
-		centerAlignment,
-		boldFont)
-	tableStyle := f.newStyle(
-		f.newSolidFill("00CCFFFF"),
-		border,
-		centerAlignment,
-		boldFont)
-	normalStyle := f.newStyle(
-		nil,
-		lightBorder,
-		leftAlignment,
-		normalFont)
-	referenceStyle := f.newStyle(
-		nil,
-		lightBorder,
-		centerAlignment,
-		refFont)
+	headerStyle := f.newStyle(f.newSolidFill("00CCFFCC"), border, centerAlignment, boldFont)
+	tableStyle := f.newStyle(f.newSolidFill("00CCFFFF"), border, centerAlignment, boldFont)
+	tableDescStyle := f.newStyle(f.newSolidFill("00FFFBCC"), lightBorder, leftAlignment, normalFont)
+	normalStyle := f.newStyle(nil, lightBorder, leftAlignment, normalFont)
+	boolStyle := f.newStyle(nil, lightBorder, centerAlignment, normalFont)
+	referenceStyle := f.newStyle(nil, lightBorder, centerAlignment, refFont)
 
 
 	// Header
 	row := sheet.AddRow()
-	f.addCells(row, []string{"Table/Reference", "Column", "Type", "Attributes", "Description"}, headerStyle)
+	f.addCells(row, []string{"Table/Reference", "Column", "Type", "Key", "null", "Attributes", "Description"}, headerStyle)
 
 	tableCount := len(schema.Tables)
 	for i, table := range schema.Tables {
@@ -334,8 +324,8 @@ func (f *Xlsx) fillGroupSheet(sheet *xlsx.Sheet, schema *Schema, group string) e
 		// Table
 		row = sheet.AddRow()
 		f.addCell(row, table.Name, tableStyle)
-		f.addCells(row, []string{"", "", ""}, nil)
-		f.addCell(row, strings.TrimSpace(table.Description), normalStyle)
+		f.addCells(row, []string{"", "", "", "", ""}, nil)
+		f.addCell(row, strings.TrimSpace(table.Description), tableDescStyle)
 
 		// Columns
 		for _, column := range table.Columns {
@@ -351,6 +341,16 @@ func (f *Xlsx) fillGroupSheet(sheet *xlsx.Sheet, schema *Schema, group string) e
 				[]string{
 					column.Name,
 					f.formatType(column),
+				},
+				normalStyle)
+			f.addCells(row,
+				[]string{
+					BoolToString(column.PrimaryKey, "P", BoolToString(column.UniqueKey, "U", "")),
+					BoolToString(column.Nullable, "O", ""),
+				},
+				boolStyle)
+			f.addCells(row,
+				[]string{
 					strings.Join(f.getColumnAttributes(column), ", "),
 					strings.TrimSpace(column.Description),
 				},
@@ -401,17 +401,8 @@ func (f *Xlsx) addCells(row *xlsx.Row, values []string, style *xlsx.Style) {
 func (f *Xlsx) getColumnAttributes(column *Column) []string {
 	attrs := make([]string, 0)
 
-	if column.PrimaryKey {
-		attrs = append(attrs, "PK")
-	}
-	if column.UniqueKey {
-		attrs = append(attrs, "UNIQUE")
-	}
 	if column.AutoIncremental {
 		attrs = append(attrs, "autoInc")
-	}
-	if column.Nullable {
-		attrs = append(attrs, "nullable")
 	}
 	if column.DefaultValue != "" {
 		attrs = append(attrs, "default="+column.DefaultValue)
