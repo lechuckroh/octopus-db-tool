@@ -91,8 +91,9 @@ func (f *Xlsx) readGroupSheet(groupName string, sheet *xlsx.Sheet) ([]*Table, er
 		tableName := strings.TrimSpace(f.getCellValue(row, 0))
 		columnName := strings.TrimSpace(f.getCellValue(row, 1))
 
-		// finish table if empty line found
-		if tableName == "" && columnName == "" && !tableFinished {
+		// finish table if
+		// - column is empty
+		if columnName == "" && !tableFinished {
 			tables = append(tables, lastTable)
 			tableFinished = true
 			continue
@@ -137,6 +138,18 @@ func (f *Xlsx) readGroupSheet(groupName string, sheet *xlsx.Sheet) ([]*Table, er
 			attrSet.Add(strings.ToLower(attr))
 		}
 
+		// reference
+		var ref *Reference
+		if tableName != "" {
+			tokens := strings.Split(tableName, ".")
+			if len(tokens) == 2 {
+				ref = &Reference{
+					Table:  tokens[0],
+					Column: tokens[1],
+				}
+			}
+		}
+
 		lastTable.AddColumn(&Column{
 			Name:            columnName,
 			Type:            typeValue,
@@ -147,7 +160,7 @@ func (f *Xlsx) readGroupSheet(groupName string, sheet *xlsx.Sheet) ([]*Table, er
 			UniqueKey:       attrSet.Contains("unique"),
 			AutoIncremental: attrSet.ContainsAny([]string{"ai", "autoinc", "auto_inc", "auto_incremental"}),
 			DefaultValue:    defaultValue,
-			Ref:             nil,
+			Ref:             ref,
 		})
 	}
 
