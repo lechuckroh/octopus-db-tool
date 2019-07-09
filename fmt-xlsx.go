@@ -1,27 +1,162 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"github.com/tealeg/xlsx"
 	"strings"
 )
 
+const (
+	xlsxSheetMeta       = "Meta"
+	xlsxMetaVersion     = "version"
+	xlsxDefaultFontName = "Verdana"
+	xlsxDefaultFontSize = 10
+)
+
 type Xlsx struct {
+	metaSheet     *xlsx.Sheet
+	sheetsByGroup map[string]*xlsx.Sheet
 }
 
 func (f *Xlsx) FromFile(filename string) error {
-	return errors.New("not implemented")
+	xlFile, err := xlsx.OpenFile(filename)
+	if err != nil {
+		return err
+	}
+
+	f.sheetsByGroup = make(map[string]*xlsx.Sheet)
+
+	for _, sheet := range xlFile.Sheets {
+		sheetName := sheet.Name
+		if sheetName == xlsxSheetMeta {
+			f.metaSheet = sheet
+		} else {
+			f.sheetsByGroup[sheet.Name] = sheet
+		}
+	}
+	return nil
 }
 
 func (f *Xlsx) ToSchema() (*Schema, error) {
-	// TODO
-	return nil, errors.New("not implemented")
+	version := ""
+	tables := make([]*Table, 0)
+
+	if f.metaSheet != nil {
+		keyValues := f.readMetaSheet()
+		version = keyValues[xlsxMetaVersion]
+	}
+
+	for groupName, sheet := range f.sheetsByGroup {
+		groupTables, err := f.readGroupSheet(groupName, sheet)
+		if err != nil {
+			return nil, err
+		}
+		tables = append(tables, groupTables...)
+	}
+
+	return &Schema{
+		Version: version,
+		Tables:  tables,
+	}, nil
+}
+
+func (f *Xlsx) readMetaSheet() map[string]string {
+	result := map[string]string{}
+
+	for _, row := range f.metaSheet.Rows {
+		if keyCell := f.getCell(row, 0); keyCell != nil {
+			key := keyCell.Value
+			valueCell := f.getCell(row, 1)
+			if valueCell == nil {
+				result[key] = ""
+			} else {
+				result[key] = valueCell.Value
+			}
+		}
+	}
+	return result
+}
+
+func (f *Xlsx) readGroupSheet(groupName string, sheet *xlsx.Sheet) ([]*Table, error) {
+	tables := make([]*Table, 0)
+
+	var lastTable *Table
+	tableFinished := true
+	for i, row := range sheet.Rows {
+		// skip header row
+		if i == 0 {
+			continue
+		}
+
+		tableName := strings.TrimSpace(f.getCellValue(row, 0))
+		columnName := strings.TrimSpace(f.getCellValue(row, 1))
+
+		// finish table if empty line found
+		if tableName == "" && columnName == "" && !tableFinished {
+			tables = append(tables, lastTable)
+			tableFinished = true
+			continue
+		}
+
+		typeValue := strings.TrimSpace(f.getCellValue(row, 2))
+		attrValue := strings.TrimSpace(f.getCellValue(row, 3))
+		description := strings.TrimSpace(f.getCellValue(row, 4))
+
+		// create new table
+		if tableFinished {
+			if tableName != "" {
+				lastTable = &Table{
+					Name:        tableName,
+					Columns:     make([]*Column, 0),
+					Description: description,
+					Group:       groupName,
+					ClassName:   typeValue,
+				}
+				tableFinished = false
+			}
+			continue
+		}
+		if lastTable == nil {
+			continue
+		}
+
+		// add column
+		defaultValue := ""
+		attrSet := NewStringSet()
+		for _, attr := range strings.Split(attrValue, ",") {
+			attr = strings.TrimSpace(attr)
+
+			if strings.HasPrefix(attr, "default") {
+				tokens := strings.SplitN(attr, "=", 2)
+				if len(tokens) == 2 {
+					defaultValue = tokens[1]
+					continue
+				}
+			}
+
+			attrSet.Add(strings.ToLower(attr))
+		}
+
+		lastTable.AddColumn(&Column{
+			Name:            columnName,
+			Type:            typeValue,
+			Description:     description,
+			Size:            0,
+			Nullable:        attrSet.ContainsAny([]string{"null", "nullable"}),
+			PrimaryKey:      attrSet.Contains("pk"),
+			UniqueKey:       attrSet.Contains("unique"),
+			AutoIncremental: attrSet.ContainsAny([]string{"ai", "autoinc", "auto_inc", "auto_incremental"}),
+			DefaultValue:    defaultValue,
+			Ref:             nil,
+		})
+	}
+
+	return tables, nil
 }
 
 func (f *Xlsx) ToFile(schema *Schema, filename string) error {
 	file := xlsx.NewFile()
-	metaSheet, err := file.AddSheet("Meta")
+	metaSheet, err := file.AddSheet(xlsxSheetMeta)
 	if err != nil {
 		return err
 	}
@@ -33,7 +168,7 @@ func (f *Xlsx) ToFile(schema *Schema, filename string) error {
 	for _, group := range schema.Groups() {
 		groupName := group
 		if groupName == "" {
-			groupName = "NoName"
+			groupName = "Common"
 		}
 		sheet, err := file.AddSheet(groupName)
 		if err != nil {
@@ -49,46 +184,110 @@ func (f *Xlsx) ToFile(schema *Schema, filename string) error {
 }
 
 func (f *Xlsx) fillMetaSheet(sheet *xlsx.Sheet, schema *Schema) error {
+	font := f.defaultFont()
+	style := f.newStyle(nil, nil, nil, font)
+
 	row := sheet.AddRow()
-	f.addCell(row, "version", nil)
-	f.addCell(row, schema.Version, nil)
+	f.addCells(row, []string{xlsxMetaVersion, schema.Version}, style)
 	return nil
 }
 
+func (f *Xlsx) newBorder(thickness, color string) *xlsx.Border {
+	border := xlsx.NewBorder(thickness, thickness, thickness, thickness)
+	if color != "" {
+		border.LeftColor = color
+		border.RightColor = color
+		border.TopColor = color
+		border.BottomColor = color
+	}
+	return border
+}
+
+func (f *Xlsx) newSolidFill(color string) *xlsx.Fill {
+	return xlsx.NewFill("solid", color, color)
+}
+
+func (f *Xlsx) newAlignment(horizontal, vertical string) *xlsx.Alignment {
+	return &xlsx.Alignment{
+		Horizontal: horizontal,
+		Vertical:   vertical,
+	}
+}
+
+func (f *Xlsx) defaultFont() *xlsx.Font {
+	return xlsx.NewFont(xlsxDefaultFontSize, xlsxDefaultFontName)
+}
+
+func (f *Xlsx) newStyle(
+	fill *xlsx.Fill,
+	border *xlsx.Border,
+	alignment *xlsx.Alignment,
+	font *xlsx.Font,
+) *xlsx.Style {
+	style := xlsx.NewStyle()
+	if fill != nil {
+		style.ApplyFill = true
+		style.Fill = *fill
+	}
+	if border != nil {
+		style.ApplyBorder = true
+		style.Border = *border
+	}
+	if alignment != nil {
+		style.ApplyAlignment = true
+		style.Alignment = *alignment
+	}
+	if font != nil {
+		style.ApplyFont = true
+		style.Font = *font
+	}
+
+	return style
+}
+
 func (f *Xlsx) fillGroupSheet(sheet *xlsx.Sheet, schema *Schema, group string) error {
-	border := *xlsx.NewBorder("thin", "thin", "thin", "thin")
-	lightBorder := *xlsx.NewBorder("thin", "thin", "thin", "thin")
-	lightBorderColor := "00B2B2B2"
-	lightBorder.LeftColor = lightBorderColor
-	lightBorder.RightColor = lightBorderColor
-	lightBorder.TopColor = lightBorderColor
-	lightBorder.BottomColor = lightBorderColor
+	// alignment
+	leftAlignment := f.newAlignment("default", "center")
+	centerAlignment := f.newAlignment("center", "center")
+	rightAlignment := f.newAlignment("right", "center")
 
-	headerStyle := xlsx.NewStyle()
-	headerStyle.ApplyFill = true
-	headerStyle.Fill = *xlsx.NewFill("solid", "00CCFFCC", "00CCFFCC")
-	headerStyle.ApplyBorder = true
-	headerStyle.Border = border
-	headerStyle.Font = *xlsx.NewFont(14, "Verdana")
-	headerStyle.Font.Bold = true
+	// border
+	border := f.newBorder("thin", "")
+	lightBorder := f.newBorder("thin", "00B2B2B2")
 
-	tableStyle := xlsx.NewStyle()
-	tableStyle.ApplyFill = true
-	tableStyle.Fill = *xlsx.NewFill("solid", "00CCFFFF", "00CCFFFF")
-	tableStyle.ApplyBorder = true
-	tableStyle.Border = border
-	tableStyle.Font.Bold = true
+	// font
+	boldFont := f.defaultFont()
+	boldFont.Bold = true
+	normalFont := f.defaultFont()
 
-	normalStyle := xlsx.NewStyle()
-	normalStyle.ApplyBorder = true
-	normalStyle.Border = lightBorder
+	headerStyle := f.newStyle(
+		f.newSolidFill("00CCFFCC"),
+		border,
+		centerAlignment,
+		boldFont)
+	tableStyle := f.newStyle(
+		f.newSolidFill("00CCFFFF"),
+		border,
+		leftAlignment,
+		boldFont)
+	normalStyle := f.newStyle(
+		nil,
+		lightBorder,
+		leftAlignment,
+		normalFont)
+	referenceStyle := f.newStyle(
+		nil,
+		lightBorder,
+		rightAlignment,
+		normalFont)
 
 
 	// Header
 	row := sheet.AddRow()
 	f.addCells(row, []string{"Table/Reference", "Column", "Type", "Attributes", "Description"}, headerStyle)
 
-	for _, table := range schema.Tables {
+	tableCount := len(schema.Tables)
+	for i, table := range schema.Tables {
 		if table.Group != group {
 			continue
 		}
@@ -96,11 +295,19 @@ func (f *Xlsx) fillGroupSheet(sheet *xlsx.Sheet, schema *Schema, group string) e
 		// Table
 		row = sheet.AddRow()
 		f.addCell(row, table.Name, tableStyle)
+		f.addCells(row, []string{"", "", ""}, nil)
+		f.addCell(row, strings.TrimSpace(table.Description), normalStyle)
 
 		// Columns
 		for _, column := range table.Columns {
 			row = sheet.AddRow()
-			f.addCell(row, f.getColumnReference(column), nil)
+
+			if ref := f.getColumnReference(column); ref != "" {
+				f.addCell(row, ref, referenceStyle)
+			} else {
+				f.addCell(row, "", nil)
+			}
+
 			f.addCells(row,
 				[]string{
 					column.Name,
@@ -110,9 +317,31 @@ func (f *Xlsx) fillGroupSheet(sheet *xlsx.Sheet, schema *Schema, group string) e
 				},
 				normalStyle)
 		}
+
+		// add empty row
+		if i < tableCount-1 {
+			sheet.AddRow()
+		}
 	}
 
 	return nil
+}
+
+func (f *Xlsx) getCell(row *xlsx.Row, colIdx int) *xlsx.Cell {
+	colCount := len(row.Cells)
+	if colIdx < colCount {
+		return row.Cells[colIdx]
+	}
+	return nil
+}
+
+func (f *Xlsx) getCellValue(row *xlsx.Row, colIdx int) string {
+	cell := f.getCell(row, colIdx)
+	if cell == nil {
+		return ""
+	} else {
+		return cell.Value
+	}
 }
 
 func (f *Xlsx) addCell(row *xlsx.Row, value string, style *xlsx.Style) *xlsx.Cell {
@@ -140,7 +369,7 @@ func (f *Xlsx) getColumnAttributes(column *Column) []string {
 		attrs = append(attrs, "UNIQUE")
 	}
 	if column.AutoIncremental {
-		attrs = append(attrs, "ID")
+		attrs = append(attrs, "autoInc")
 	}
 	if column.Nullable {
 		attrs = append(attrs, "nullable")

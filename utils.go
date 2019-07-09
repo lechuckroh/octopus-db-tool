@@ -59,6 +59,20 @@ func (s *StringSet) AddAll(values []string) {
 	}
 }
 
+func (s *StringSet) Contains(key string) bool {
+	_, ok := s.valueMap[key]
+	return ok
+}
+
+func (s *StringSet) ContainsAny(keys []string) bool {
+	for _, key := range keys {
+		if _, ok := s.valueMap[key]; ok {
+			return true
+		}
+	}
+	return false
+}
+
 func (s *StringSet) Slice() []string {
 	keys := make([]string, 0, len(s.valueMap))
 	for key := range s.valueMap {

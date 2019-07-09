@@ -49,6 +49,8 @@ func (cmd *ConvertCmd) inputToSchema(input *Input) (*Schema, error) {
 		reader = &Schema{}
 	case FormatStaruml2:
 		reader = &StarUML2{}
+	case FormatXlsx:
+		reader = &Xlsx{}
 	}
 
 	if reader == nil {
@@ -57,7 +59,12 @@ func (cmd *ConvertCmd) inputToSchema(input *Input) (*Schema, error) {
 	if err := reader.FromFile(input.Filename); err != nil {
 		return nil, err
 	}
-	return reader.ToSchema()
+	if schema, err := reader.ToSchema(); err != nil {
+		return nil, err
+	} else {
+		schema.Normalize()
+		return schema, nil
+	}
 }
 
 func (cmd *ConvertCmd) schemaToOutput(schema *Schema, output *Output) error {

@@ -38,6 +38,11 @@ type Schema struct {
 	Tables  []*Table `json:"tables,omitempty"`
 }
 
+func (t *Table) AddColumn(column *Column) {
+	if column != nil {
+		t.Columns = append(t.Columns, column)
+	}
+}
 
 // Normalize converts colume types to lowercase
 func (s *Schema) Normalize() {
