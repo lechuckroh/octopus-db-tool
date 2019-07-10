@@ -130,7 +130,7 @@ func (f *Xlsx) readGroupSheet(groupName string, sheet *xlsx.Sheet) ([]*Table, er
 			attr = strings.TrimSpace(attr)
 
 			if strings.HasPrefix(attr, "default") {
-				tokens := strings.SplitN(attr, "=", 2)
+				tokens := strings.SplitN(attr, ":", 2)
 				if len(tokens) == 2 {
 					defaultValue = tokens[1]
 					continue
@@ -157,7 +157,7 @@ func (f *Xlsx) readGroupSheet(groupName string, sheet *xlsx.Sheet) ([]*Table, er
 			Type:            typeValue,
 			Description:     description,
 			Size:            0,
-			Nullable:        nullableValue == "O",
+			Nullable:        nullableValue != "",
 			PrimaryKey:      keyValue == "P",
 			UniqueKey:       keyValue == "U",
 			AutoIncremental: attrSet.ContainsAny([]string{"ai", "autoinc", "auto_inc", "auto_incremental"}),
@@ -405,7 +405,7 @@ func (f *Xlsx) getColumnAttributes(column *Column) []string {
 		attrs = append(attrs, "autoInc")
 	}
 	if column.DefaultValue != "" {
-		attrs = append(attrs, "default="+column.DefaultValue)
+		attrs = append(attrs, "default:"+column.DefaultValue)
 	}
 
 	return attrs
