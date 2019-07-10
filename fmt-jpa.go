@@ -159,14 +159,13 @@ func (k *JPAKotlin) Generate(schema *Schema, output *GenOutput) error {
 	// Create directory
 	pathArgs := append([]string{output.Directory}, strings.Split(output.Package, ".")...)
 	outputDir := path.Join(pathArgs...)
-	log.Printf("[MKDIR] %s", outputDir)
-	err := os.MkdirAll(outputDir, 0777)
-	if err != nil {
+	if err := os.MkdirAll(outputDir, 0777); err != nil {
 		return err
 	}
+	log.Printf("[MKDIR] %s", outputDir)
 
 	// Generate AbstractJpaPersistable.kt
-	if err = k.generateAbstractJpaPersistable(outputDir); err != nil {
+	if err := k.generateAbstractJpaPersistable(outputDir); err != nil {
 		return err
 	}
 
@@ -274,8 +273,7 @@ func (k *JPAKotlin) Generate(schema *Schema, output *GenOutput) error {
 
 		// Write file
 		outputFile := path.Join(outputDir, fmt.Sprintf("%s.kt", class.Name))
-		err = ioutil.WriteFile(outputFile, []byte(strings.Join(contents, "\n")), 0644)
-		if err != nil {
+		if err := ioutil.WriteFile(outputFile, []byte(strings.Join(contents, "\n")), 0644); err != nil {
 			return err
 		}
 		log.Printf("[WRITE] %s", outputFile)
@@ -285,7 +283,7 @@ func (k *JPAKotlin) Generate(schema *Schema, output *GenOutput) error {
 }
 
 func (k *JPAKotlin) generateAbstractJpaPersistable(outputDir string) error {
-	filename := path.Join(outputDir, "AbstractPersistable.kt")
+	filename := path.Join(outputDir, "AbstractJpaPersistable.kt")
 	data := `package kstec.sp.api.entity
 
 import org.springframework.data.util.ProxyUtils

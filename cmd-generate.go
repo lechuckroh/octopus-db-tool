@@ -15,6 +15,9 @@ func (cmd *GenerateCmd) Generate(input *Input, output *GenOutput) error {
 	case FormatJpaKotlin:
 		jpa := &JPAKotlin{}
 		return jpa.Generate(schema, output)
+	case FormatLiquibase:
+		liquibase := &Liquibase{}
+		return liquibase.Generate(schema, output)
 	}
 
 	return fmt.Errorf("unsupported output format: %s", output.Format)

@@ -34,6 +34,8 @@ type Table struct {
 }
 
 type Schema struct {
+	Author  string   `json:"author,omitempty"`
+	Name    string   `json:"name,omitempty"`
 	Version string   `json:"version,omitempty"`
 	Tables  []*Table `json:"tables,omitempty"`
 }

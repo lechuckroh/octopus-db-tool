@@ -2,6 +2,7 @@ package main
 
 import (
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -46,6 +47,38 @@ func IsStringType(typ string) bool {
 		}
 	}
 	return false
+}
+
+func IsBooleanType(typ string) bool {
+	lowerType := strings.ToLower(typ)
+	booleanTypes := []string{"bool", "boolean"}
+	for _, booleanType := range booleanTypes {
+		if lowerType == booleanType {
+			return true
+		}
+	}
+	return false
+}
+
+func IsNumericType(typ string) bool {
+	lowerType := strings.ToLower(typ)
+	numericTypes := []string{"float", "double", "long", "bigint", "int", "smallint", "number"}
+	for _, numericType := range numericTypes {
+		if lowerType == numericType {
+			return true
+		}
+	}
+	return false
+}
+
+func ParseType(str string) (string, uint16) {
+	r := regexp.MustCompile(`(?m)([a-zA-Z]+)\(([0-9]+)\)`)
+	matches := r.FindStringSubmatch(str)
+	if len(matches) == 3 {
+		size, _ := strconv.Atoi(matches[2])
+		return matches[1], uint16(size)
+	}
+	return str, 0
 }
 
 func GetFileFormat(fileFormat string, filename string) string {

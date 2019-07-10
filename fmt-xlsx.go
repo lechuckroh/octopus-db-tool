@@ -8,6 +8,8 @@ import (
 
 const (
 	xlsxSheetMeta       = "Meta"
+	xlsxMetaAuthor      = "author"
+	xlsxMetaName        = "name"
 	xlsxMetaVersion     = "version"
 	xlsxDefaultFontName = "Verdana"
 	xlsxDefaultFontSize = 10
@@ -38,11 +40,15 @@ func (f *Xlsx) FromFile(filename string) error {
 }
 
 func (f *Xlsx) ToSchema() (*Schema, error) {
+	author := ""
+	name := ""
 	version := ""
 	tables := make([]*Table, 0)
 
 	if f.metaSheet != nil {
 		keyValues := f.readMetaSheet()
+		author = keyValues[xlsxMetaAuthor]
+		name = keyValues[xlsxMetaName]
 		version = keyValues[xlsxMetaVersion]
 	}
 
@@ -55,6 +61,8 @@ func (f *Xlsx) ToSchema() (*Schema, error) {
 	}
 
 	return &Schema{
+		Author:  author,
+		Name:    name,
 		Version: version,
 		Tables:  tables,
 	}, nil
@@ -152,11 +160,13 @@ func (f *Xlsx) readGroupSheet(groupName string, sheet *xlsx.Sheet) ([]*Table, er
 			}
 		}
 
+		colType, colSize := ParseType(typeValue)
+
 		lastTable.AddColumn(&Column{
 			Name:            columnName,
-			Type:            typeValue,
+			Type:            colType,
 			Description:     description,
-			Size:            0,
+			Size:            colSize,
 			Nullable:        nullableValue != "",
 			PrimaryKey:      keyValue == "P",
 			UniqueKey:       keyValue == "U",
@@ -221,6 +231,10 @@ func (f *Xlsx) fillMetaSheet(sheet *xlsx.Sheet, schema *Schema) error {
 	style := f.newStyle(nil, nil, nil, font)
 
 	row := sheet.AddRow()
+	f.addCells(row, []string{xlsxMetaAuthor, schema.Author}, style)
+	row = sheet.AddRow()
+	f.addCells(row, []string{xlsxMetaName, schema.Name}, style)
+	row = sheet.AddRow()
 	f.addCells(row, []string{xlsxMetaVersion, schema.Version}, style)
 	return nil
 }

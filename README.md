@@ -15,6 +15,7 @@ octopus-db-tools provides:
 | `jpa-kotlin`        |   |   | O |`kt`    |
 | `jpa-groovy`        |   |   |   |`groovy`|
 | `jpa-java`          |   |   |   |`java`  |
+| `liquibase`         |   |   | O |`yaml`  |
 | `opti-studio`       |   |   |   |`xml`   |
 | `plantuml`          |   |   |   |`plantuml`|
 | `schema-converter`  |   |   |   |`schema`|
@@ -65,7 +66,8 @@ $ ./oct generate <sourceFile> <targetFile> \
     --sourceFormat=<srcFormat> \
     --targetFormat=<targetFormat> \
     --package=<packageName> \
-    --removePrefix=<prefixes>
+    --removePrefix=<prefixes> \
+    --uniqueNameSuffix=<suffix>
 ```
 
 You can omit `--sorceFormat`, `--targetFormat` if file format can be detected.
@@ -85,8 +87,10 @@ $ ./oct convert sample.ojson sample.xlsx
 # - package: com.foo
 # - output directory: ./output
 # - remove tableName prefix starting with 'db_' or 'mydb_'
+# - unique constraint Name : tableName + '_uq'
 $ ./oct generate sample.ojson ./output \
     --targetFormat=jpa-kotlin \
     --package=com.foo \
-    --removePrefix=db_,mydb_
+    --removePrefix=db_,mydb_ \
+    --uniqueNameSuffix=_uq
 ```
