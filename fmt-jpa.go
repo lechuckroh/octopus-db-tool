@@ -193,8 +193,8 @@ func (k *JPAKotlin) Generate(schema *Schema, output *GenOutput) error {
 		appendLine("@Entity")
 		appendLine(fmt.Sprintf("@Table(name = \"%s\")", table.Name))
 		if pkFieldCount > 1 {
-			idClass = class.Name + "Id"
-			appendLine(fmt.Sprintf("@IdClass(%s)", idClass))
+			idClass = class.Name + "PK"
+			appendLine(fmt.Sprintf("@IdClass(%s::class)", idClass))
 		}
 		appendLine(fmt.Sprintf("class %s(", class.Name))
 
@@ -257,19 +257,33 @@ func (k *JPAKotlin) Generate(schema *Schema, output *GenOutput) error {
 			importSet.AddAll(field.Imports)
 		}
 
-		// Composite Key
-		if pkFieldCount > 1 {
-			// TODO: add CompositeKey class
-		}
-
 		appendLine(fmt.Sprintf(") : AbstractJpaPersistable<%s>()", idClass))
 		appendLine("")
+
+		// Composite Key
+		idClassLines := make([]string, 0)
+		if pkFieldCount > 1 {
+			addLine := func(s string) { idClassLines = append(idClassLines, s) }
+
+			importSet.Add("java.io.Serializable")
+			addLine(fmt.Sprintf("data class %s(", idClass))
+			for i, pkField := range class.PKFields {
+				line := indent + fmt.Sprintf("var %s: %s = %s", pkField.Name, pkField.Type, pkField.DefaultValue)
+				if i < pkFieldCount-1 {
+					line = line + ","
+				}
+				addLine(line)
+			}
+			addLine("): Serializable")
+			addLine("")
+		}
 
 		// contents
 		for _, imp := range importSet.Slice() {
 			contents = append(contents, "import "+imp)
 		}
 		contents = append(contents, classLines...)
+		contents = append(contents, idClassLines...)
 
 		// Write file
 		outputFile := path.Join(outputDir, fmt.Sprintf("%s.kt", class.Name))
