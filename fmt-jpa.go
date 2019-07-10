@@ -155,7 +155,7 @@ func NewKotlinField(column *Column) *KotlinField {
 	}
 }
 
-func (k *JPAKotlin) Generate(schema *Schema, output *GenOutput) error {
+func (k *JPAKotlin) Generate(schema *Schema, output *GenOutput, useDataClass bool) error {
 	// Create directory
 	pathArgs := append([]string{output.Directory}, strings.Split(output.Package, ".")...)
 	outputDir := path.Join(pathArgs...)
@@ -164,9 +164,11 @@ func (k *JPAKotlin) Generate(schema *Schema, output *GenOutput) error {
 	}
 	log.Printf("[MKDIR] %s", outputDir)
 
-	// Generate AbstractJpaPersistable.kt
-	if err := k.generateAbstractJpaPersistable(outputDir); err != nil {
-		return err
+	if !useDataClass {
+		// Generate AbstractJpaPersistable.kt
+		if err := k.generateAbstractJpaPersistable(outputDir); err != nil {
+			return err
+		}
 	}
 
 	indent := "    "
@@ -196,7 +198,13 @@ func (k *JPAKotlin) Generate(schema *Schema, output *GenOutput) error {
 			idClass = class.Name + "PK"
 			appendLine(fmt.Sprintf("@IdClass(%s::class)", idClass))
 		}
-		appendLine(fmt.Sprintf("class %s(", class.Name))
+
+		classDef := fmt.Sprintf("class %s(", class.Name)
+		if useDataClass {
+			appendLine("data " + classDef)
+		} else {
+			appendLine(classDef)
+		}
 
 		// fields
 		fieldCount := len(class.Fields)
@@ -248,16 +256,21 @@ func (k *JPAKotlin) Generate(schema *Schema, output *GenOutput) error {
 
 			if i < fieldCount-1 {
 				appendLine(indent + line + ",")
+				appendLine("")
 			} else {
 				appendLine(indent + line)
 			}
-			appendLine("")
 
 			// import
 			importSet.AddAll(field.Imports)
 		}
 
-		appendLine(fmt.Sprintf(") : AbstractJpaPersistable<%s>()", idClass))
+		if useDataClass {
+			appendLine(")")
+		} else {
+			appendLine("")
+			appendLine(fmt.Sprintf(") : AbstractJpaPersistable<%s>()", idClass))
+		}
 		appendLine("")
 
 		// Composite Key

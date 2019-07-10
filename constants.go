@@ -3,6 +3,7 @@ package main
 const (
 	FormatDbdiagramIo     = "dbdiagram.io"
 	FormatJpaKotlin       = "jpa-kotlin"
+	FormatJpaKotlinData   = "jpa-kotlin-data"
 	FormatLiquibase       = "liquibase"
 	FormatOctopus         = "octopus"
 	FormatOptiStudio      = "opti-studio"

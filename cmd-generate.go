@@ -14,7 +14,10 @@ func (cmd *GenerateCmd) Generate(input *Input, output *GenOutput) error {
 	switch output.Format {
 	case FormatJpaKotlin:
 		jpa := &JPAKotlin{}
-		return jpa.Generate(schema, output)
+		return jpa.Generate(schema, output, false)
+	case FormatJpaKotlinData:
+		jpa := &JPAKotlin{}
+		return jpa.Generate(schema, output, true)
 	case FormatLiquibase:
 		liquibase := &Liquibase{}
 		return liquibase.Generate(schema, output)

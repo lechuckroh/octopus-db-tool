@@ -13,6 +13,7 @@ octopus-db-tools provides:
 | [`dbdiagram.io`][1] |   | O |   |        |
 | [`quickdbd`][2]     |   | O |   |        |
 | `jpa-kotlin`        |   |   | O |`kt`    |
+| `jpa-kotlin-data`   |   |   | O |`kt`    |
 | `jpa-groovy`        |   |   |   |`groovy`|
 | `jpa-java`          |   |   |   |`java`  |
 | `liquibase`         |   |   | O |`yaml`  |
@@ -89,7 +90,7 @@ $ ./oct convert sample.ojson sample.xlsx
 # - remove tableName prefix starting with 'db_' or 'mydb_'
 # - unique constraint Name : tableName + '_uq'
 $ ./oct generate sample.ojson ./output \
-    --targetFormat=jpa-kotlin \
+    --targetFormat=jpa-kotlin-data \
     --package=com.foo \
     --removePrefix=db_,mydb_ \
     --uniqueNameSuffix=_uq
