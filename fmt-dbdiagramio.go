@@ -55,9 +55,9 @@ func (f *DBDiagramIO) ToString(schema *Schema) ([]byte, error) {
 			if column.UniqueKey {
 				params = append(params, "unique")
 			}
-			if column.AutoIncremental {
-				params = append(params, "auto_increment")
-			}
+			//if column.AutoIncremental {
+			//	params = append(params, "auto increment")
+			//}
 			if !column.Nullable {
 				params = append(params, "not null")
 			}
