@@ -156,17 +156,26 @@ func NewKotlinField(column *Column) *KotlinField {
 }
 
 func (k *JPAKotlin) Generate(schema *Schema, output *GenOutput, useDataClass bool) error {
-	// Create directory
-	pathArgs := append([]string{output.Directory}, strings.Split(output.Package, ".")...)
-	outputDir := path.Join(pathArgs...)
-	if err := os.MkdirAll(outputDir, 0777); err != nil {
+	// Create package directory
+	entityDir := path.Join(append([]string{output.Directory}, strings.Split(output.Package, ".")...)...)
+	if err := os.MkdirAll(entityDir, 0777); err != nil {
 		return err
 	}
-	log.Printf("[MKDIR] %s", outputDir)
+	log.Printf("[MKDIR] %s", entityDir)
+
+	// Create repos package directory
+	reposDir := ""
+	if output.ReposPackage != "" {
+		reposDir = path.Join(append([]string{output.Directory}, strings.Split(output.ReposPackage, ".")...)...)
+		if err := os.MkdirAll(reposDir, 0777); err != nil {
+			return err
+		}
+		log.Printf("[MKDIR] %s", reposDir)
+	}
 
 	if !useDataClass {
 		// Generate AbstractJpaPersistable.kt
-		if err := k.generateAbstractJpaPersistable(outputDir); err != nil {
+		if err := k.generateAbstractJpaPersistable(entityDir); err != nil {
 			return err
 		}
 	}
@@ -299,11 +308,32 @@ func (k *JPAKotlin) Generate(schema *Schema, output *GenOutput, useDataClass boo
 		contents = append(contents, idClassLines...)
 
 		// Write file
-		outputFile := path.Join(outputDir, fmt.Sprintf("%s.kt", class.Name))
+		outputFile := path.Join(entityDir, fmt.Sprintf("%s.kt", class.Name))
 		if err := ioutil.WriteFile(outputFile, []byte(strings.Join(contents, "\n")), 0644); err != nil {
 			return err
 		}
 		log.Printf("[WRITE] %s", outputFile)
+
+		// Write Repos
+		if output.ReposPackage != "" {
+			reposClassName := fmt.Sprintf("%sRepository", class.Name)
+			file := path.Join(reposDir, reposClassName + ".kt")
+			lines := []string{
+				"package " + output.ReposPackage,
+				"",
+				"import " + output.Package + ".*",
+				"import org.springframework.data.jpa.repository.JpaRepository",
+				"import org.springframework.data.rest.core.annotation.RepositoryRestResource",
+				"",
+				"@RepositoryRestResource",
+				fmt.Sprintf("interface %s : JpaRepository<%s, %s>", reposClassName, class.Name, idClass),
+				"",
+			}
+			if err := ioutil.WriteFile(file, []byte(strings.Join(lines, "\n")), 0644); err != nil {
+				return err
+			}
+			log.Printf("[WRITE] %s", file)
+		}
 	}
 
 	return nil

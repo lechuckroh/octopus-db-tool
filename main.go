@@ -24,6 +24,7 @@ type GenOutput struct {
 	Format           string
 	Directory        string
 	Package          string
+	ReposPackage     string
 	PrefixesToRemove []string
 	UniqueNameSuffix string
 }
@@ -104,6 +105,7 @@ func generate(c *cli.Context) error {
 		Directory:        args.Get(1),
 		Format:           c.String("targetFormat"),
 		Package:          c.String("package"),
+		ReposPackage:     c.String("reposPackage"),
 		UniqueNameSuffix: c.String("uniqueNameSuffix"),
 		PrefixesToRemove: prefixesToRemove,
 	}
@@ -168,7 +170,12 @@ func main() {
 					EnvVar: "OCTOPUS_PACKAGE",
 				},
 				cli.StringFlag{
-					Name:   "removePrefix, rp",
+					Name:   "reposPackage, rp",
+					Usage:  "set target repository package name",
+					EnvVar: "OCTOPUS_REPOS_PACKAGE",
+				},
+				cli.StringFlag{
+					Name:   "removePrefix, rm",
 					Usage:  "set prefixes to remove. set multiple values with comma separated.",
 					EnvVar: "OCTOPUS_REMOVE_PREFIX",
 				},
