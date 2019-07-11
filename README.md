@@ -85,13 +85,15 @@ $ ./oct convert sample.ojson sample.xlsx
 ### Generate
 ```bash
 # octopus -> JPA-kotlin
-# - package: com.foo
+# - entity package: com.foo.entity
+# - repository package: com.foo.repos
 # - output directory: ./output
 # - remove tableName prefix starting with 'db_' or 'mydb_'
 # - unique constraint Name : tableName + '_uq'
 $ ./oct generate sample.ojson ./output \
     --targetFormat=jpa-kotlin-data \
-    --package=com.foo \
+    --package=com.foo.entity \
+    --reposPackage=com.foo.repos \
     --removePrefix=db_,mydb_ \
     --uniqueNameSuffix=_uq
 ```
