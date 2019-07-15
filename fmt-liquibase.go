@@ -105,7 +105,7 @@ func (l *Liquibase) Generate(schema *Schema, output *GenOutput) error {
 			i++
 		}
 		// Unique Constraint
-		if uniqueCount >= 2 {
+		if uniqueCount >= 1 {
 			appendLine(0, "- changeSet:")
 			appendLine(2, fmt.Sprintf("id: %d", i))
 			appendLine(2, "author: "+schema.Author)
