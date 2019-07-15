@@ -88,6 +88,10 @@ func GetFileFormat(fileFormat string, filename string) string {
 
 	ext := filepath.Ext(filename)
 	switch strings.ToLower(ext) {
+	case ".graphql":
+		fallthrough
+	case ".graphqls":
+		return FormatGraphql
 	case ".mdj":
 		return FormatStaruml2
 	case ".ojson":

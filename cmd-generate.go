@@ -12,6 +12,9 @@ func (cmd *GenerateCmd) Generate(input *Input, output *GenOutput) error {
 	}
 
 	switch output.Format {
+	case FormatGraphql:
+		graphql := &Graphql{}
+		return graphql.Generate(schema, output)
 	case FormatJpaKotlin:
 		jpa := &JPAKotlin{}
 		return jpa.Generate(schema, output, false)

@@ -12,6 +12,7 @@ octopus-db-tools provides:
 | `staruml2`          | O |   |   |`mdj`   |
 | [`dbdiagram.io`][1] |   | O |   |        |
 | [`quickdbd`][2]     |   | O |   |        |
+| `graphql`           |   |   | O |`graphql`, `graphqls`|
 | `jpa-kotlin`        |   |   | O |`kt`    |
 | `jpa-kotlin-data`   |   |   | O |`kt`    |
 | `jpa-groovy`        |   |   |   |`groovy`|
