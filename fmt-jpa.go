@@ -119,10 +119,10 @@ func NewKotlinField(column *Column) *KotlinField {
 			defaultValue = "0.0"
 		}
 	case "datetime":
-		fieldType = "LocalDateTime"
-		importSet.Add("java.time.LocalDateTime")
+		fieldType = "Timestamp"
+		importSet.Add("java.sql.Timestamp")
 		if !nullable {
-			defaultValue = "LocalDateTime.now()"
+			defaultValue = "Timestamp(System.currentTimeMillis())"
 		}
 	case "date":
 		fieldType = "LocalDate"
