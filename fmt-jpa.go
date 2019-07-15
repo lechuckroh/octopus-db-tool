@@ -238,7 +238,7 @@ func (k *JPAKotlin) Generate(schema *Schema, output *GenOutput, useDataClass boo
 			if !column.Nullable {
 				attributes = append(attributes, "nullable = false")
 			}
-			if field.Type == "String" && column.Size > 0 {
+			if column.Type == "string" && column.Size > 0 {
 				attributes = append(attributes, fmt.Sprintf("length = %d", column.Size))
 			}
 			if len(attributes) > 0 {
