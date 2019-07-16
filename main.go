@@ -25,6 +25,7 @@ type GenOutput struct {
 	Directory        string
 	Package          string
 	ReposPackage     string
+	GraphqlPackage   string
 	PrefixesToRemove []string
 	UniqueNameSuffix string
 }
@@ -106,6 +107,7 @@ func generate(c *cli.Context) error {
 		Format:           c.String("targetFormat"),
 		Package:          c.String("package"),
 		ReposPackage:     c.String("reposPackage"),
+		GraphqlPackage:   c.String("graphqlPackage"),
 		UniqueNameSuffix: c.String("uniqueNameSuffix"),
 		PrefixesToRemove: prefixesToRemove,
 	}
@@ -170,17 +172,22 @@ func main() {
 					EnvVar: "OCTOPUS_PACKAGE",
 				},
 				cli.StringFlag{
-					Name:   "reposPackage, rp",
+					Name:   "reposPackage",
 					Usage:  "set target repository package name",
 					EnvVar: "OCTOPUS_REPOS_PACKAGE",
 				},
 				cli.StringFlag{
-					Name:   "removePrefix, rm",
+					Name:   "graphqlPackage",
+					Usage:  "set target graphql package name",
+					EnvVar: "OCTOPUS_GRAPHQL_PACKAGE",
+				},
+				cli.StringFlag{
+					Name:   "removePrefix",
 					Usage:  "set prefixes to remove. set multiple values with comma separated.",
 					EnvVar: "OCTOPUS_REMOVE_PREFIX",
 				},
 				cli.StringFlag{
-					Name:   "uniqueNameSuffix, un",
+					Name:   "uniqueNameSuffix",
 					Usage:  "set unique constraint name suffix",
 					EnvVar: "OCTOPUS_UNIQUE_NAME_SUFFIX",
 				},

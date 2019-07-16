@@ -81,6 +81,9 @@ $ ./oct convert sample.mdj sample.ojson
 
 # octopus -> xlsx
 $ ./oct convert sample.ojson sample.xlsx
+
+# xlsx -> octopus
+$ ./oct convert sample.xlsx sample.ojson
 ```
 
 ### Generate
@@ -88,6 +91,7 @@ $ ./oct convert sample.ojson sample.xlsx
 # octopus -> JPA-kotlin
 # - entity package: com.foo.entity
 # - repository package: com.foo.repos
+# - graphql package: com.foo.graphql
 # - output directory: ./output
 # - remove tableName prefix starting with 'db_' or 'mydb_'
 # - unique constraint Name : tableName + '_uq'
@@ -95,6 +99,7 @@ $ ./oct generate sample.ojson ./output \
     --targetFormat=jpa-kotlin-data \
     --package=com.foo.entity \
     --reposPackage=com.foo.repos \
+    --graphqlPackage=com.foo.graphql \
     --removePrefix=db_,mydb_ \
     --uniqueNameSuffix=_uq
 ```

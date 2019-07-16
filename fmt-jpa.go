@@ -155,22 +155,30 @@ func NewKotlinField(column *Column) *KotlinField {
 	}
 }
 
+func (k *JPAKotlin) mkdir(basedir, pkgName string) (string, error) {
+	if pkgName == "" {
+		return "", nil
+	}
+	dir := path.Join(append([]string{basedir}, strings.Split(pkgName, ".")...)...)
+	if err := os.MkdirAll(dir, 0777); err != nil {
+		return "", err
+	}
+	log.Printf("[MKDIR] %s", dir)
+	return dir, nil
+}
+
 func (k *JPAKotlin) Generate(schema *Schema, output *GenOutput, useDataClass bool) error {
-	// Create package directory
-	entityDir := path.Join(append([]string{output.Directory}, strings.Split(output.Package, ".")...)...)
-	if err := os.MkdirAll(entityDir, 0777); err != nil {
+	entityDir, err := k.mkdir(output.Directory, output.Package)
+	if err != nil {
 		return err
 	}
-	log.Printf("[MKDIR] %s", entityDir)
-
-	// Create repos package directory
-	reposDir := ""
-	if output.ReposPackage != "" {
-		reposDir = path.Join(append([]string{output.Directory}, strings.Split(output.ReposPackage, ".")...)...)
-		if err := os.MkdirAll(reposDir, 0777); err != nil {
-			return err
-		}
-		log.Printf("[MKDIR] %s", reposDir)
+	reposDir, err := k.mkdir(output.Directory, output.ReposPackage)
+	if err != nil {
+		return err
+	}
+	graphqlDir, err := k.mkdir(output.Directory, output.GraphqlPackage)
+	if err != nil {
+		return err
 	}
 
 	if !useDataClass {
@@ -181,8 +189,13 @@ func (k *JPAKotlin) Generate(schema *Schema, output *GenOutput, useDataClass boo
 	}
 
 	indent := "    "
+
+	classes := make([]*KotlinClass, 0)
 	for _, table := range schema.Tables {
-		class := NewKotlinClass(table, output)
+		classes = append(classes, NewKotlinClass(table, output))
+	}
+
+	for _, class := range classes {
 		var idClass string
 		pkFieldCount := len(class.PKFields)
 
@@ -202,7 +215,7 @@ func (k *JPAKotlin) Generate(schema *Schema, output *GenOutput, useDataClass boo
 		// class
 		appendLine("")
 		appendLine("@Entity")
-		appendLine(fmt.Sprintf("@Table(name = \"%s\")", table.Name))
+		appendLine(fmt.Sprintf("@Table(name = \"%s\")", class.table.Name))
 		if pkFieldCount > 1 {
 			idClass = class.Name + "PK"
 			appendLine(fmt.Sprintf("@IdClass(%s::class)", idClass))
@@ -315,9 +328,8 @@ func (k *JPAKotlin) Generate(schema *Schema, output *GenOutput, useDataClass boo
 		log.Printf("[WRITE] %s", outputFile)
 
 		// Write Repos
-		if output.ReposPackage != "" {
+		if reposDir != "" {
 			reposClassName := fmt.Sprintf("%sRepository", class.Name)
-			file := path.Join(reposDir, reposClassName + ".kt")
 			lines := []string{
 				"package " + output.ReposPackage,
 				"",
@@ -329,13 +341,54 @@ func (k *JPAKotlin) Generate(schema *Schema, output *GenOutput, useDataClass boo
 				fmt.Sprintf("interface %s : JpaRepository<%s, %s>", reposClassName, class.Name, idClass),
 				"",
 			}
-			if err := ioutil.WriteFile(file, []byte(strings.Join(lines, "\n")), 0644); err != nil {
+			if err := k.writeLines(path.Join(reposDir, reposClassName + ".kt"), lines); err != nil {
 				return err
 			}
-			log.Printf("[WRITE] %s", file)
 		}
 	}
 
+	// write graphql
+	if graphqlDir != "" {
+		contents := []string{
+			"package " + output.GraphqlPackage,
+			"",
+			"import com.coxautodev.graphql.tools.GraphQLQueryResolver",
+			"import org.springframework.stereotype.Component",
+			"import java.util.*",
+			"import " + output.Package + ".*",
+			"import " + output.ReposPackage + ".*",
+			"",
+			"@Component",
+			"class Query(",
+		}
+		ctorArgs := make([]string, 0)
+		for _, class := range classes {
+			ctorArgs = append(ctorArgs,
+				fmt.Sprintf("        private val %sRepos: %sRepository", strcase.ToLowerCamel(class.Name), class.Name))
+		}
+		contents = append(contents, strings.Join(ctorArgs, ",\n"))
+		contents = append(contents, ") : GraphQLQueryResolver {")
+
+		for _, class := range classes {
+			contents = append(contents, "")
+			contents = append(contents, fmt.Sprintf("    fun %sList(): List<%s> {", strcase.ToLowerCamel(class.Name), class.Name))
+			contents = append(contents, fmt.Sprintf("        return %sRepos.findAll()", strcase.ToLowerCamel(class.Name)))
+			contents = append(contents, "    }")
+		}
+		contents = append(contents, "}")
+		if err := k.writeLines(path.Join(graphqlDir, "Query.kt"), contents); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (k *JPAKotlin) writeLines(filename string, lines []string) error {
+	if err := ioutil.WriteFile(filename, []byte(strings.Join(lines, "\n")), 0644); err != nil {
+		return err
+	}
+	log.Printf("[WRITE] %s", filename)
 	return nil
 }
 
