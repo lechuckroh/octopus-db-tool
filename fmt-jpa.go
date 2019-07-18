@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/gertd/go-pluralize"
 	"github.com/iancoleman/strcase"
 	"io/ioutil"
 	"log"
@@ -27,6 +28,10 @@ type KotlinField struct {
 }
 
 type JPAKotlin struct {
+}
+
+func NewJPAKotlin() *JPAKotlin {
+	return &JPAKotlin{}
 }
 
 func NewKotlinClass(table *Table, output *GenOutput) *KotlinClass {
@@ -341,7 +346,7 @@ func (k *JPAKotlin) Generate(schema *Schema, output *GenOutput, useDataClass boo
 				fmt.Sprintf("interface %s : PagingAndSortingRepository<%s, %s>", reposClassName, class.Name, idClass),
 				"",
 			}
-			if err := k.writeLines(path.Join(reposDir, reposClassName + ".kt"), lines); err != nil {
+			if err := k.writeLines(path.Join(reposDir, reposClassName+".kt"), lines); err != nil {
 				return err
 			}
 		}
@@ -369,10 +374,13 @@ func (k *JPAKotlin) Generate(schema *Schema, output *GenOutput, useDataClass boo
 		contents = append(contents, strings.Join(ctorArgs, ",\n"))
 		contents = append(contents, ") : GraphQLQueryResolver {")
 
+		client := pluralize.NewClient()
 		for _, class := range classes {
+			lowerClassName := strcase.ToLowerCamel(class.Name)
+
 			contents = append(contents, "")
-			contents = append(contents, fmt.Sprintf("    fun %sList(): List<%s> {", strcase.ToLowerCamel(class.Name), class.Name))
-			contents = append(contents, fmt.Sprintf("        return %sRepos.findAll()", strcase.ToLowerCamel(class.Name)))
+			contents = append(contents, fmt.Sprintf("    fun %s(): Iterable<%s> {", client.Plural(lowerClassName), class.Name))
+			contents = append(contents, fmt.Sprintf("        return %sRepos.findAll()", lowerClassName))
 			contents = append(contents, "    }")
 		}
 		contents = append(contents, "}")

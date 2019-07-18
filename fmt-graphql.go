@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/gertd/go-pluralize"
 	"github.com/iancoleman/strcase"
 	"io/ioutil"
 	"log"
@@ -131,12 +132,15 @@ func (l *Graphql) Generate(schema *Schema, output *GenOutput) error {
 
 	classes := make([]*GraphqlClass, 0)
 
+	client := pluralize.NewClient()
+
 	appendLine(0, "type Query {")
 	for _, table := range schema.Tables {
 		class := NewGraphqlClass(table, output)
 		classes = append(classes, class)
 
-		appendLine(1, fmt.Sprintf("%sList: [%s]", strcase.ToLowerCamel(class.Name), class.Name))
+		lowerClassName := strcase.ToLowerCamel(class.Name)
+		appendLine(1, fmt.Sprintf("%s: [%s]", client.Plural(lowerClassName), class.Name))
 	}
 	appendLine(0, "}")
 	appendLine(0, "")

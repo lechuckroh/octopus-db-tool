@@ -16,7 +16,7 @@ func (cmd *GenerateCmd) Generate(input *Input, output *GenOutput) error {
 		graphql := &Graphql{}
 		return graphql.Generate(schema, output)
 	case FormatJpaKotlin:
-		jpa := &JPAKotlin{}
+		jpa := NewJPAKotlin()
 		return jpa.Generate(schema, output, false)
 	case FormatJpaKotlinData:
 		jpa := &JPAKotlin{}
