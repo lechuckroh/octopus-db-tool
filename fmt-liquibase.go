@@ -44,21 +44,21 @@ func (l *Liquibase) Generate(schema *Schema, output *GenOutput) error {
 		pkCount := len(primaryKeys)
 		uniqueCount := len(uniques)
 
-		appendLine(0, "- changeSet:")
-		appendLine(2, fmt.Sprintf("id: %d", i))
-		appendLine(2, "author: "+schema.Author)
-		appendLine(2, "changes:")
-		appendLine(2, "- createTable:")
-		appendLine(4, "tableName: "+table.Name)
-		appendLine(4, "columns:")
+		appendLine(1, "- changeSet:")
+		appendLine(3, fmt.Sprintf("id: %d", i))
+		appendLine(3, "author: "+schema.Author)
+		appendLine(3, "changes:")
+		appendLine(4, "- createTable:")
+		appendLine(6, "tableName: "+table.Name)
+		appendLine(6, "columns:")
 		for _, column := range table.Columns {
-			appendLine(4, "- column:")
-			appendLine(6, "name: "+column.Name)
-			appendLine(6, "type: "+l.getType(column))
+			appendLine(7, "- column:")
+			appendLine(9, "name: "+column.Name)
+			appendLine(9, "type: "+l.getType(column))
 
 			// auto_incremental
 			if column.AutoIncremental {
-				appendLine(6, "autoIncrement: true")
+				appendLine(9, "autoIncrement: true")
 			}
 
 			// constraints
@@ -73,20 +73,20 @@ func (l *Liquibase) Generate(schema *Schema, output *GenOutput) error {
 			}
 
 			if len(constraints) > 0 {
-				appendLine(6, "constraints:")
+				appendLine(9, "constraints:")
 				for _, constraint := range constraints {
-					appendLine(7, constraint)
+					appendLine(10, constraint)
 				}
 			}
 
 			// default value
 			if column.DefaultValue != "" {
 				if IsStringType(column.Type) {
-					appendLine(6, "defaultValue: \""+column.DefaultValue+"\"")
+					appendLine(9, "defaultValue: \""+column.DefaultValue+"\"")
 				} else if IsBooleanType(column.Type) {
-					appendLine(6, "defaultValueBoolean: "+column.DefaultValue)
+					appendLine(9, "defaultValueBoolean: "+column.DefaultValue)
 				} else if IsNumericType(column.Type) {
-					appendLine(6, "defaultValueNumeric: "+column.DefaultValue)
+					appendLine(9, "defaultValueNumeric: "+column.DefaultValue)
 				}
 			}
 		}
@@ -94,26 +94,26 @@ func (l *Liquibase) Generate(schema *Schema, output *GenOutput) error {
 
 		// Primary Key
 		if pkCount >= 2 {
-			appendLine(0, "- changeSet:")
-			appendLine(2, fmt.Sprintf("id: %d", i))
-			appendLine(2, "author: "+schema.Author)
-			appendLine(2, "changes:")
-			appendLine(2, "- addPrimaryKey:")
-			appendLine(4, "columnNames: "+strings.Join(primaryKeys, ", "))
-			appendLine(4, "tableName: "+table.Name)
+			appendLine(1, "- changeSet:")
+			appendLine(3, fmt.Sprintf("id: %d", i))
+			appendLine(3, "author: "+schema.Author)
+			appendLine(3, "changes:")
+			appendLine(4, "- addPrimaryKey:")
+			appendLine(6, "columnNames: "+strings.Join(primaryKeys, ", "))
+			appendLine(6, "tableName: "+table.Name)
 
 			i++
 		}
 		// Unique Constraint
 		if uniqueCount >= 1 {
-			appendLine(0, "- changeSet:")
-			appendLine(2, fmt.Sprintf("id: %d", i))
-			appendLine(2, "author: "+schema.Author)
-			appendLine(2, "changes:")
-			appendLine(2, "- addUniqueConstraint:")
-			appendLine(4, "columnNames: "+strings.Join(uniques, ", "))
-			appendLine(4, "constraintName: "+table.Name+output.UniqueNameSuffix)
-			appendLine(4, "tableName: "+table.Name)
+			appendLine(1, "- changeSet:")
+			appendLine(3, fmt.Sprintf("id: %d", i))
+			appendLine(3, "author: "+schema.Author)
+			appendLine(3, "changes:")
+			appendLine(4, "- addUniqueConstraint:")
+			appendLine(6, "columnNames: "+strings.Join(uniques, ", "))
+			appendLine(6, "constraintName: "+table.Name+output.UniqueNameSuffix)
+			appendLine(6, "tableName: "+table.Name)
 
 			i++
 		}
