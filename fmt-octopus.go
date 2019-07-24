@@ -67,9 +67,26 @@ func (s *Schema) Normalize() {
 
 	for _, table := range s.Tables {
 		for _, column := range table.Columns {
-			column.Type = strings.ToLower(column.Type)
+			column.Type = normalizeColumnType(column.Type)
 		}
 	}
+}
+
+// normalizeColumnType converts column type to octopus generalized column type
+func normalizeColumnType(colType string) string {
+	colType = strings.ToLower(colType)
+
+	if colType == "varchar" || colType == "char" {
+		return "string"
+	}
+	if colType == "integer" || colType == "smallint" {
+		return "int"
+	}
+	if colType == "bigint" {
+		return "long"
+	}
+
+	return colType
 }
 
 func (s *Schema) Groups() []string {
