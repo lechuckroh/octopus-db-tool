@@ -19,7 +19,7 @@ octopus-db-tools provides:
 | `jpa-java`          |   |   |   |`java`  |
 | `liquibase`         |   |   | O |`yaml`  |
 | `opti-studio`       |   |   |   |`xml`   |
-| `plantuml`          |   |   |   |`plantuml`|
+| `plantuml`          |   | O |   |`plantuml`|
 | `schema-converter`  |   |   |   |`schema`|
 | `sql-h2`            |   |   |   |`sql`   |
 | `sql-mysql`         |   |   |   |`sql`   |

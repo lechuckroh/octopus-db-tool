@@ -119,7 +119,7 @@ func generate(c *cli.Context) error {
 func main() {
 	cliApp := cli.NewApp()
 	cliApp.Name = "oct"
-	cliApp.Version = "1.0.4"
+	cliApp.Version = "1.0.5"
 	cliApp.Compiled = time.Now()
 	cliApp.Authors = []cli.Author{
 		{Name: "Lechuck Roh"},

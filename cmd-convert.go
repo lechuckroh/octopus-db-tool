@@ -75,6 +75,8 @@ func (cmd *ConvertCmd) schemaToOutput(schema *Schema, output *Output) error {
 		return schema.ToFile(output.Filename)
 	case FormatDbdiagramIo:
 		writer = &DBDiagramIO{}
+	case FormatPlantuml:
+		writer = &PlantUML{}
 	case FormatQuickdbd:
 		writer = &QuickDBD{}
 	case FormatXlsx:
