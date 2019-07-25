@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"sort"
 	"strings"
 )
@@ -17,6 +18,7 @@ type Column struct {
 	Type            string     `json:"type"`
 	Description     string     `json:"desc,omitempty"`
 	Size            uint16     `json:"size,omitempty"`
+	Scale           uint16     `json:"scale,omitempty"`
 	Nullable        bool       `json:"nullable,omitempty"`
 	PrimaryKey      bool       `json:"pk,omitempty"`
 	UniqueKey       bool       `json:"unique,omitempty"`
@@ -67,26 +69,55 @@ func (s *Schema) Normalize() {
 
 	for _, table := range s.Tables {
 		for _, column := range table.Columns {
-			column.Type = normalizeColumnType(column.Type)
+			if colType, ok := normalizeColumnType(column); ok {
+				column.Type = colType
+			} else {
+				log.Printf("unknown column type: '%s', table: %s, column: %s",
+					column.Type, table.Name, column.Name)
+			}
 		}
 	}
 }
 
 // normalizeColumnType converts column type to octopus generalized column type
-func normalizeColumnType(colType string) string {
-	colType = strings.ToLower(colType)
+func normalizeColumnType(col *Column) (string, bool) {
+	colType := strings.ToLower(col.Type)
 
-	if colType == "varchar" || colType == "char" {
-		return "string"
+	if colType == "string" || colType == "varchar" || colType == "char" {
+		return ColTypeString, true
 	}
-	if colType == "integer" || colType == "smallint" {
-		return "int"
+	if colType == "int" || colType == "integer" || colType == "smallint" {
+		return ColTypeInt, true
 	}
-	if colType == "bigint" {
-		return "long"
+	if colType == "bigint" || colType == "long" {
+		return ColTypeLong, true
+	}
+	if colType == "datetime" {
+		return ColTypeDateTime, true
+	}
+	if colType == "bool" || colType == "boolean" {
+		return ColTypeBoolean, true
+	}
+	if colType == "number" || colType == "double" || colType == "decimal" {
+		return ColTypeDouble, true
+	}
+	if colType == "float" {
+		return ColTypeFloat, true
+	}
+	if colType == "text" {
+		return ColTypeText, true
+	}
+	if colType == "date" {
+		return ColTypeDate, true
+	}
+	if colType == "time" {
+		return ColTypeTime, true
+	}
+	if colType == "blob" {
+		return ColTypeBlob, true
 	}
 
-	return colType
+	return colType, false
 }
 
 func (s *Schema) Groups() []string {

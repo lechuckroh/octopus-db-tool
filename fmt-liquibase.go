@@ -134,39 +134,27 @@ func (l *Liquibase) Generate(schema *Schema, output *GenOutput) error {
 func (l *Liquibase) getType(column *Column) string {
 	typ := ""
 	switch strings.ToLower(column.Type) {
-	case "string":
-		fallthrough
-	case "varchar":
+	case ColTypeString:
 		typ = "varchar"
-	case "char":
-		typ = "char"
-	case "text":
+	case ColTypeText:
 		typ = "clob"
-	case "bool":
-		fallthrough
-	case "boolean":
+	case ColTypeBoolean:
 		typ = "boolean"
-	case "bigint":
-		fallthrough
-	case "long":
+	case ColTypeLong:
 		typ = "bigint"
-	case "int":
-		fallthrough
-	case "integer":
+	case ColTypeInt:
 		typ = "int"
-	case "smallint":
-		typ = "smallint"
-	case "float":
+	case ColTypeFloat:
 		typ = "float"
-	case "number":
-		fallthrough
-	case "double":
+	case ColTypeDouble:
 		typ = "double"
-	case "datetime":
+	case ColTypeDateTime:
 		typ = "datetime"
-	case "date":
+	case ColTypeDate:
 		typ = "date"
-	case "blob":
+	case ColTypeTime:
+		typ = "time"
+	case ColTypeBlob:
 		typ = "blob"
 	default:
 		typ = column.Type

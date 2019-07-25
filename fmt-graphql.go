@@ -64,39 +64,28 @@ func NewGraphqlField(column *Column) *GraphqlField {
 	nullable := column.Nullable
 	columnType := strings.ToLower(column.Type)
 	switch columnType {
-	case "datetime":
+	case ColTypeDateTime:
 		fallthrough
-	case "date":
+	case ColTypeDate:
 		fallthrough
-	case "varchar":
+	case ColTypeTime:
 		fallthrough
-	case "char":
+	case ColTypeString:
 		fallthrough
-	case "string":
-		fallthrough
-	case "text":
+	case ColTypeText:
 		fieldType = "String"
-	case "bool":
-		fallthrough
-	case "boolean":
+	case ColTypeBoolean:
 		fieldType = "Boolean"
-	case "bigint":
+	case ColTypeLong:
 		fallthrough
-	case "long":
-		fallthrough
-	case "int":
-		fallthrough
-	case "integer":
-		fallthrough
-	case "smallint":
+	case ColTypeInt:
 		fieldType = "Int"
-	case "float":
+	case ColTypeFloat:
 		fallthrough
-	case "number":
-		fallthrough
-	case "double":
+	case ColTypeDouble:
 		fieldType = "Float"
 	default:
+		log.Printf("unknown column type: '%s', column: %s", column.Type, column.Name)
 		fieldType = "String"
 	}
 	if !nullable {

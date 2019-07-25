@@ -86,7 +86,11 @@ func (f *DBDiagramIO) ToString(schema *Schema) ([]byte, error) {
 
 			columnType := column.Type
 			if column.Size > 0 {
-				columnType = fmt.Sprintf("%s(%d)", column.Type, column.Size)
+				if column.Scale > 0 {
+					columnType = fmt.Sprintf("%s(%d,%d)", column.Type, column.Size, column.Scale)
+				} else {
+					columnType = fmt.Sprintf("%s(%d)", column.Type, column.Size)
+				}
 			}
 
 			if len(params) == 0 {

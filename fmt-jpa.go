@@ -77,64 +77,59 @@ func NewKotlinField(column *Column) *KotlinField {
 
 	columnType := strings.ToLower(column.Type)
 	switch columnType {
-	case "varchar":
+	case ColTypeString:
 		fallthrough
-	case "char":
-		fallthrough
-	case "string":
-		fallthrough
-	case "text":
+	case ColTypeText:
 		fieldType = "String"
 		if !nullable {
 			defaultValue = "\"\""
 		}
-	case "bool":
-		fallthrough
-	case "boolean":
+	case ColTypeBoolean:
 		fieldType = "Boolean"
 		if !nullable {
 			defaultValue = "false"
 		}
-	case "bigint":
-		fallthrough
-	case "long":
+	case ColTypeLong:
 		fieldType = "Long"
 		if !nullable {
 			defaultValue = "0L"
 		}
-	case "int":
-		fallthrough
-	case "integer":
-		fallthrough
-	case "smallint":
+	case ColTypeInt:
 		fieldType = "Int"
 		if !nullable {
 			defaultValue = "0"
 		}
-	case "float":
+	case ColTypeFloat:
 		fieldType = "Float"
 		if !nullable {
 			defaultValue = "0.0F"
 		}
-	case "number":
-		fallthrough
-	case "double":
+	case ColTypeDouble:
 		fieldType = "Double"
 		if !nullable {
 			defaultValue = "0.0"
 		}
-	case "datetime":
+	case ColTypeDateTime:
 		fieldType = "Timestamp"
 		importSet.Add("java.sql.Timestamp")
 		if !nullable {
 			defaultValue = "Timestamp(System.currentTimeMillis())"
 		}
-	case "date":
+	case ColTypeDate:
 		fieldType = "LocalDate"
 		importSet.Add("java.time.LocalDate")
 		if !nullable {
-			defaultValue = "0.0"
+			defaultValue = "LocalDate.now()"
 		}
+	case ColTypeTime:
+		fieldType = "LocalTime"
+		importSet.Add("java.time.LocalTime")
+		if !nullable {
+			defaultValue = "LocalTime.now()"
+		}
+	case ColTypeBlob:
+		fieldType = "Blob"
+		importSet.Add("java.sql.Blob")
 	default:
 		if columnType == "bit" {
 			if column.Size == 1 {
@@ -258,6 +253,14 @@ func (k *JPAKotlin) Generate(schema *Schema, output *GenOutput, useDataClass boo
 			}
 			if column.Type == "string" && column.Size > 0 {
 				attributes = append(attributes, fmt.Sprintf("length = %d", column.Size))
+			}
+			if column.Type == "double" || column.Type == "float" {
+				if column.Size > 0 {
+					attributes = append(attributes, fmt.Sprintf("precision = %d", column.Size))
+				}
+				if column.Scale > 0 {
+					attributes = append(attributes, fmt.Sprintf("scale = %d", column.Scale))
+				}
 			}
 			if len(attributes) > 0 {
 				appendLine(indent + fmt.Sprintf("@Column(%s)", strings.Join(attributes, ", ")))

@@ -160,13 +160,14 @@ func (f *Xlsx) readGroupSheet(groupName string, sheet *xlsx.Sheet) ([]*Table, er
 			}
 		}
 
-		colType, colSize := ParseType(typeValue)
+		colType, colSize, colScale := ParseType(typeValue)
 
 		lastTable.AddColumn(&Column{
 			Name:            columnName,
 			Type:            colType,
 			Description:     description,
 			Size:            colSize,
+			Scale:           colScale,
 			Nullable:        nullableValue != "",
 			PrimaryKey:      keyValue == "P",
 			UniqueKey:       keyValue == "U",
@@ -301,7 +302,6 @@ func (f *Xlsx) fillGroupSheet(sheet *xlsx.Sheet, schema *Schema, group string) e
 	_ = sheet.SetColWidth(5, 5, 9.5)
 	_ = sheet.SetColWidth(6, 6, 50)
 
-
 	// alignment
 	leftAlignment := f.newAlignment("default", "center")
 	centerAlignment := f.newAlignment("center", "center")
@@ -323,7 +323,6 @@ func (f *Xlsx) fillGroupSheet(sheet *xlsx.Sheet, schema *Schema, group string) e
 	normalStyle := f.newStyle(nil, lightBorder, leftAlignment, normalFont)
 	boolStyle := f.newStyle(nil, lightBorder, centerAlignment, normalFont)
 	referenceStyle := f.newStyle(nil, lightBorder, centerAlignment, refFont)
-
 
 	// Header
 	row := sheet.AddRow()

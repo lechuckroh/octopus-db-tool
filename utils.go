@@ -71,14 +71,29 @@ func IsNumericType(typ string) bool {
 	return false
 }
 
-func ParseType(str string) (string, uint16) {
-	r := regexp.MustCompile(`(?m)([a-zA-Z]+)\(([0-9]+)\)`)
+// ParseType parses column type
+func ParseType(str string) (string, uint16, uint16) {
+	r := regexp.MustCompile(`(?m)([a-zA-Z]+)\(([0-9]+)[\s,]*([0-9]*)\)`)
 	matches := r.FindStringSubmatch(str)
-	if len(matches) == 3 {
-		size, _ := strconv.Atoi(matches[2])
-		return matches[1], uint16(size)
+	matchLen := len(matches)
+
+	var name string
+	var size, scale int
+
+	if matchLen >= 2 {
+		name = matches[1]
+
+		if matchLen >= 3 {
+			size, _ = strconv.Atoi(matches[2])
+		}
+		if matchLen == 4 {
+			scale, _ = strconv.Atoi(matches[3])
+		}
+	} else {
+		name = str
 	}
-	return str, 0
+
+	return name, uint16(size), uint16(scale)
 }
 
 func GetFileFormat(fileFormat string, filename string) string {
@@ -106,7 +121,6 @@ func GetFileFormat(fileFormat string, filename string) string {
 		return ""
 	}
 }
-
 
 type StringSet struct {
 	valueMap map[string]bool

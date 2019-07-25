@@ -19,4 +19,16 @@ const (
 	FormatSqlSqlserver    = "sql-sqlserver"
 	FormatStaruml2        = "staruml2"
 	FormatXlsx            = "xlsx"
+
+	ColTypeString   = "string"
+	ColTypeLong     = "long"
+	ColTypeInt      = "int"
+	ColTypeFloat    = "float"
+	ColTypeDouble   = "double"
+	ColTypeBoolean  = "boolean"
+	ColTypeText     = "text"
+	ColTypeDate     = "date"
+	ColTypeTime     = "time"
+	ColTypeDateTime = "datetime"
+	ColTypeBlob     = "blob"
 )
