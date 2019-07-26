@@ -25,6 +25,7 @@ type GenOutput struct {
 	Directory        string
 	Package          string
 	ReposPackage     string
+	Relation         string
 	GraphqlPackage   string
 	PrefixesToRemove []string
 	UniqueNameSuffix string
@@ -107,6 +108,7 @@ func generate(c *cli.Context) error {
 		Format:           c.String("targetFormat"),
 		Package:          c.String("package"),
 		ReposPackage:     c.String("reposPackage"),
+		Relation:         c.String("relation"),
 		GraphqlPackage:   c.String("graphqlPackage"),
 		UniqueNameSuffix: c.String("uniqueNameSuffix"),
 		PrefixesToRemove: prefixesToRemove,
@@ -119,7 +121,7 @@ func generate(c *cli.Context) error {
 func main() {
 	cliApp := cli.NewApp()
 	cliApp.Name = "oct"
-	cliApp.Version = "1.0.5"
+	cliApp.Version = "1.0.6"
 	cliApp.Compiled = time.Now()
 	cliApp.Authors = []cli.Author{
 		{Name: "Lechuck Roh"},
@@ -175,6 +177,11 @@ func main() {
 					Name:   "reposPackage",
 					Usage:  "set target repository package name",
 					EnvVar: "OCTOPUS_REPOS_PACKAGE",
+				},
+				cli.StringFlag{
+					Name:   "relation",
+					Usage:  "set relation annotation type",
+					EnvVar: "OCTOPUS_RELATION",
 				},
 				cli.StringFlag{
 					Name:   "graphqlPackage",

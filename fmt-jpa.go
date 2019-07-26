@@ -195,6 +195,15 @@ func (k *JPAKotlin) Generate(schema *Schema, output *GenOutput, useDataClass boo
 		classes = append(classes, NewKotlinClass(table, output))
 	}
 
+	getClassNameByTable := func(table string) string {
+		for _, cls := range classes {
+			if cls.table.Name == table {
+				return cls.Name
+			}
+		}
+		return ""
+	}
+
 	for _, class := range classes {
 		var idClass string
 		pkFieldCount := len(class.PKFields)
@@ -244,6 +253,22 @@ func (k *JPAKotlin) Generate(schema *Schema, output *GenOutput, useDataClass boo
 			if column.Type == "text" {
 				appendLine(indent + "@Type(type = \"text\")")
 				importSet.Add("org.hibernate.annotations.Type")
+			}
+
+			// @VRelation
+			if output.Relation == "VRelation" {
+				if ref := column.Ref; ref != nil {
+					targetClassName := getClassNameByTable(ref.Table)
+					if len(targetClassName) == 0 {
+						log.Fatalf("Relation not found. %s::%s -> %s",
+							class.Name, field.Name, ref.Table)
+					}
+
+					appendLine(indent +
+						fmt.Sprintf("@VRelation(cls = \"%s\", field = \"%s\")",
+							targetClassName,
+							strcase.ToLowerCamel(ref.Column)))
+				}
 			}
 
 			// @Column attributes
