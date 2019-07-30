@@ -248,7 +248,7 @@ func (k *JPAKotlin) Generate(schema *Schema, output *GenOutput, useDataClass boo
 				}
 			}
 			if column.AutoIncremental {
-				appendLine(indent + "@GeneratedValue(strategy = GenerationType.IDENTITY)")
+				appendLine(indent + "@GeneratedValue(strategy = GenerationType.AUTO)")
 			}
 			if column.Type == "text" {
 				appendLine(indent + "@Type(type = \"text\")")
@@ -368,9 +368,9 @@ func (k *JPAKotlin) Generate(schema *Schema, output *GenOutput, useDataClass boo
 				"",
 				"import " + output.Package + ".*",
 				"import org.springframework.data.repository.PagingAndSortingRepository",
-				"import org.springframework.data.rest.core.annotation.RepositoryRestResource",
+				"import org.springframework.stereotype.Repository",
 				"",
-				"@RepositoryRestResource",
+				"@Repository",
 				fmt.Sprintf("interface %s : PagingAndSortingRepository<%s, %s>", reposClassName, class.Name, idClass),
 				"",
 			}
