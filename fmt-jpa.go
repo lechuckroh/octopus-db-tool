@@ -183,7 +183,7 @@ func (k *JPAKotlin) Generate(schema *Schema, output *GenOutput, useDataClass boo
 
 	if !useDataClass {
 		// Generate AbstractJpaPersistable.kt
-		if err := k.generateAbstractJpaPersistable(entityDir); err != nil {
+		if err := k.generateAbstractJpaPersistable(entityDir, output.Package); err != nil {
 			return err
 		}
 	}
@@ -428,9 +428,9 @@ func (k *JPAKotlin) writeLines(filename string, lines []string) error {
 	return nil
 }
 
-func (k *JPAKotlin) generateAbstractJpaPersistable(outputDir string) error {
+func (k *JPAKotlin) generateAbstractJpaPersistable(outputDir string, packageName string) error {
 	filename := path.Join(outputDir, "AbstractJpaPersistable.kt")
-	data := `package kstec.sp.api.entity
+	data := fmt.Sprintf(`package %s
 
 import org.springframework.data.util.ProxyUtils
 import java.io.Serializable
@@ -470,6 +470,6 @@ abstract class AbstractJpaPersistable<T : Serializable> {
 
     override fun toString() = "Entity of type ${this.javaClass.name} with id: $id"
 }
-`
+`, packageName)
 	return ioutil.WriteFile(filename, []byte(data), 0644)
 }
