@@ -72,6 +72,7 @@ func IsNumericType(typ string) bool {
 }
 
 // ParseType parses column type
+// returns name, size, scale
 func ParseType(str string) (string, uint16, uint16) {
 	r := regexp.MustCompile(`(?m)([a-zA-Z]+)\(([0-9]+)[\s,]*([0-9]*)\)`)
 	matches := r.FindStringSubmatch(str)

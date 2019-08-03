@@ -80,14 +80,22 @@ func (f *StarUML2) ToSchema() (*Schema, error) {
 		// Create Columns
 		columns := make([]*Column, 0)
 		for _, erdColumn := range f.findByType(erdEntity.Columns, "ERDColumn") {
+			colType, colSize, colScale := ParseType(erdColumn.Type)
+			size := uint16(ToInt(erdColumn.Length, 0))
+			if size == 0 {
+				size = colSize
+			}
+
 			column := &Column{
-				Name:        erdColumn.Name,
-				Type:        erdColumn.Type,
-				Size:        uint16(ToInt(erdColumn.Length, 0)),
-				Nullable:    erdColumn.Nullable,
-				PrimaryKey:  erdColumn.PrimaryKey,
-				UniqueKey:   erdColumn.Unique,
-				Description: strings.TrimSpace(erdColumn.Documentation),
+				Name:            erdColumn.Name,
+				Type:            colType,
+				Size:            size,
+				Scale:           colScale,
+				Nullable:        erdColumn.Nullable,
+				PrimaryKey:      erdColumn.PrimaryKey,
+				UniqueKey:       erdColumn.Unique,
+				AutoIncremental: false,
+				Description:     strings.TrimSpace(erdColumn.Documentation),
 			}
 
 			if erdColumn.ReferenceTo != nil {
