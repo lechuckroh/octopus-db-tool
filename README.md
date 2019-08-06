@@ -22,7 +22,7 @@ octopus-db-tools provides:
 | `plantuml`          |   | O |   |`plantuml`|
 | `schema-converter`  |   |   |   |`schema`|
 | `sql-h2`            |   |   |   |`sql`   |
-| `sql-mysql`         |   |   |   |`sql`   |
+| `sql-mysql`         |   | O |   |`sql`   |
 | `sql-oracle`        |   |   |   |`sql`   |
 | `sql-sqlite3`       |   |   |   |`sql`   |
 | `sql-sqlserver`     |   |   |   |`sql`   |
@@ -84,6 +84,9 @@ $ ./oct convert sample.ojson sample.xlsx
 
 # xlsx -> octopus
 $ ./oct convert sample.xlsx sample.ojson
+
+# octopus -> mysql
+$ ./oct convert sample.ojson sample-mysql.sql --targetFormat=mysql
 ```
 
 ### Generate

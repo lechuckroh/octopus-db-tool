@@ -81,6 +81,8 @@ func (cmd *ConvertCmd) schemaToOutput(schema *Schema, output *Output) error {
 		writer = &QuickDBD{}
 	case FormatXlsx:
 		writer = &Xlsx{}
+	case FormatSqlMysql:
+		writer = &Mysql{}
 	}
 
 	if writer == nil {
