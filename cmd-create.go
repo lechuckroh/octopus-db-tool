@@ -69,5 +69,5 @@ func (cmd *CreateCmd) Create(target *Output) error {
 		return err
 	}
 
-	return ioutil.WriteFile(target.Filename, bytes, 0644)
+	return ioutil.WriteFile(target.FilePath, bytes, 0644)
 }

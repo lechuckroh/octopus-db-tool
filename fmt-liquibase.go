@@ -12,13 +12,12 @@ import (
 type Liquibase struct {
 }
 
-
-func (l *Liquibase) Generate(schema *Schema, output *GenOutput) error {
+func (l *Liquibase) Generate(schema *Schema, output *Output) error {
 	// Create directory
-	if err := os.MkdirAll(output.Directory, 0777); err != nil {
+	if err := os.MkdirAll(output.FilePath, 0777); err != nil {
 		return err
 	}
-	log.Printf("[MKDIR] %s", output.Directory)
+	log.Printf("[MKDIR] %s", output.FilePath)
 
 	indent := "  "
 	contents := make([]string, 0)
@@ -27,6 +26,8 @@ func (l *Liquibase) Generate(schema *Schema, output *GenOutput) error {
 			strings.Repeat(indent, indentLevel)+line,
 		)
 	}
+
+	uniqueNameSuffix := output.Get(FlagUniqueNameSuffix)
 
 	appendLine(0, "databaseChangeLog:")
 	i := 1
@@ -112,7 +113,7 @@ func (l *Liquibase) Generate(schema *Schema, output *GenOutput) error {
 			appendLine(3, "changes:")
 			appendLine(4, "- addUniqueConstraint:")
 			appendLine(6, "columnNames: "+strings.Join(uniques, ", "))
-			appendLine(6, "constraintName: "+table.Name+output.UniqueNameSuffix)
+			appendLine(6, "constraintName: "+table.Name+uniqueNameSuffix)
 			appendLine(6, "tableName: "+table.Name)
 
 			i++
@@ -120,7 +121,7 @@ func (l *Liquibase) Generate(schema *Schema, output *GenOutput) error {
 	}
 
 	// Write file
-	outputFile := path.Join(output.Directory,
+	outputFile := path.Join(output.FilePath,
 		fmt.Sprintf("%s-%s.yaml", schema.Name, schema.Version))
 
 	if err := ioutil.WriteFile(outputFile, []byte(strings.Join(contents, "\n")), 0644); err != nil {

@@ -16,19 +16,27 @@ type Input struct {
 }
 
 type Output struct {
-	Filename string
+	FilePath string
 	Format   string
+	Options  map[string]string
 }
 
-type GenOutput struct {
-	Format           string
-	Directory        string
-	Package          string
-	ReposPackage     string
-	Relation         string
-	GraphqlPackage   string
-	PrefixesToRemove []string
-	UniqueNameSuffix string
+func (o *Output) Get(name string) string {
+	return o.Options[name]
+}
+func (o *Output) GetSlice(name string) []string {
+	return strings.Split(o.Options[name], ",")
+}
+
+func getFlagValues(c *cli.Context) map[string]string {
+	result := make(map[string]string)
+
+	for _, flagName := range c.FlagNames() {
+		flagValue := c.String(flagName)
+		result[flagName] = flagValue
+	}
+
+	return result
 }
 
 func create(c *cli.Context) error {
@@ -42,7 +50,11 @@ func create(c *cli.Context) error {
 	}
 
 	cmd := &CreateCmd{}
-	return cmd.Create(&Output{Filename: filename})
+	return cmd.Create(&Output{
+		FilePath: filename,
+		Format:   "",
+		Options:  getFlagValues(c),
+	})
 }
 
 func convert(c *cli.Context) error {
@@ -58,11 +70,11 @@ func convert(c *cli.Context) error {
 	inputFilename := args.Get(0)
 	outputFilename := args.Get(1)
 
-	inputFormat := GetFileFormat(c.String("sourceFormat"), inputFilename)
+	inputFormat := GetFileFormat(c.String(FlagSourceFormat), inputFilename)
 	if inputFormat == "" {
 		return errors.New("cannot find sourceFormat")
 	}
-	outputFormat := GetFileFormat(c.String("targetFormat"), outputFilename)
+	outputFormat := GetFileFormat(c.String(FlagTargetFormat), outputFilename)
 	if outputFormat == "" {
 		return errors.New("cannot find targetFormat")
 	}
@@ -72,8 +84,9 @@ func convert(c *cli.Context) error {
 		Format:   inputFormat,
 	}
 	output := &Output{
-		Filename: outputFilename,
+		FilePath: outputFilename,
 		Format:   outputFormat,
+		Options:  getFlagValues(c),
 	}
 
 	cmd := &ConvertCmd{}
@@ -91,7 +104,7 @@ func generate(c *cli.Context) error {
 	}
 
 	inputFilename := args.Get(0)
-	inputFormat := GetFileFormat(c.String("sourceFormat"), inputFilename)
+	inputFormat := GetFileFormat(c.String(FlagSourceFormat), inputFilename)
 	if inputFormat == "" {
 		return errors.New("cannot find sourceFormat")
 	}
@@ -101,17 +114,10 @@ func generate(c *cli.Context) error {
 		Format:   inputFormat,
 	}
 
-	prefixesToRemove := strings.Split(c.String("removePrefix"), ",")
-
-	output := &GenOutput{
-		Directory:        args.Get(1),
-		Format:           c.String("targetFormat"),
-		Package:          c.String("package"),
-		ReposPackage:     c.String("reposPackage"),
-		Relation:         c.String("relation"),
-		GraphqlPackage:   c.String("graphqlPackage"),
-		UniqueNameSuffix: c.String("uniqueNameSuffix"),
-		PrefixesToRemove: prefixesToRemove,
+	output := &Output{
+		FilePath: args.Get(1),
+		Format:   c.String(FlagTargetFormat),
+		Options:  getFlagValues(c),
 	}
 
 	cmd := &GenerateCmd{}
@@ -141,12 +147,12 @@ func main() {
 			Usage:   "convert `source` `target`",
 			Flags: []cli.Flag{
 				cli.StringFlag{
-					Name:   "sourceFormat, sf",
+					Name:   FlagSourceFormat,
 					Usage:  "set source format",
 					EnvVar: "OCTOPUS_SOURCE_FORMAT",
 				},
 				cli.StringFlag{
-					Name:   "targetFormat, tf",
+					Name:   FlagTargetFormat,
 					Usage:  "set target format",
 					EnvVar: "OCTOPUS_TARGET_FORMAT",
 				},
@@ -159,42 +165,42 @@ func main() {
 			Usage:   "generate `source` `target`",
 			Flags: []cli.Flag{
 				cli.StringFlag{
-					Name:   "sourceFormat, sf",
+					Name:   FlagSourceFormat,
 					Usage:  "set source format",
 					EnvVar: "OCTOPUS_SOURCE_FORMAT",
 				},
 				cli.StringFlag{
-					Name:   "targetFormat, tf",
+					Name:   FlagTargetFormat,
 					Usage:  "set target format",
 					EnvVar: "OCTOPUS_TARGET_FORMAT",
 				},
 				cli.StringFlag{
-					Name:   "package, p",
+					Name:   FlagPackage,
 					Usage:  "set target package name",
 					EnvVar: "OCTOPUS_PACKAGE",
 				},
 				cli.StringFlag{
-					Name:   "reposPackage",
+					Name:   FlagReposPackage,
 					Usage:  "set target repository package name",
 					EnvVar: "OCTOPUS_REPOS_PACKAGE",
 				},
 				cli.StringFlag{
-					Name:   "relation",
+					Name:   FlagRelation,
 					Usage:  "set relation annotation type",
 					EnvVar: "OCTOPUS_RELATION",
 				},
 				cli.StringFlag{
-					Name:   "graphqlPackage",
+					Name:   FlagGraphqlPackage,
 					Usage:  "set target graphql package name",
 					EnvVar: "OCTOPUS_GRAPHQL_PACKAGE",
 				},
 				cli.StringFlag{
-					Name:   "removePrefix",
+					Name:   FlagRemovePrefix,
 					Usage:  "set prefixes to remove. set multiple values with comma separated.",
 					EnvVar: "OCTOPUS_REMOVE_PREFIX",
 				},
 				cli.StringFlag{
-					Name:   "uniqueNameSuffix",
+					Name:   FlagUniqueNameSuffix,
 					Usage:  "set unique constraint name suffix",
 					EnvVar: "OCTOPUS_UNIQUE_NAME_SUFFIX",
 				},

@@ -27,11 +27,12 @@ type GraphqlField struct {
 type Graphql struct {
 }
 
-func NewGraphqlClass(table *Table, output *GenOutput) *GraphqlClass {
+func NewGraphqlClass(table *Table, output *Output) *GraphqlClass {
 	className := table.ClassName
 	if className == "" {
 		tableName := table.Name
-		for _, prefix := range output.PrefixesToRemove {
+		prefixes := output.GetSlice(FlagRemovePrefix)
+		for _, prefix := range prefixes {
 			tableName = strings.TrimPrefix(tableName, prefix)
 		}
 		className = strcase.ToCamel(tableName)
@@ -99,12 +100,12 @@ func NewGraphqlField(column *Column) *GraphqlField {
 	}
 }
 
-func (l *Graphql) Generate(schema *Schema, output *GenOutput) error {
+func (l *Graphql) Generate(schema *Schema, output *Output) error {
 	// Create directory
-	if err := os.MkdirAll(output.Directory, 0777); err != nil {
+	if err := os.MkdirAll(output.FilePath, 0777); err != nil {
 		return err
 	}
-	log.Printf("[MKDIR] %s", output.Directory)
+	log.Printf("[MKDIR] %s", output.FilePath)
 
 	indent := "  "
 	contents := make([]string, 0)
@@ -145,7 +146,7 @@ func (l *Graphql) Generate(schema *Schema, output *GenOutput) error {
 	}
 
 	// Write file
-	outputFile := path.Join(output.Directory,
+	outputFile := path.Join(output.FilePath,
 		fmt.Sprintf("%s-%s.graphqls", schema.Name, schema.Version))
 
 	if err := ioutil.WriteFile(outputFile, []byte(strings.Join(contents, "\n")), 0644); err != nil {

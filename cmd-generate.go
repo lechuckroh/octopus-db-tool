@@ -5,7 +5,7 @@ import "fmt"
 type GenerateCmd struct {
 }
 
-func (cmd *GenerateCmd) Generate(input *Input, output *GenOutput) error {
+func (cmd *GenerateCmd) Generate(input *Input, output *Output) error {
 	schema, err := (&ConvertCmd{}).inputToSchema(input)
 	if err != nil {
 		return err

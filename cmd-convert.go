@@ -36,7 +36,7 @@ func (cmd *ConvertCmd) Convert(input *Input, output *Output) error {
 	// Write Output
 	err = cmd.schemaToOutput(inputSchema, output)
 	if err == nil {
-		log.Printf("[WRITE] %s\n", output.Filename)
+		log.Printf("[WRITE] %s\n", output.FilePath)
 	}
 	return err
 }
@@ -72,7 +72,7 @@ func (cmd *ConvertCmd) schemaToOutput(schema *Schema, output *Output) error {
 
 	switch output.Format {
 	case FormatOctopus:
-		return schema.ToFile(output.Filename)
+		return schema.ToFile(output.FilePath)
 	case FormatDbdiagramIo:
 		writer = &DBDiagramIO{}
 	case FormatPlantuml:
@@ -88,5 +88,5 @@ func (cmd *ConvertCmd) schemaToOutput(schema *Schema, output *Output) error {
 	if writer == nil {
 		return fmt.Errorf("unsupported output format: %s", output.Format)
 	}
-	return writer.ToFile(schema, output.Filename)
+	return writer.ToFile(schema, output.FilePath)
 }

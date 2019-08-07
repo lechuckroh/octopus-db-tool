@@ -34,11 +34,11 @@ func NewJPAKotlin() *JPAKotlin {
 	return &JPAKotlin{}
 }
 
-func NewKotlinClass(table *Table, output *GenOutput) *KotlinClass {
+func NewKotlinClass(table *Table, output *Output) *KotlinClass {
 	className := table.ClassName
 	if className == "" {
 		tableName := table.Name
-		for _, prefix := range output.PrefixesToRemove {
+		for _, prefix := range output.GetSlice(FlagRemovePrefix) {
 			tableName = strings.TrimPrefix(tableName, prefix)
 		}
 		className = strcase.ToCamel(tableName)
@@ -167,23 +167,28 @@ func (k *JPAKotlin) mkdir(basedir, pkgName string) (string, error) {
 	return dir, nil
 }
 
-func (k *JPAKotlin) Generate(schema *Schema, output *GenOutput, useDataClass bool) error {
-	entityDir, err := k.mkdir(output.Directory, output.Package)
+func (k *JPAKotlin) Generate(schema *Schema, output *Output, useDataClass bool) error {
+	outputPackage := output.Get(FlagPackage)
+	reposPackage := output.Get(FlagReposPackage)
+	graphqlPackage := output.Get(FlagGraphqlPackage)
+	relation := output.Get(FlagRelation)
+
+	entityDir, err := k.mkdir(output.FilePath, outputPackage)
 	if err != nil {
 		return err
 	}
-	reposDir, err := k.mkdir(output.Directory, output.ReposPackage)
+	reposDir, err := k.mkdir(output.FilePath, reposPackage)
 	if err != nil {
 		return err
 	}
-	graphqlDir, err := k.mkdir(output.Directory, output.GraphqlPackage)
+	graphqlDir, err := k.mkdir(output.FilePath, graphqlPackage)
 	if err != nil {
 		return err
 	}
 
 	if !useDataClass {
 		// Generate AbstractJpaPersistable.kt
-		if err := k.generateAbstractJpaPersistable(entityDir, output.Package); err != nil {
+		if err := k.generateAbstractJpaPersistable(entityDir, outputPackage); err != nil {
 			return err
 		}
 	}
@@ -215,8 +220,8 @@ func (k *JPAKotlin) Generate(schema *Schema, output *GenOutput, useDataClass boo
 		}
 
 		// package
-		if output.Package != "" {
-			contents = append(contents, fmt.Sprintf("package %s", output.Package), "")
+		if outputPackage != "" {
+			contents = append(contents, fmt.Sprintf("package %s", outputPackage), "")
 		}
 		importSet := NewStringSet()
 		importSet.Add("javax.persistence.*")
@@ -256,7 +261,7 @@ func (k *JPAKotlin) Generate(schema *Schema, output *GenOutput, useDataClass boo
 			}
 
 			// @VRelation
-			if output.Relation == "VRelation" {
+			if relation == "VRelation" {
 				if ref := column.Ref; ref != nil {
 					targetClassName := getClassNameByTable(ref.Table)
 					if len(targetClassName) == 0 {
@@ -364,9 +369,9 @@ func (k *JPAKotlin) Generate(schema *Schema, output *GenOutput, useDataClass boo
 		if reposDir != "" {
 			reposClassName := fmt.Sprintf("%sRepository", class.Name)
 			lines := []string{
-				"package " + output.ReposPackage,
+				"package " + reposPackage,
 				"",
-				"import " + output.Package + ".*",
+				"import " + outputPackage + ".*",
 				"import org.springframework.data.repository.PagingAndSortingRepository",
 				"import org.springframework.stereotype.Repository",
 				"",
@@ -383,13 +388,13 @@ func (k *JPAKotlin) Generate(schema *Schema, output *GenOutput, useDataClass boo
 	// write graphql
 	if graphqlDir != "" {
 		contents := []string{
-			"package " + output.GraphqlPackage,
+			"package " + graphqlPackage,
 			"",
 			"import com.coxautodev.graphql.tools.GraphQLQueryResolver",
 			"import org.springframework.stereotype.Component",
 			"import java.util.*",
-			"import " + output.Package + ".*",
-			"import " + output.ReposPackage + ".*",
+			"import " + outputPackage + ".*",
+			"import " + reposPackage + ".*",
 			"",
 			"@Component",
 			"class Query(",
