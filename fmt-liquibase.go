@@ -110,6 +110,15 @@ func (l *Liquibase) Generate(schema *Schema, output *Output) error {
 			appendLine(1, "- changeSet:")
 			appendLine(3, fmt.Sprintf("id: %d", i))
 			appendLine(3, "author: "+schema.Author)
+
+			if uniqueCount == 1 {
+				appendLine(3, "preConditions:")
+				appendLine(4, "onError: CONTINUE")
+				appendLine(4, "onFail: CONTINUE")
+				appendLine(4, "dbms:")
+				appendLine(5, "type: derby, h2, mssql, mysql, postgresql, sqlite")
+			}
+
 			appendLine(3, "changes:")
 			appendLine(4, "- addUniqueConstraint:")
 			appendLine(6, "columnNames: "+strings.Join(uniques, ", "))
