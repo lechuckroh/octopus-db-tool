@@ -30,6 +30,7 @@ func (l *Liquibase) Generate(schema *Schema, output *Output) error {
 	uniqueNameSuffix := output.Get(FlagUniqueNameSuffix)
 
 	appendLine(0, "databaseChangeLog:")
+	appendLine(1, "- objectQuotingStrategy: QUOTE_ALL_OBJECTS")
 	i := 1
 	for _, table := range schema.Tables {
 		uniques := make([]string, 0)
