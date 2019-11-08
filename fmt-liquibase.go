@@ -117,7 +117,7 @@ func (l *Liquibase) Generate(schema *Schema, output *Output) error {
 				appendLine(4, "onError: CONTINUE")
 				appendLine(4, "onFail: CONTINUE")
 				appendLine(4, "dbms:")
-				appendLine(5, "type: derby, h2, mssql, mysql, postgresql, sqlite")
+				appendLine(5, "type: derby, h2, mssql, mariadb, mysql, postgresql, sqlite")
 			}
 
 			appendLine(3, "changes:")
