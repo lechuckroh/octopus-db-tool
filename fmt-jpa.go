@@ -256,8 +256,7 @@ func (k *JPAKotlin) Generate(schema *Schema, output *Output, useDataClass bool) 
 				appendLine(indent + "@GeneratedValue(strategy = GenerationType.AUTO)")
 			}
 			if column.Type == "text" {
-				appendLine(indent + "@Type(type = \"text\")")
-				importSet.Add("org.hibernate.annotations.Type")
+				appendLine(indent + "@Lob")
 			}
 
 			// @VRelation
