@@ -123,6 +123,10 @@ func GetFileFormat(fileFormat string, filename string) string {
 	}
 }
 
+func Quote(text string, quotationMark string) string {
+	return quotationMark + text + quotationMark;
+}
+
 type StringSet struct {
 	valueMap map[string]bool
 }

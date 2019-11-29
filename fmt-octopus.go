@@ -48,6 +48,26 @@ func (t *Table) AddColumn(column *Column) {
 	}
 }
 
+func (t *Table) GetUniqueColumnNames() []string {
+	result := make([]string, 0)
+	for _, column := range t.Columns {
+		if column.UniqueKey {
+			result = append(result, column.Name)
+		}
+	}
+	return result
+}
+
+func (t *Table) GetPrimaryKeyColumnNames() []string {
+	result := make([]string, 0)
+	for _, column := range t.Columns {
+		if column.PrimaryKey {
+			result = append(result, column.Name)
+		}
+	}
+	return result
+}
+
 type TableSlice []*Table
 
 func (s TableSlice) Len() int { return len(s) }

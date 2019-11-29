@@ -33,16 +33,8 @@ func (l *Liquibase) Generate(schema *Schema, output *Output) error {
 	appendLine(1, "- objectQuotingStrategy: QUOTE_ALL_OBJECTS")
 	i := 1
 	for _, table := range schema.Tables {
-		uniques := make([]string, 0)
-		primaryKeys := make([]string, 0)
-		for _, column := range table.Columns {
-			if column.UniqueKey {
-				uniques = append(uniques, column.Name)
-			}
-			if column.PrimaryKey {
-				primaryKeys = append(primaryKeys, column.Name)
-			}
-		}
+		uniques := table.GetUniqueColumnNames()
+		primaryKeys := table.GetPrimaryKeyColumnNames()
 		pkCount := len(primaryKeys)
 		uniqueCount := len(uniques)
 

@@ -172,6 +172,7 @@ func (k *JPAKotlin) Generate(schema *Schema, output *Output, useDataClass bool) 
 	reposPackage := output.Get(FlagReposPackage)
 	graphqlPackage := output.Get(FlagGraphqlPackage)
 	relation := output.Get(FlagRelation)
+	uniqueNameSuffix := output.Get(FlagUniqueNameSuffix)
 
 	entityDir, err := k.mkdir(output.FilePath, outputPackage)
 	if err != nil {
@@ -210,6 +211,8 @@ func (k *JPAKotlin) Generate(schema *Schema, output *Output, useDataClass bool) 
 	}
 
 	for _, class := range classes {
+		table := class.table
+
 		var idClass string
 		pkFieldCount := len(class.PKFields)
 
@@ -226,10 +229,22 @@ func (k *JPAKotlin) Generate(schema *Schema, output *Output, useDataClass bool) 
 		importSet := NewStringSet()
 		importSet.Add("javax.persistence.*")
 
+		// unique
+		uniqueCstName := table.Name + uniqueNameSuffix
+		uniqueFieldNames := make([]string, 0)
+		for _, field := range class.UniqueFields {
+			uniqueFieldNames = append(uniqueFieldNames, Quote(field.Name, "\""))
+		}
+
 		// class
 		appendLine("")
 		appendLine("@Entity")
-		appendLine(fmt.Sprintf("@Table(name = \"%s\")", class.table.Name))
+		if len(uniqueFieldNames) == 0 {
+			appendLine(fmt.Sprintf("@Table(name = \"%s\")", table.Name))
+		} else {
+			appendLine(fmt.Sprintf("@Table(name = \"%s\", uniqueConstraints = [\n    UniqueConstraint(name = \"%s\", columnNames = [%s])\n])",
+				table.Name, uniqueCstName, strings.Join(uniqueFieldNames, ", ")))
+		}
 		if pkFieldCount > 1 {
 			idClass = class.Name + "PK"
 			appendLine(fmt.Sprintf("@IdClass(%s::class)", idClass))
