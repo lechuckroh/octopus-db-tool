@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/xwb1989/sqlparser"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -125,6 +126,23 @@ func GetFileFormat(fileFormat string, filename string) string {
 
 func Quote(text string, quotationMark string) string {
 	return quotationMark + text + quotationMark;
+}
+
+func SQLValToInt(sqlVal *sqlparser.SQLVal, defaultValue int) int {
+	if sqlVal == nil {
+		return defaultValue
+	}
+	if value, err := strconv.Atoi(string(sqlVal.Val)); err != nil {
+		return defaultValue
+	} else {
+		return value
+	}
+}
+func SQLValToString(sqlVal *sqlparser.SQLVal, defaultValue string) string {
+	if sqlVal == nil {
+		return defaultValue
+	}
+	return string(sqlVal.Val)
 }
 
 type StringSet struct {

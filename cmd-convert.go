@@ -51,6 +51,8 @@ func (cmd *ConvertCmd) inputToSchema(input *Input) (*Schema, error) {
 		reader = &StarUML2{}
 	case FormatXlsx:
 		reader = &Xlsx{}
+	case FormatSqlMysql:
+		reader = &Mysql{}
 	}
 
 	if reader == nil {

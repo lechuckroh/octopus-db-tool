@@ -3,11 +3,14 @@ package main
 import (
 	"errors"
 	"fmt"
+	"github.com/xwb1989/sqlparser"
+	"io"
 	"io/ioutil"
 	"strings"
 )
 
 type Mysql struct {
+	schema *Schema
 }
 
 func (m *Mysql) FromFile(filename string) error {
@@ -20,13 +23,83 @@ func (m *Mysql) FromFile(filename string) error {
 }
 
 func (m *Mysql) FromString(data []byte) error {
-	// TODO
-	return errors.New("not implemented")
+	tokens := sqlparser.NewStringTokenizer(string(data))
+
+	tables := make([]*Table, 0)
+	for {
+		stmt, err := sqlparser.ParseNext(tokens)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			m.schema = nil
+			return err
+		}
+
+		switch stmt.(type) {
+		case *sqlparser.DDL:
+			ddl := stmt.(*sqlparser.DDL)
+			columns := make([]*Column, 0)
+
+			tableSpec := ddl.TableSpec
+
+			if tableSpec != nil {
+				pkSet := NewStringSet()
+				uniqueSet := NewStringSet()
+				for _, idx := range tableSpec.Indexes {
+					info := idx.Info
+					if info.Primary {
+						for _, c := range idx.Columns {
+							pkSet.Add(c.Column.String())
+						}
+					} else if info.Unique {
+						for _, c := range idx.Columns {
+							uniqueSet.Add(c.Column.String())
+						}
+					}
+				}
+
+				for _, col := range ddl.TableSpec.Columns {
+					name := col.Name.String()
+					nullable := !bool(col.Type.NotNull)
+					defaultValue := SQLValToString(col.Type.Default, "")
+					if nullable && defaultValue == "null" {
+						defaultValue = ""
+					}
+					comment := SQLValToString(col.Type.Comment, "")
+					columns = append(columns, &Column{
+						Name:            name,
+						Type:            m.fromColumnType(col.Type),
+						Description:     comment,
+						Size:            uint16(SQLValToInt(col.Type.Length, 0)),
+						Scale:           uint16(SQLValToInt(col.Type.Scale, 0)),
+						Nullable:        nullable,
+						PrimaryKey:      pkSet.Contains(name),
+						UniqueKey:       uniqueSet.Contains(name),
+						AutoIncremental: bool(col.Type.Autoincrement),
+						DefaultValue:    defaultValue,
+					})
+				}
+				tables = append(tables, &Table{
+					Name:    ddl.NewName.Name.String(),
+					Columns: columns,
+				})
+			}
+		}
+	}
+
+	m.schema = &Schema{
+		Tables: tables,
+	}
+
+	return nil
 }
 
 func (m *Mysql) ToSchema() (*Schema, error) {
-	// TODO
-	return nil, errors.New("not implemented")
+	if m.schema == nil {
+		return nil, errors.New("schema is not read")
+	}
+	return m.schema, nil
 }
 
 func (m *Mysql) ToFile(schema *Schema, filename string) error {
@@ -82,7 +155,7 @@ func (m *Mysql) ToString(schema *Schema) ([]byte, error) {
 			}
 
 			lines = append(lines,
-				fmt.Sprintf(indent + "%s %s %s",
+				fmt.Sprintf(indent+"%s %s %s",
 					m.quote(column.Name),
 					m.toMysqlColumnType(column),
 					strings.Join(params, " ")))
@@ -90,12 +163,12 @@ func (m *Mysql) ToString(schema *Schema) ([]byte, error) {
 
 		if len(primaryKeys) > 0 {
 			lines = append(lines,
-				fmt.Sprintf(indent + "PRIMARY KEY (%s)", strings.Join(primaryKeys, ", ")))
+				fmt.Sprintf(indent+"PRIMARY KEY (%s)", strings.Join(primaryKeys, ", ")))
 		}
 		if len(uniqueKeys) > 0 {
 			lines = append(lines,
-				fmt.Sprintf(indent + "UNIQUE KEY %s (%s)",
-					m.quote(table.Name + "_UNIQUE"),
+				fmt.Sprintf(indent+"UNIQUE KEY %s (%s)",
+					m.quote(table.Name+"_UNIQUE"),
 					strings.Join(uniqueKeys, ", ")))
 		}
 		body := strings.Join(lines, ",\n")
@@ -107,7 +180,7 @@ func (m *Mysql) ToString(schema *Schema) ([]byte, error) {
 	return []byte(strings.Join(result, "\n")), nil
 }
 
-func (m* Mysql) toMysqlColumnType(col *Column) string {
+func (m *Mysql) toMysqlColumnType(col *Column) string {
 	switch col.Type {
 	case ColTypeString:
 		return fmt.Sprintf("varchar(%d)", col.Size)
@@ -149,5 +222,36 @@ func (m* Mysql) toMysqlColumnType(col *Column) string {
 		return "blob"
 	default:
 		return col.Type
+	}
+}
+
+func (m *Mysql) fromColumnType(colType sqlparser.ColumnType) string {
+	switch colType.Type {
+	case "varchar":
+		return ColTypeString
+	case "longtext":
+		fallthrough
+	case "text":
+		return ColTypeText
+	case "bit":
+		return ColTypeBoolean
+	case "bigint":
+		return ColTypeLong
+	case "int":
+		return ColTypeInt
+	case "float":
+		return ColTypeFloat
+	case "double":
+		return ColTypeDouble
+	case "datetime":
+		return ColTypeDateTime
+	case "date":
+		return ColTypeDate
+	case "time":
+		return ColTypeTime
+	case "blob":
+		return ColTypeBlob
+	default:
+		return colType.Type
 	}
 }

@@ -22,7 +22,7 @@ octopus-db-tools provides:
 | `plantuml`          |   | O |   |`plantuml`|
 | `schema-converter`  |   |   |   |`schema`|
 | `sql-h2`            |   |   |   |`sql`   |
-| `sql-mysql`         |   | O |   |`sql`   |
+| `sql-mysql`         | O | O |   |`sql`   |
 | `sql-oracle`        |   |   |   |`sql`   |
 | `sql-sqlite3`       |   |   |   |`sql`   |
 | `sql-sqlserver`     |   |   |   |`sql`   |
@@ -85,8 +85,24 @@ $ ./oct convert sample.ojson sample.xlsx
 # xlsx -> octopus
 $ ./oct convert sample.xlsx sample.ojson
 
-# octopus -> mysql
+# octopus -> mysql DDL
 $ ./oct convert sample.ojson sample-mysql.sql --targetFormat=mysql
+
+# mysql DDL -> octopus
+$ ./oct convert sample-mysql.sql sample.ojson --sourceFormat=mysql
+```
+
+#### mysqldump
+Octopus does not support all mysql DDL. To generate octopus readable DDL, run the following command :
+```bash
+$ mysqldump \
+    --compact \
+    --no-create-db \
+    --no-data \
+    --skip-add-locks \
+    --skip-add-drop-table \
+    -u<user> -p -h<host> --databases <DB> \
+    > mysql-ddl.sql
 ```
 
 ### Generate
