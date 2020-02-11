@@ -208,13 +208,18 @@ func main() {
 					EnvVar: "OCTOPUS_REMOVE_PREFIX",
 				},
 				cli.StringFlag{
+					Name:   FlagPrefix,
+					Usage:  "set prefix to add",
+					EnvVar: "OCTOPUS_PREFIX",
+				},
+				cli.StringFlag{
 					Name:   FlagUniqueNameSuffix,
 					Usage:  "set unique constraint name suffix",
 					EnvVar: "OCTOPUS_UNIQUE_NAME_SUFFIX",
 				},
 				cli.StringFlag{
 					Name:   FlagGroups,
-					Usage:  "filter table groups to generate",
+					Usage:  "filter table groups to generate. set multiple values with comma separated.",
 					EnvVar: "OCTOPUS_GROUPS",
 				},
 			},

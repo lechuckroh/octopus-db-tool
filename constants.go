@@ -36,6 +36,7 @@ const (
 	FlagGroups           = "groups"
 	FlagNotNull          = "notNull"
 	FlagPackage          = "package"
+	FlagPrefix           = "prefix"
 	FlagRelation         = "relation"
 	FlagRemovePrefix     = "removePrefix"
 	FlagReposPackage     = "reposPackage"

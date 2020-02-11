@@ -38,6 +38,10 @@ func NewKotlinClass(table *Table, output *Output) *KotlinClass {
 			tableName = strings.TrimPrefix(tableName, prefix)
 		}
 		className = strcase.ToCamel(tableName)
+
+		if prefix := output.Get(FlagPrefix); prefix != "" {
+			className = prefix + className
+		}
 	}
 
 	fields := make([]*KotlinField, 0)

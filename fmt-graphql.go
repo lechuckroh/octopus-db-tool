@@ -36,6 +36,10 @@ func NewGraphqlClass(table *Table, output *Output) *GraphqlClass {
 			tableName = strings.TrimPrefix(tableName, prefix)
 		}
 		className = strcase.ToCamel(tableName)
+
+		if prefix := output.Get(FlagPrefix); prefix != "" {
+			className = prefix + className
+		}
 	}
 
 	fields := make([]*GraphqlField, 0)
