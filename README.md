@@ -117,11 +117,13 @@ $ mysqldump \
 # - output directory: ./output
 # - remove tableName prefix starting with 'db_' or 'mydb_'
 # - unique constraint Name : tableName + '_uq'
+# - filter table groups: foo, bar
 $ ./oct generate sample.ojson ./output \
     --targetFormat=jpa-kotlin-data \
     --package=com.foo.entity \
     --reposPackage=com.foo.repos \
     --graphqlPackage=com.foo.graphql \
     --removePrefix=db_,mydb_ \
-    --uniqueNameSuffix=_uq
+    --uniqueNameSuffix=_uq \
+    --groups=foo,bar
 ```

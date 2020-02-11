@@ -33,6 +33,8 @@ const (
 	ColTypeTime     = "time"
 
 	FlagGraphqlPackage   = "graphqlPackage"
+	FlagGroups           = "groups"
+	FlagNotNull          = "notNull"
 	FlagPackage          = "package"
 	FlagRelation         = "relation"
 	FlagRemovePrefix     = "removePrefix"
@@ -40,5 +42,4 @@ const (
 	FlagSourceFormat     = "sourceFormat"
 	FlagTargetFormat     = "targetFormat"
 	FlagUniqueNameSuffix = "uniqueNameSuffix"
-	FlagNotNull          = "notNull"
 )

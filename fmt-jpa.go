@@ -30,10 +30,6 @@ type KotlinField struct {
 type JPAKotlin struct {
 }
 
-func NewJPAKotlin() *JPAKotlin {
-	return &JPAKotlin{}
-}
-
 func NewKotlinClass(table *Table, output *Output) *KotlinClass {
 	className := table.ClassName
 	if className == "" {
@@ -167,7 +163,12 @@ func (k *JPAKotlin) mkdir(basedir, pkgName string) (string, error) {
 	return dir, nil
 }
 
-func (k *JPAKotlin) Generate(schema *Schema, output *Output, useDataClass bool) error {
+func (k *JPAKotlin) Generate(
+	schema *Schema,
+	output *Output,
+	tableFilterFn TableFilterFn,
+	useDataClass bool,
+) error {
 	outputPackage := output.Get(FlagPackage)
 	reposPackage := output.Get(FlagReposPackage)
 	graphqlPackage := output.Get(FlagGraphqlPackage)
@@ -198,6 +199,10 @@ func (k *JPAKotlin) Generate(schema *Schema, output *Output, useDataClass bool) 
 
 	classes := make([]*KotlinClass, 0)
 	for _, table := range schema.Tables {
+		// filter table
+		if tableFilterFn != nil && !tableFilterFn(table) {
+			continue
+		}
 		classes = append(classes, NewKotlinClass(table, output))
 	}
 

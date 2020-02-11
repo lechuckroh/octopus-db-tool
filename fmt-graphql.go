@@ -100,7 +100,11 @@ func NewGraphqlField(column *Column) *GraphqlField {
 	}
 }
 
-func (l *Graphql) Generate(schema *Schema, output *Output) error {
+func (l *Graphql) Generate(
+	schema *Schema,
+	output *Output,
+	tableFilterFn TableFilterFn,
+) error {
 	// Create directory
 	if err := os.MkdirAll(output.FilePath, 0777); err != nil {
 		return err
@@ -126,6 +130,11 @@ func (l *Graphql) Generate(schema *Schema, output *Output) error {
 
 	appendLine(0, "type Query {")
 	for _, table := range schema.Tables {
+		// filter table
+		if tableFilterFn != nil && !tableFilterFn(table) {
+			continue
+		}
+
 		class := NewGraphqlClass(table, output)
 		classes = append(classes, class)
 

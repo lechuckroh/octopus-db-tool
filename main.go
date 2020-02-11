@@ -212,6 +212,11 @@ func main() {
 					Usage:  "set unique constraint name suffix",
 					EnvVar: "OCTOPUS_UNIQUE_NAME_SUFFIX",
 				},
+				cli.StringFlag{
+					Name:   FlagGroups,
+					Usage:  "filter table groups to generate",
+					EnvVar: "OCTOPUS_GROUPS",
+				},
 			},
 			Action: generate,
 		},

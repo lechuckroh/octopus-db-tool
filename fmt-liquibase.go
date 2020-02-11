@@ -12,7 +12,11 @@ import (
 type Liquibase struct {
 }
 
-func (l *Liquibase) Generate(schema *Schema, output *Output) error {
+func (l *Liquibase) Generate(
+	schema *Schema,
+	output *Output,
+	tableFilterFn TableFilterFn,
+) error {
 	// Create directory
 	if err := os.MkdirAll(output.FilePath, 0777); err != nil {
 		return err
@@ -33,6 +37,11 @@ func (l *Liquibase) Generate(schema *Schema, output *Output) error {
 	appendLine(1, "- objectQuotingStrategy: QUOTE_ALL_OBJECTS")
 	i := 1
 	for _, table := range schema.Tables {
+		// filter table
+		if tableFilterFn != nil && !tableFilterFn(table) {
+			continue
+		}
+
 		uniques := table.GetUniqueColumnNames()
 		primaryKeys := table.GetPrimaryKeyColumnNames()
 		pkCount := len(primaryKeys)
