@@ -24,6 +24,9 @@ type Output struct {
 func (o *Output) Get(name string) string {
 	return o.Options[name]
 }
+func (o *Output) GetBool(name string) bool {
+	return o.Options[name] == "true"
+}
 func (o *Output) GetSlice(name string) []string {
 	return strings.Split(o.Options[name], ",")
 }
@@ -127,7 +130,7 @@ func generate(c *cli.Context) error {
 func main() {
 	cliApp := cli.NewApp()
 	cliApp.Name = "oct"
-	cliApp.Version = "1.0.7"
+	cliApp.Version = "1.0.10"
 	cliApp.Compiled = time.Now()
 	cliApp.Authors = []cli.Author{
 		{Name: "Lechuck Roh"},
@@ -155,6 +158,11 @@ func main() {
 					Name:   FlagTargetFormat,
 					Usage:  "set target format",
 					EnvVar: "OCTOPUS_TARGET_FORMAT",
+				},
+				cli.StringFlag{
+					Name:   FlagNotNull,
+					Usage:  "use 'not null' instead of 'nullable'",
+					EnvVar: "OCTOPUS_NOT_NULL",
 				},
 			},
 			Action: convert,

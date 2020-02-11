@@ -40,4 +40,5 @@ const (
 	FlagSourceFormat     = "sourceFormat"
 	FlagTargetFormat     = "targetFormat"
 	FlagUniqueNameSuffix = "uniqueNameSuffix"
+	FlagNotNull          = "notNull"
 )

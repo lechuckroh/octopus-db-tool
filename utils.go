@@ -187,3 +187,25 @@ func (s *StringSet) Slice() []string {
 	sort.Strings(keys)
 	return keys
 }
+
+func TernaryString(condition bool, trueValue, falseValue string) string {
+	if condition {
+		return trueValue
+	} else {
+		return falseValue
+	}
+}
+func TernaryBool(condition bool, trueValue, falseValue bool) bool {
+	if condition {
+		return trueValue
+	} else {
+		return falseValue
+	}
+}
+func TernaryFloat64(condition bool, trueValue, falseValue float64) float64 {
+	if condition {
+		return trueValue
+	} else {
+		return falseValue
+	}
+}

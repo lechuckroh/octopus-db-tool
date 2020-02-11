@@ -82,6 +82,9 @@ $ ./oct convert sample.mdj sample.ojson
 # octopus -> xlsx
 $ ./oct convert sample.ojson sample.xlsx
 
+# octopus -> xlsx (use not null column)
+$ ./oct convert sample.ojson sample.xlsx --notNull=true
+
 # xlsx -> octopus
 $ ./oct convert sample.xlsx sample.ojson
 

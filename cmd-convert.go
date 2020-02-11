@@ -82,7 +82,9 @@ func (cmd *ConvertCmd) schemaToOutput(schema *Schema, output *Output) error {
 	case FormatQuickdbd:
 		writer = &QuickDBD{}
 	case FormatXlsx:
-		writer = &Xlsx{}
+		writer = &Xlsx{
+			UseNotNullColumn: output.GetBool(FlagNotNull),
+		}
 	case FormatSqlMysql:
 		writer = &Mysql{}
 	}
