@@ -30,7 +30,11 @@ type KotlinField struct {
 type JPAKotlin struct {
 }
 
-func NewKotlinClass(table *Table, output *Output) *KotlinClass {
+func NewKotlinClass(
+	table *Table,
+	output *Output,
+	prefixMapper *PrefixMapper,
+) *KotlinClass {
 	className := table.ClassName
 	if className == "" {
 		tableName := table.Name
@@ -39,7 +43,7 @@ func NewKotlinClass(table *Table, output *Output) *KotlinClass {
 		}
 		className = strcase.ToCamel(tableName)
 
-		if prefix := output.Get(FlagPrefix); prefix != "" {
+		if prefix := prefixMapper.GetPrefix(table.Group); prefix != "" {
 			className = prefix + className
 		}
 	}
@@ -173,6 +177,7 @@ func (k *JPAKotlin) Generate(
 	schema *Schema,
 	output *Output,
 	tableFilterFn TableFilterFn,
+	prefixMapper *PrefixMapper,
 	useDataClass bool,
 ) error {
 	outputPackage := output.Get(FlagPackage)
@@ -209,7 +214,7 @@ func (k *JPAKotlin) Generate(
 		if tableFilterFn != nil && !tableFilterFn(table) {
 			continue
 		}
-		classes = append(classes, NewKotlinClass(table, output))
+		classes = append(classes, NewKotlinClass(table, output, prefixMapper))
 	}
 
 	getClassNameByTable := func(table string) string {

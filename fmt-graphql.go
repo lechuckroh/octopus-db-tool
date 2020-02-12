@@ -27,7 +27,11 @@ type GraphqlField struct {
 type Graphql struct {
 }
 
-func NewGraphqlClass(table *Table, output *Output) *GraphqlClass {
+func NewGraphqlClass(
+	table *Table,
+	output *Output,
+	prefixMapper *PrefixMapper,
+) *GraphqlClass {
 	className := table.ClassName
 	if className == "" {
 		tableName := table.Name
@@ -37,7 +41,7 @@ func NewGraphqlClass(table *Table, output *Output) *GraphqlClass {
 		}
 		className = strcase.ToCamel(tableName)
 
-		if prefix := output.Get(FlagPrefix); prefix != "" {
+		if prefix := prefixMapper.GetPrefix(table.Group); prefix != "" {
 			className = prefix + className
 		}
 	}
@@ -110,6 +114,7 @@ func (g *Graphql) Generate(
 	schema *Schema,
 	output *Output,
 	tableFilterFn TableFilterFn,
+	prefixMapper *PrefixMapper,
 ) error {
 	// Create directory
 	if err := os.MkdirAll(output.FilePath, 0777); err != nil {
@@ -141,7 +146,7 @@ func (g *Graphql) Generate(
 			continue
 		}
 
-		class := NewGraphqlClass(table, output)
+		class := NewGraphqlClass(table, output, prefixMapper)
 		classes = append(classes, class)
 
 		lowerClassName := strcase.ToLowerCamel(class.Name)
