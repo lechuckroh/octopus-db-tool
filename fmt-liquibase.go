@@ -174,7 +174,11 @@ func (l *Liquibase) getType(column *Column) string {
 		typ = column.Type
 	}
 	if column.Size > 0 {
-		return fmt.Sprintf("%s(%d)", typ, column.Size)
+		if column.Scale > 0 {
+			return fmt.Sprintf("%s(%d,%d)", typ, column.Size, column.Scale)
+		} else {
+			return fmt.Sprintf("%s(%d)", typ, column.Size)
+		}
 	} else {
 		return typ
 	}
