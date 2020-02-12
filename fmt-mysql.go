@@ -192,16 +192,10 @@ func (m *Mysql) toMysqlColumnType(col *Column) string {
 		return "bigint"
 	case ColTypeInt:
 		return "int"
+	case ColTypeDecimal:
+		fallthrough
 	case ColTypeFloat:
-		if col.Size > 0 {
-			if col.Scale > 0 {
-				return fmt.Sprintf("decimal(%d, %d)", col.Size, col.Scale)
-			} else {
-				return fmt.Sprintf("decimal(%d)", col.Size)
-			}
-		} else {
-			return "float"
-		}
+		fallthrough
 	case ColTypeDouble:
 		if col.Size > 0 {
 			if col.Scale > 0 {
@@ -210,7 +204,7 @@ func (m *Mysql) toMysqlColumnType(col *Column) string {
 				return fmt.Sprintf("decimal(%d)", col.Size)
 			}
 		} else {
-			return "double"
+			return col.Type
 		}
 	case ColTypeDateTime:
 		return "datetime"
@@ -239,6 +233,8 @@ func (m *Mysql) fromColumnType(colType sqlparser.ColumnType) string {
 		return ColTypeLong
 	case "int":
 		return ColTypeInt
+	case "decimal":
+		return ColTypeDecimal
 	case "float":
 		return ColTypeFloat
 	case "double":

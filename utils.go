@@ -63,7 +63,7 @@ func IsBooleanType(typ string) bool {
 
 func IsNumericType(typ string) bool {
 	lowerType := strings.ToLower(typ)
-	numericTypes := []string{"float", "double", "long", "bigint", "int", "smallint", "number"}
+	numericTypes := []string{"decimal", "float", "double", "long", "bigint", "int", "smallint", "number"}
 	for _, numericType := range numericTypes {
 		if lowerType == numericType {
 			return true

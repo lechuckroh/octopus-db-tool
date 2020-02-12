@@ -139,6 +139,9 @@ func (x *Xlsx) readGroupSheet(groupName string, sheet *xlsx.Sheet) ([]*Table, er
 			continue
 		}
 
+		// column type
+		colType, colSize, colScale := ParseType(typeValue)
+
 		// add column
 		defaultValue := ""
 		attrSet := NewStringSet()
@@ -148,7 +151,7 @@ func (x *Xlsx) readGroupSheet(groupName string, sheet *xlsx.Sheet) ([]*Table, er
 			if strings.HasPrefix(attr, "default") {
 				tokens := strings.SplitN(attr, ":", 2)
 				if len(tokens) == 2 {
-					defaultValue = tokens[1]
+					defaultValue = x.fixDefaultValue(colType, tokens[1])
 					continue
 				}
 			}
@@ -167,8 +170,6 @@ func (x *Xlsx) readGroupSheet(groupName string, sheet *xlsx.Sheet) ([]*Table, er
 				}
 			}
 		}
-
-		colType, colSize, colScale := ParseType(typeValue)
 
 		lastTable.AddColumn(&Column{
 			Name:            columnName,
@@ -190,6 +191,13 @@ func (x *Xlsx) readGroupSheet(groupName string, sheet *xlsx.Sheet) ([]*Table, er
 	}
 
 	return tables, nil
+}
+
+func (x *Xlsx) fixDefaultValue(colType string, defaultValue string) string {
+	if IsBooleanType(colType) {
+		return TernaryString(defaultValue == "true" || defaultValue == "1", "true", "false")
+	}
+	return defaultValue
 }
 
 func (x *Xlsx) ToFile(schema *Schema, filename string) error {
@@ -452,5 +460,8 @@ func (x *Xlsx) formatType(column *Column) string {
 	if column.Size == 0 {
 		return column.Type
 	}
-	return fmt.Sprintf("%s(%d)", column.Type, column.Size)
+	if column.Scale == 0 {
+		return fmt.Sprintf("%s(%d)", column.Type, column.Size)
+	}
+	return fmt.Sprintf("%s(%d,%d)", column.Type, column.Size, column.Scale)
 }

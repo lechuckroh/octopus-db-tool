@@ -119,7 +119,7 @@ func normalizeColumnType(col *Column) (string, bool) {
 		return ColTypeBoolean, true
 	}
 	if colType == "number" || colType == "double" || colType == "decimal" {
-		return ColTypeDouble, true
+		return ColTypeDecimal, true
 	}
 	if colType == "float" {
 		return ColTypeFloat, true

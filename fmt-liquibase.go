@@ -156,6 +156,8 @@ func (l *Liquibase) getType(column *Column) string {
 		typ = "bigint"
 	case ColTypeInt:
 		typ = "int"
+	case ColTypeDecimal:
+		typ = "decimal"
 	case ColTypeFloat:
 		typ = "float"
 	case ColTypeDouble:

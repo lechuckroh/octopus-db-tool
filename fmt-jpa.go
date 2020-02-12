@@ -104,6 +104,8 @@ func NewKotlinField(column *Column) *KotlinField {
 		if !nullable {
 			defaultValue = "0.0F"
 		}
+	case ColTypeDecimal:
+		fallthrough
 	case ColTypeDouble:
 		fieldType = "Double"
 		if !nullable {
@@ -307,7 +309,7 @@ func (k *JPAKotlin) Generate(
 			if column.Type == "string" && column.Size > 0 {
 				attributes = append(attributes, fmt.Sprintf("length = %d", column.Size))
 			}
-			if column.Type == "double" || column.Type == "float" {
+			if column.Type == ColTypeDouble || column.Type == ColTypeFloat || column.Type == ColTypeDecimal {
 				if column.Size > 0 {
 					attributes = append(attributes, fmt.Sprintf("precision = %d", column.Size))
 				}

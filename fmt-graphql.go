@@ -85,6 +85,8 @@ func NewGraphqlField(column *Column) *GraphqlField {
 		fallthrough
 	case ColTypeInt:
 		fieldType = "Int"
+	case ColTypeDecimal:
+		fallthrough
 	case ColTypeFloat:
 		fallthrough
 	case ColTypeDouble:
@@ -104,7 +106,7 @@ func NewGraphqlField(column *Column) *GraphqlField {
 	}
 }
 
-func (l *Graphql) Generate(
+func (g *Graphql) Generate(
 	schema *Schema,
 	output *Output,
 	tableFilterFn TableFilterFn,
@@ -168,51 +170,4 @@ func (l *Graphql) Generate(
 	log.Printf("[WRITE] %s", outputFile)
 
 	return nil
-}
-
-func (l *Graphql) getType(column *Column) string {
-	typ := ""
-	switch strings.ToLower(column.Type) {
-	case "string":
-		fallthrough
-	case "varchar":
-		typ = "varchar"
-	case "char":
-		typ = "char"
-	case "text":
-		typ = "clob"
-	case "bool":
-		fallthrough
-	case "boolean":
-		typ = "boolean"
-	case "bigint":
-		fallthrough
-	case "long":
-		typ = "bigint"
-	case "int":
-		fallthrough
-	case "integer":
-		typ = "int"
-	case "smallint":
-		typ = "smallint"
-	case "float":
-		typ = "float"
-	case "number":
-		fallthrough
-	case "double":
-		typ = "double"
-	case "datetime":
-		typ = "datetime"
-	case "date":
-		typ = "date"
-	case "blob":
-		typ = "blob"
-	default:
-		typ = column.Type
-	}
-	if column.Size > 0 {
-		return fmt.Sprintf("%s(%d)", typ, column.Size)
-	} else {
-		return typ
-	}
 }

@@ -24,6 +24,7 @@ const (
 	ColTypeBoolean  = "boolean"
 	ColTypeDate     = "date"
 	ColTypeDateTime = "datetime"
+	ColTypeDecimal  = "decimal"
 	ColTypeDouble   = "double"
 	ColTypeFloat    = "float"
 	ColTypeInt      = "int"
