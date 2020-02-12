@@ -103,13 +103,17 @@ func NewKotlinField(column *Column) *KotlinField {
 		if !nullable {
 			defaultValue = "0"
 		}
+	case ColTypeDecimal:
+		fieldType = "BigDecimal"
+		importSet.Add("java.math.BigDecimal")
+		if !nullable {
+			defaultValue = "BigDecimal.ZERO"
+		}
 	case ColTypeFloat:
 		fieldType = "Float"
 		if !nullable {
 			defaultValue = "0.0F"
 		}
-	case ColTypeDecimal:
-		fallthrough
 	case ColTypeDouble:
 		fieldType = "Double"
 		if !nullable {
