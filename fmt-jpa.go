@@ -333,6 +333,7 @@ func (k *JPAKotlin) Generate(
 			// @CreationTimestamp
 			if column.Type == "datetime" && field.Name == "createdAt" {
 				appendLine(indent + "@CreationTimestamp")
+				appendLine(indent + "@Column(updatable = false)")
 				importSet.Add("org.hibernate.annotations.CreationTimestamp")
 			}
 			// @UpdateTimestamp
