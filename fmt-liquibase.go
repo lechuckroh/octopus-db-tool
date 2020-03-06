@@ -704,7 +704,7 @@ func (l *Liquibase) diffTable(
 	useComments bool,
 	uniqueNameSuffix string,
 ) ([]*LqChangeSet, error) {
-	result := make([]*LqChangeSet, 0)
+	changeSets := make([]*LqChangeSet, 0)
 
 	oldColumnByName := oldTable.ColumnByName()
 
@@ -725,11 +725,11 @@ func (l *Liquibase) diffTable(
 		removedColumnNameSet.Remove(column.Name)
 
 		// diff column
-		if changeSets, err := l.diffColumn(id, author, table, column, oldColumn, useComments); err != nil {
+		if changes, err := l.diffColumn(id, author, table, column, oldColumn, useComments); err != nil {
 			return nil, err
 		} else {
-			for _, changeSet := range changeSets {
-				result = append(result, changeSet)
+			for _, change := range changes {
+				changeSets = append(changeSets, change)
 			}
 		}
 	}
@@ -738,7 +738,7 @@ func (l *Liquibase) diffTable(
 	for _, addedColumn := range addedColumns {
 		for _, removedColumnName := range removedColumnNameSet.Slice() {
 			if removedColumn := oldColumnByName[removedColumnName]; removedColumn != nil {
-				if addedColumn.IsRenamed(removedColumn) {
+				if addedColumn.IsRenamed(removedColumn, !useComments) {
 					renamedColumnMap[addedColumn] = removedColumn
 					removedColumnNameSet.Remove(removedColumnName)
 					break
@@ -747,18 +747,31 @@ func (l *Liquibase) diffTable(
 		}
 	}
 
+	// unique key
+	uqSet := table.UniqueKeyNameSet()
+	oldUqSet := oldTable.UniqueKeyNameSet()
+	uniqueChanged := !uqSet.Equals(oldUqSet)
+
+	// drop unique constraint
+	if uniqueChanged {
+		uniqueConstraintName := table.Name + uniqueNameSuffix
+		changeSet := newLqChangeSet(id.bumpMinor(), author)
+		changeSet.Append("dropUniqueConstraint", newDropUniqueConstraint(table, uniqueConstraintName))
+		changeSets = append(changeSets, changeSet)
+	}
+
 	// removed columns
 	for _, columnName := range removedColumnNameSet.Slice() {
 		changeSet := newLqChangeSet(id.bumpMinor(), author)
 		changeSet.Append("dropColumn", newDropColumn(table, columnName))
-		result = append(result, changeSet)
+		changeSets = append(changeSets, changeSet)
 	}
 
 	// renamed columns
 	for newColumn, oldColumn := range renamedColumnMap {
 		changeSet := newLqChangeSet(id.bumpMinor(), author)
 		changeSet.Append("renameColumn", newRenameColumn(table, newColumn, oldColumn))
-		result = append(result, changeSet)
+		changeSets = append(changeSets, changeSet)
 	}
 
 	// added columns
@@ -776,7 +789,7 @@ func (l *Liquibase) diffTable(
 			return nil, err
 		} else {
 			changeSet.Append("addColumn", lqAddColumn)
-			result = append(result, changeSet)
+			changeSets = append(changeSets, changeSet)
 		}
 	}
 
@@ -792,24 +805,21 @@ func (l *Liquibase) diffTable(
 			pkColumeNames := pkSet.Join(", ")
 			changeSet.Append("addPrimaryKey", newAddPrimaryKey(table, pkColumeNames))
 		}
-		result = append(result, changeSet)
+		changeSets = append(changeSets, changeSet)
 	}
 
-	// unique key
-	uqSet := table.UniqueKeyNameSet()
-	oldUqSet := oldTable.UniqueKeyNameSet()
-	if !uqSet.Equals(oldUqSet) {
+	// add unique constraint
+	if uniqueChanged {
 		uniqueConstraintName := table.Name + uniqueNameSuffix
 		changeSet := newLqChangeSet(id.bumpMinor(), author)
-		changeSet.Append("dropUniqueConstraint", newDropUniqueConstraint(table, uniqueConstraintName))
-
 		if uqSet.Size() > 0 {
 			uniqueColumeNames := uqSet.Join(", ")
 			changeSet.Append("addUniqueConstraint", newAddUniqueConstraint(table, uniqueColumeNames, uniqueConstraintName))
 		}
-		result = append(result, changeSet)
+		changeSets = append(changeSets, changeSet)
 	}
-	return result, nil
+
+	return changeSets, nil
 }
 
 // diffColumn compares two columns.
@@ -821,24 +831,24 @@ func (l *Liquibase) diffColumn(
 	oldColumn *Column,
 	useComments bool,
 ) ([]*LqChangeSet, error) {
-	result := make([]*LqChangeSet, 0)
+	changeSets := make([]*LqChangeSet, 0)
 
 	if column.Name != oldColumn.Name {
 		changeSet := newLqChangeSet(id.bumpMinor(), author)
 		changeSet.Append("renameColumn", newRenameColumn(table, column, oldColumn))
-		result = append(result, changeSet)
+		changeSets = append(changeSets, changeSet)
 	}
 
 	if column.Type != oldColumn.Type || column.Size != oldColumn.Size || column.Scale != oldColumn.Scale {
 		changeSet := newLqChangeSet(id.bumpMinor(), author)
 		changeSet.Append("modifyDataType", newModifyDataType(table, column))
-		result = append(result, changeSet)
+		changeSets = append(changeSets, changeSet)
 	}
 
 	if useComments && column.Description != oldColumn.Description {
 		changeSet := newLqChangeSet(id.bumpMinor(), author)
 		changeSet.Append("setColumnRemarks", newSetColumnRemarks(table, column))
-		result = append(result, changeSet)
+		changeSets = append(changeSets, changeSet)
 	}
 
 	if column.Nullable != oldColumn.Nullable {
@@ -848,7 +858,7 @@ func (l *Liquibase) diffColumn(
 		} else {
 			changeSet.Append("addNotNullConstraint", newAddNotNullConstraint(table, column))
 		}
-		result = append(result, changeSet)
+		changeSets = append(changeSets, changeSet)
 	}
 
 	if column.AutoIncremental != oldColumn.AutoIncremental {
@@ -857,7 +867,7 @@ func (l *Liquibase) diffColumn(
 		} else {
 			changeSet := newLqChangeSet(id.bumpMinor(), author)
 			changeSet.Append("addAutoIncrement", newAddAutoIncrement(table, column))
-			result = append(result, changeSet)
+			changeSets = append(changeSets, changeSet)
 		}
 	}
 
@@ -872,10 +882,10 @@ func (l *Liquibase) diffColumn(
 				changeSet.Append("addDefaultValue", change)
 			}
 		}
-		result = append(result, changeSet)
+		changeSets = append(changeSets, changeSet)
 	}
 
-	return result, nil
+	return changeSets, nil
 }
 
 func getLiquibaseType(column *Column) string {

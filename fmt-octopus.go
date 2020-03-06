@@ -27,9 +27,9 @@ type Column struct {
 	Ref             *Reference `json:"ref,omitempty"`
 }
 
-func (c *Column) IsRenamed(target *Column) bool {
+func (c *Column) IsRenamed(target *Column, excludeDescription bool) bool {
 	return c.Type == target.Type &&
-		c.Description == target.Description &&
+		(excludeDescription || (c.Description == target.Description)) &&
 		c.Size == target.Size &&
 		c.Scale == target.Scale &&
 		c.Nullable == target.Nullable &&
