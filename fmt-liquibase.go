@@ -161,12 +161,12 @@ func newRenameTable(newTableName string, oldTableName string) *LqRenameTable {
 }
 
 type LqAddColumn struct {
-	TableName string      `yaml:"tableName"`
-	Columns   []*LqColumn `yaml:"columns"`
+	TableName string                 `yaml:"tableName"`
+	Columns   []map[string]*LqColumn `yaml:"columns"`
 }
 
 func newAddColumn(table *Table, columns []*Column, useComments bool) (*LqAddColumn, error) {
-	lqColumns := make([]*LqColumn, 0)
+	lqColumns := make([]map[string]*LqColumn, 0)
 	for _, col := range columns {
 		if lc, err := newLqColumn(col, true, true); err != nil {
 			return nil, err
@@ -184,7 +184,7 @@ func newAddColumn(table *Table, columns []*Column, useComments bool) (*LqAddColu
 			}
 
 			lc.AfterColumn = lastColName
-			lqColumns = append(lqColumns, lc)
+			lqColumns = append(lqColumns, map[string]*LqColumn{"column": lc})
 		}
 	}
 	return &LqAddColumn{
