@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/google/go-cmp/cmp"
 	"github.com/xwb1989/sqlparser"
 	"path/filepath"
 	"regexp"
@@ -22,13 +23,6 @@ func ToInt(value interface{}, defaultValue int) int {
 	default:
 		return defaultValue
 	}
-}
-
-func GetDefaultString(value string, defaultValue string) string {
-	if value == "" {
-		return defaultValue
-	}
-	return value
 }
 
 func BoolToString(value bool, trueStr, falseStr string) string {
@@ -66,6 +60,28 @@ func IsNumericType(typ string) bool {
 	numericTypes := []string{"decimal", "float", "double", "long", "bigint", "int", "smallint", "number"}
 	for _, numericType := range numericTypes {
 		if lowerType == numericType {
+			return true
+		}
+	}
+	return false
+}
+
+func IsIntType(typ string) bool {
+	lowerType := strings.ToLower(typ)
+	intTypes := []string{"long", "bigint", "int", "smallint"}
+	for _, numericType := range intTypes {
+		if lowerType == numericType {
+			return true
+		}
+	}
+	return false
+}
+
+func IsDateType(typ string) bool {
+	lowerType := strings.ToLower(typ)
+	dateTypes := []string{"date", "datetime"}
+	for _, dateType := range dateTypes {
+		if lowerType == dateType {
 			return true
 		}
 	}
@@ -125,7 +141,7 @@ func GetFileFormat(fileFormat string, filename string) string {
 }
 
 func Quote(text string, quotationMark string) string {
-	return quotationMark + text + quotationMark;
+	return quotationMark + text + quotationMark
 }
 
 func SQLValToInt(sqlVal *sqlparser.SQLVal, defaultValue int) int {
@@ -179,6 +195,10 @@ func (s *StringSet) ContainsAny(keys []string) bool {
 	return false
 }
 
+func (s *StringSet) Remove(key string) {
+	delete(s.valueMap, key)
+}
+
 func (s *StringSet) Slice() []string {
 	keys := make([]string, 0, len(s.valueMap))
 	for key := range s.valueMap {
@@ -186,6 +206,18 @@ func (s *StringSet) Slice() []string {
 	}
 	sort.Strings(keys)
 	return keys
+}
+
+func (s *StringSet) Join(separator string) string {
+	return strings.Join(s.Slice(), separator)
+}
+
+func (s *StringSet) Equals(other *StringSet) bool {
+	return cmp.Equal(s.valueMap, other.valueMap)
+}
+
+func (s *StringSet) Size() int {
+	return len(s.valueMap)
 }
 
 func TernaryString(condition bool, trueValue, falseValue string) string {
@@ -208,4 +240,9 @@ func TernaryFloat64(condition bool, trueValue, falseValue float64) float64 {
 	} else {
 		return falseValue
 	}
+}
+
+func NewBool(value bool) *bool {
+	b := value
+	return &b
 }

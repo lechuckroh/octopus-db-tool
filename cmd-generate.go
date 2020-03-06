@@ -11,7 +11,7 @@ type GenerateCmd struct {
 }
 
 func (cmd *GenerateCmd) Generate(input *Input, output *Output) error {
-	schema, err := (&ConvertCmd{}).inputToSchema(input)
+	schema, err := input.ToSchema()
 	if err != nil {
 		return err
 	}

@@ -97,6 +97,7 @@ $ ./oct convert sample-mysql.sql sample.ojson --sourceFormat=mysql
 
 #### mysqldump
 Octopus does not support all mysql DDL. To generate octopus readable DDL, run the following command :
+
 ```bash
 $ mysqldump \
     --compact \
@@ -109,19 +110,19 @@ $ mysqldump \
 ```
 
 ### Generate
-```bash
-# octopus -> JPA-kotlin
-# - entity package: com.foo.entity
-# - repository package: com.foo.repos
-# - graphql package: com.foo.graphql
-# - output directory: ./output
-# - remove tableName prefix starting with 'db_' or 'mydb_'
-# - unique constraint Name : tableName + '_uq'
-# - filter table groups: foo, bar
-# - add prefix to className: 
-#    - 'foo' group: append 'F'
-#    - 'bar' group: append 'B'
+#### octopus -> JPA-kotlin
+* entity package: `com.foo.entity`
+* repository package: `com.foo.repos`
+* graphql package: `com.foo.graphql`
+* output directory: `./output`
+* remove tableName prefix starting with `db_` or `mydb_`
+* unique constraint Name : tableName + `_uq`
+* filter table groups: `foo`, `bar`
+* add prefix to className: 
+    * `foo` group: append `F`
+    * `bar` group: append `B`
 
+```bash
 $ ./oct generate sample.ojson ./output \
     --targetFormat=jpa-kotlin-data \
     --package=com.foo.entity \
@@ -131,4 +132,30 @@ $ ./oct generate sample.ojson ./output \
     --uniqueNameSuffix=_uq \
     --groups=foo,bar,foobar
     --prefix=foo:F,bar:B
+```
+
+#### octopus -> liquibase yaml
+Generate all:
+* output directory: `./output`
+* unique constraint Name : tableName + `_uq`
+* generate comments
+
+```bash
+$ ./oct generate samples.ojson ./output \
+    --targetFormat=liquibase
+    --uniqueNameSuffix=_uq
+    --comments
+```
+
+Generate diff changelog:
+* output directory: `./output`
+* unique constraint Name : tableName + `_uq`
+* from octopus: `v1.ojson`
+* to octopus: `v2.ojson`
+
+```bash
+$ ./oct generate v2.ojson ./output \
+    --diff=v1.ojson
+    --targetFormat=liquibase
+    --uniqueNameSuffix=_uq
 ```

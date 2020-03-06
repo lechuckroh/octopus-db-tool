@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"github.com/urfave/cli"
 	"log"
 	"os"
@@ -13,6 +14,46 @@ import (
 type Input struct {
 	Filename string
 	Format   string
+}
+
+func NewInput(filename string, fileFormat string) (*Input, error) {
+	inputFormat := GetFileFormat(fileFormat, filename)
+	if inputFormat == "" {
+		return nil, errors.New("cannot find sourceFormat")
+	}
+
+	return &Input{
+		Filename: filename,
+		Format:   inputFormat,
+	}, nil
+}
+
+func (i *Input) ToSchema() (*Schema, error) {
+	var reader FormatReader
+
+	switch i.Format {
+	case FormatOctopus:
+		reader = &Schema{}
+	case FormatStaruml2:
+		reader = &StarUML2{}
+	case FormatXlsx:
+		reader = &Xlsx{}
+	case FormatSqlMysql:
+		reader = &Mysql{}
+	}
+
+	if reader == nil {
+		return nil, fmt.Errorf("unsupported input format: %s", i.Format)
+	}
+	if err := reader.FromFile(i.Filename); err != nil {
+		return nil, err
+	}
+	if schema, err := reader.ToSchema(); err != nil {
+		return nil, err
+	} else {
+		schema.Normalize()
+		return schema, nil
+	}
 }
 
 type Output struct {
@@ -107,14 +148,9 @@ func generate(c *cli.Context) error {
 	}
 
 	inputFilename := args.Get(0)
-	inputFormat := GetFileFormat(c.String(FlagSourceFormat), inputFilename)
-	if inputFormat == "" {
-		return errors.New("cannot find sourceFormat")
-	}
-
-	input := &Input{
-		Filename: inputFilename,
-		Format:   inputFormat,
+	input, err := NewInput(inputFilename, c.String(FlagSourceFormat))
+	if err != nil {
+		return err
 	}
 
 	output := &Output{
@@ -130,7 +166,7 @@ func generate(c *cli.Context) error {
 func main() {
 	cliApp := cli.NewApp()
 	cliApp.Name = "oct"
-	cliApp.Version = "1.0.11"
+	cliApp.Version = "1.0.12"
 	cliApp.Compiled = time.Now()
 	cliApp.Authors = []cli.Author{
 		{Name: "Lechuck Roh"},
@@ -221,6 +257,11 @@ func main() {
 					Name:   FlagGroups,
 					Usage:  "filter table groups to generate. set multiple values with comma separated.",
 					EnvVar: "OCTOPUS_GROUPS",
+				},
+				cli.StringFlag{
+					Name:   FlagDiff,
+					Usage:  "diff octopus filename.",
+					EnvVar: "OCTOPUS_DIFF",
 				},
 			},
 			Action: generate,

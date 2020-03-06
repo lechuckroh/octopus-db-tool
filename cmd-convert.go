@@ -27,7 +27,7 @@ func (cmd *ConvertCmd) Convert(input *Input, output *Output) error {
 	}
 
 	// Read Input
-	inputSchema, err := cmd.inputToSchema(input)
+	inputSchema, err := input.ToSchema()
 	if err != nil {
 		return err
 	}
@@ -39,34 +39,6 @@ func (cmd *ConvertCmd) Convert(input *Input, output *Output) error {
 		log.Printf("[WRITE] %s\n", output.FilePath)
 	}
 	return err
-}
-
-func (cmd *ConvertCmd) inputToSchema(input *Input) (*Schema, error) {
-	var reader FormatReader
-
-	switch input.Format {
-	case FormatOctopus:
-		reader = &Schema{}
-	case FormatStaruml2:
-		reader = &StarUML2{}
-	case FormatXlsx:
-		reader = &Xlsx{}
-	case FormatSqlMysql:
-		reader = &Mysql{}
-	}
-
-	if reader == nil {
-		return nil, fmt.Errorf("unsupported input format: %s", input.Format)
-	}
-	if err := reader.FromFile(input.Filename); err != nil {
-		return nil, err
-	}
-	if schema, err := reader.ToSchema(); err != nil {
-		return nil, err
-	} else {
-		schema.Normalize()
-		return schema, nil
-	}
 }
 
 func (cmd *ConvertCmd) schemaToOutput(schema *Schema, output *Output) error {

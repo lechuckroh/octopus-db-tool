@@ -45,7 +45,6 @@ package-linux: compile-linux
 	upx -9 $(BINARY_LINUX)
 	zip -m oct-linux64.zip $(BINARY_LINUX)
 package-macos: compile-macos
-	#upx -9 $(BINARY_MACOS)
 	zip -m oct-darwin64.zip $(BINARY_MACOS)
 
 # Test

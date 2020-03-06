@@ -33,6 +33,7 @@ const (
 	ColTypeText     = "text"
 	ColTypeTime     = "time"
 
+	FlagDiff             = "diff"
 	FlagGraphqlPackage   = "graphqlPackage"
 	FlagGroups           = "groups"
 	FlagNotNull          = "notNull"
@@ -44,4 +45,5 @@ const (
 	FlagSourceFormat     = "sourceFormat"
 	FlagTargetFormat     = "targetFormat"
 	FlagUniqueNameSuffix = "uniqueNameSuffix"
+	FlagUseComments      = "comments"
 )
