@@ -266,6 +266,11 @@ func main() {
 					Usage:  "diff octopus filename.",
 					EnvVar: "OCTOPUS_DIFF",
 				},
+				cli.StringFlag{
+					Name:   FlagIdEntity,
+					Usage:  "set IdEntity interface name",
+					EnvVar: "OCTOPUS_ID_ENTITY",
+				},
 			},
 			Action: generate,
 		},

@@ -189,6 +189,7 @@ func (k *JPAKotlin) Generate(
 	graphqlPackage := output.Get(FlagGraphqlPackage)
 	relation := output.Get(FlagRelation)
 	uniqueNameSuffix := output.Get(FlagUniqueNameSuffix)
+	idEntityInterfaceName := output.Get(FlagIdEntity)
 
 	entityDir, err := k.mkdir(output.FilePath, outputPackage)
 	if err != nil {
@@ -210,7 +211,7 @@ func (k *JPAKotlin) Generate(
 		}
 	}
 
-	indent := "    "
+	indent := strings.Repeat(" ", 8)
 
 	classes := make([]*KotlinClass, 0)
 	for _, table := range schema.Tables {
@@ -233,8 +234,14 @@ func (k *JPAKotlin) Generate(
 	for _, class := range classes {
 		table := class.table
 
-		var idClass string
+		var idClassName string
 		pkFieldCount := len(class.PKFields)
+
+		// idEntity field
+		var idEntityField *KotlinField
+		if idEntityInterfaceName != "" && pkFieldCount == 1 && class.PKFields[0].Name == "id" {
+			idEntityField = class.PKFields[0]
+		}
 
 		contents := make([]string, 0)
 		classLines := make([]string, 0)
@@ -247,7 +254,8 @@ func (k *JPAKotlin) Generate(
 			contents = append(contents, fmt.Sprintf("package %s", outputPackage), "")
 		}
 		importSet := NewStringSet()
-		importSet.Add("javax.persistence.*")
+		javaImportSet := NewStringSet()
+		javaImportSet.Add("javax.persistence.*")
 
 		// unique
 		uniqueCstName := table.Name + uniqueNameSuffix
@@ -266,8 +274,8 @@ func (k *JPAKotlin) Generate(
 				table.Name, uniqueCstName, strings.Join(uniqueFieldNames, ", ")))
 		}
 		if pkFieldCount > 1 {
-			idClass = class.Name + "PK"
-			appendLine(fmt.Sprintf("@IdClass(%s::class)", idClass))
+			idClassName = class.Name + "PK"
+			appendLine(fmt.Sprintf("@IdClass(%s::class)", idClassName))
 		}
 
 		classDef := fmt.Sprintf("class %s(", class.Name)
@@ -283,8 +291,8 @@ func (k *JPAKotlin) Generate(
 			column := field.Column
 			if column.PrimaryKey {
 				appendLine(indent + "@Id")
-				if idClass == "" {
-					idClass = field.Type
+				if idClassName == "" {
+					idClassName = field.Type
 				}
 			}
 			if column.AutoIncremental {
@@ -344,6 +352,11 @@ func (k *JPAKotlin) Generate(
 
 			line := fmt.Sprintf("var %s: %s", field.Name, field.Type)
 
+			// override
+			if field == idEntityField {
+				line = "override " + line
+			}
+
 			// set default value
 			if field.DefaultValue != "" {
 				line = line + " = " + field.DefaultValue
@@ -357,14 +370,24 @@ func (k *JPAKotlin) Generate(
 			}
 
 			// import
-			importSet.AddAll(field.Imports)
+			for _, imp := range field.Imports {
+				if strings.HasPrefix(imp, "java") {
+					javaImportSet.Add(imp)
+				} else {
+					importSet.Add(imp)
+				}
+			}
 		}
 
 		if useDataClass {
-			appendLine(")")
+			if idEntityField != nil {
+				appendLine(fmt.Sprintf(") : %s<%s>", idEntityInterfaceName, idEntityField.Type))
+			} else {
+				appendLine(")")
+			}
 		} else {
 			appendLine("")
-			appendLine(fmt.Sprintf(") : AbstractJpaPersistable<%s>()", idClass))
+			appendLine(fmt.Sprintf(") : AbstractJpaPersistable<%s>()", idClassName))
 		}
 		appendLine("")
 
@@ -373,8 +396,8 @@ func (k *JPAKotlin) Generate(
 		if pkFieldCount > 1 {
 			addLine := func(s string) { idClassLines = append(idClassLines, s) }
 
-			importSet.Add("java.io.Serializable")
-			addLine(fmt.Sprintf("data class %s(", idClass))
+			javaImportSet.Add("java.io.Serializable")
+			addLine(fmt.Sprintf("data class %s(", idClassName))
 			for i, pkField := range class.PKFields {
 				line := indent + fmt.Sprintf("var %s: %s = %s", pkField.Name, pkField.Type, pkField.DefaultValue)
 				if i < pkFieldCount-1 {
@@ -388,6 +411,9 @@ func (k *JPAKotlin) Generate(
 
 		// contents
 		for _, imp := range importSet.Slice() {
+			contents = append(contents, "import "+imp)
+		}
+		for _, imp := range javaImportSet.Slice() {
 			contents = append(contents, "import "+imp)
 		}
 		contents = append(contents, classLines...)
@@ -411,7 +437,7 @@ func (k *JPAKotlin) Generate(
 				"import org.springframework.stereotype.Repository",
 				"",
 				"@Repository",
-				fmt.Sprintf("interface %s : PagingAndSortingRepository<%s, %s>", reposClassName, class.Name, idClass),
+				fmt.Sprintf("interface %s : PagingAndSortingRepository<%s, %s>", reposClassName, class.Name, idClassName),
 				"",
 			}
 			if err := k.writeLines(path.Join(reposDir, reposClassName+".kt"), lines); err != nil {

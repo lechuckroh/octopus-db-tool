@@ -36,6 +36,7 @@ const (
 	FlagDiff             = "diff"
 	FlagGraphqlPackage   = "graphqlPackage"
 	FlagGroups           = "groups"
+	FlagIdEntity         = "idEntity"
 	FlagNotNull          = "notNull"
 	FlagPackage          = "package"
 	FlagPrefix           = "prefix"
