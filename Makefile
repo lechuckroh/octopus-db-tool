@@ -66,3 +66,8 @@ vendor:
 	@$(GOMOD) vendor
 vendor-update:
 	@$(GOGET) -u
+
+# Bump version
+# see https://github.com/Shyp/bump_version
+bump-patch:
+	bump_version patch main.go
