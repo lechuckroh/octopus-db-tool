@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/google/go-cmp/cmp"
+	"github.com/iancoleman/strcase"
 	"github.com/xwb1989/sqlparser"
 	"path/filepath"
 	"regexp"
@@ -245,4 +246,12 @@ func TernaryFloat64(condition bool, trueValue, falseValue float64) float64 {
 func NewBool(value bool) *bool {
 	b := value
 	return &b
+}
+
+// ToLowerCamel converts snakeCase to camelCase.
+// returns false if string conversion is insymmetric.
+func ToLowerCamel(s string) (string, bool) {
+	camel := strcase.ToLowerCamel(s)
+	snake := strcase.ToSnake(camel)
+	return camel, s == snake
 }

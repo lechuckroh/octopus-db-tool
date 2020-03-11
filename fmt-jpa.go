@@ -22,6 +22,7 @@ type KotlinClass struct {
 type KotlinField struct {
 	Column       *Column
 	Name         string
+	OverrideName bool
 	Type         string
 	Imports      []string
 	DefaultValue string
@@ -156,9 +157,12 @@ func NewKotlinField(column *Column) *KotlinField {
 		fieldType = fieldType + "?"
 	}
 
+	fieldName, ok := ToLowerCamel(column.Name)
+
 	return &KotlinField{
 		Column:       column,
-		Name:         strcase.ToLowerCamel(column.Name),
+		Name:         fieldName,
+		OverrideName: !ok,
 		Type:         fieldType,
 		DefaultValue: defaultValue,
 		Imports:      importSet.Slice(),
@@ -307,8 +311,7 @@ func (k *JPAKotlin) Generate(
 				if ref := column.Ref; ref != nil {
 					targetClassName := getClassNameByTable(ref.Table)
 					if len(targetClassName) == 0 {
-						log.Fatalf("Relation not found. %s::%s -> %s",
-							class.Name, field.Name, ref.Table)
+						log.Fatalf("Relation not found. %s::%s -> %s", class.Name, field.Name, ref.Table)
 					}
 
 					appendLine(indent +
@@ -320,6 +323,9 @@ func (k *JPAKotlin) Generate(
 
 			// @Column attributes
 			attributes := make([]string, 0)
+			if field.OverrideName {
+				attributes = append(attributes, fmt.Sprintf("name = \"%s\"", column.Name))
+			}
 			if !column.Nullable {
 				attributes = append(attributes, "nullable = false")
 			}

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/iancoleman/strcase"
 	"testing"
 )
 
@@ -18,5 +19,23 @@ func TestStringSet_Equals(t *testing.T) {
 	s2.Add("foobar")
 	if s1.Equals(s2) {
 		t.Error("TestStringSet_Equals #2 failed")
+	}
+}
+
+func TestToLowerCamel(t *testing.T) {
+	trueCase := []string{"id", "user_name"}
+	for _, s := range trueCase {
+		camel, ok := ToLowerCamel(s)
+		if !ok {
+			t.Errorf("ToLowerCamel failed: %s -> %s -> %s", s, camel, strcase.ToSnake(camel))
+		}
+	}
+
+	falseCase := []string{"a1_code", "a1"}
+	for _, s := range falseCase {
+		camel, ok := ToLowerCamel(s)
+		if ok {
+			t.Errorf("ToLowerCamel failed: %s -> %s -> %s", s, camel, strcase.ToSnake(camel))
+		}
 	}
 }
