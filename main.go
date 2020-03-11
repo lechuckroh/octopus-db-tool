@@ -163,10 +163,13 @@ func generate(c *cli.Context) error {
 	return cmd.Generate(input, output)
 }
 
+const VERSION = "1.0.12"
+var buildDateVersion string
+
 func main() {
 	cliApp := cli.NewApp()
 	cliApp.Name = "oct"
-	cliApp.Version = "1.0.12"
+	cliApp.Version = VERSION + buildDateVersion
 	cliApp.Compiled = time.Now()
 	cliApp.Authors = []cli.Author{
 		{Name: "Lechuck Roh"},
