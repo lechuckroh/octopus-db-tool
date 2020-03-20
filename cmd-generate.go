@@ -35,6 +35,9 @@ func (cmd *GenerateCmd) Generate(input *Input, output *Output) error {
 	case FormatLiquibase:
 		liquibase := &Liquibase{}
 		return liquibase.Generate(schema, output, tableFilterFn)
+	case FormatSqlalchemy:
+		sqlAlchemy := &SqlAlchemy{}
+		return sqlAlchemy.Generate(schema, output, tableFilterFn, prefixMapper)
 	}
 
 	return fmt.Errorf("unsupported output format: %s", output.Format)

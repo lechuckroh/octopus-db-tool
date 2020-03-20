@@ -11,6 +11,7 @@ const (
 	FormatPlantuml        = "plantuml"
 	FormatQuickdbd        = "quickdbd"
 	FormatSchemaConverter = "schema-converter"
+	FormatSqlalchemy      = "sqlalchemy"
 	FormatSqlH2           = "h2"
 	FormatSqlMysql        = "mysql"
 	FormatSqlOracle       = "oracle"

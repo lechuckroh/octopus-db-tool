@@ -17,6 +17,7 @@ octopus-db-tools provides:
 | `jpa-kotlin-data`   |   |   | O |`kt`    |
 | `jpa-groovy`        |   |   |   |`groovy`|
 | `jpa-java`          |   |   |   |`java`  |
+| `sqlalchemy`        |   |   | O |`py`  |
 | `liquibase`         |   |   | O |`yaml`  |
 | `opti-studio`       |   |   |   |`xml`   |
 | `plantuml`          |   | O |   |`plantuml`|
@@ -133,6 +134,26 @@ $ ./oct generate sample.ojson ./output \
     --groups=foo,bar,foobar
     --prefix=foo:F,bar:B
 ```
+
+#### octopus -> SqlAlchemy
+* output file: `./output/entity.py`
+    * use `./output` to generate separate `*.py` files. 
+* remove tableName prefix starting with `db_` or `mydb_`
+* unique constraint Name : tableName + `_uq`
+* filter table groups: `foo`, `bar`
+* add prefix to className: 
+    * `foo` group: append `F`
+    * `bar` group: append `B`
+
+```bash
+$ ./oct generate sample.ojson ./output/entity.py \
+    --targetFormat=sqlalchemy \
+    --removePrefix=db_,mydb_ \
+    --uniqueNameSuffix=_uq \
+    --groups=foo,bar,foobar
+    --prefix=foo:F,bar:B
+```
+ 
 
 #### octopus -> liquibase yaml
 Generate all:

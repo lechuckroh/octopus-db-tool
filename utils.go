@@ -4,6 +4,8 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/iancoleman/strcase"
 	"github.com/xwb1989/sqlparser"
+	"io/ioutil"
+	"log"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -141,6 +143,15 @@ func GetFileFormat(fileFormat string, filename string) string {
 	}
 }
 
+func WriteLinesToFile(filename string, lines []string) error {
+	if err := ioutil.WriteFile(filename, []byte(strings.Join(lines, "\n")), 0644); err != nil {
+		return err
+	}
+	log.Printf("[WRITE] %s", filename)
+	return nil
+}
+
+
 func Quote(text string, quotationMark string) string {
 	return quotationMark + text + quotationMark
 }
@@ -200,6 +211,10 @@ func (s *StringSet) Remove(key string) {
 	delete(s.valueMap, key)
 }
 
+func (s *StringSet) Clear() {
+	s.valueMap = make(map[string]bool)
+}
+
 func (s *StringSet) Slice() []string {
 	keys := make([]string, 0, len(s.valueMap))
 	for key := range s.valueMap {
@@ -254,4 +269,8 @@ func ToLowerCamel(s string) (string, bool) {
 	camel := strcase.ToLowerCamel(s)
 	snake := strcase.ToSnake(camel)
 	return camel, s == snake
+}
+
+func ToLowerSnake(s string) string {
+	return strcase.ToSnake(strings.ToLower(s))
 }
