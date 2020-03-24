@@ -272,6 +272,11 @@ func main() {
 					Usage:  "set IdEntity interface name",
 					EnvVar: "OCTOPUS_ID_ENTITY",
 				},
+				cli.StringFlag{
+					Name:   FlagUseUTC,
+					Usage:  "use UTC for audit column default value",
+					EnvVar: "OCTOPUS_USE_UTC",
+				},
 			},
 			Action: generate,
 		},

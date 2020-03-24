@@ -144,6 +144,7 @@ $ ./oct generate sample.ojson ./output \
 * add prefix to className: 
     * `foo` group: append `F`
     * `bar` group: append `B`
+* use UTC for `created_at`, `updated_at` column default value.
 
 ```bash
 $ ./oct generate sample.ojson ./output/entity.py \
@@ -151,7 +152,8 @@ $ ./oct generate sample.ojson ./output/entity.py \
     --removePrefix=db_,mydb_ \
     --uniqueNameSuffix=_uq \
     --groups=foo,bar,foobar
-    --prefix=foo:F,bar:B
+    --prefix=foo:F,bar:B \
+    --useUTC=true
 ```
  
 

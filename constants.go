@@ -48,4 +48,5 @@ const (
 	FlagTargetFormat     = "targetFormat"
 	FlagUniqueNameSuffix = "uniqueNameSuffix"
 	FlagUseComments      = "comments"
+	FlagUseUTC           = "useUTC"
 )

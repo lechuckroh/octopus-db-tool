@@ -147,6 +147,7 @@ func (sa *SqlAlchemy) Generate(
 	prefixMapper *PrefixMapper,
 ) error {
 	uniqueNameSuffix := output.Get(FlagUniqueNameSuffix)
+	useUTC := output.GetBool(FlagUseUTC)
 
 	// write to single file if extension is '.py'
 	var outputDir string
@@ -249,11 +250,19 @@ func (sa *SqlAlchemy) Generate(
 			}
 			// audit column
 			if column.Name == "created_at" {
-				attributes = append(attributes, "default=datetime.now")
+				if useUTC {
+					attributes = append(attributes, "default=datetime.utcnow")
+				} else {
+					attributes = append(attributes, "default=datetime.now")
+				}
 				importSet.Add("from datetime import datetime")
 			}
 			if column.Name == "updated_at" {
-				attributes = append(attributes, "default=datetime.now", "onupdate=datetime.now")
+				if useUTC {
+					attributes = append(attributes, "default=datetime.utcnow", "onupdate=datetime.utcnow")
+				} else {
+					attributes = append(attributes, "default=datetime.now", "onupdate=datetime.now")
+				}
 				importSet.Add("from datetime import datetime")
 			}
 
