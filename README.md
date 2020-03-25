@@ -12,6 +12,7 @@ octopus-db-tools provides:
 | `staruml2`          | O |   |   |`mdj`   |
 | [`dbdiagram.io`][1] |   | O |   |        |
 | [`quickdbd`][2]     |   | O |   |        |
+| `gorm`              |   |   | O |`go`    |
 | `graphql`           |   |   | O |`graphql`, `graphqls`|
 | `jpa-kotlin`        |   |   | O |`kt`    |
 | `jpa-kotlin-data`   |   |   | O |`kt`    |
@@ -136,7 +137,7 @@ $ ./oct generate sample.ojson ./output \
 ```
 
 #### octopus -> SqlAlchemy
-* output file: `./output/entity.py`
+* output file: `./output/entities.py`
     * use `./output` to generate separate `*.py` files. 
 * remove tableName prefix starting with `db_` or `mydb_`
 * unique constraint Name : tableName + `_uq`
@@ -147,13 +148,35 @@ $ ./oct generate sample.ojson ./output \
 * use UTC for `created_at`, `updated_at` column default value.
 
 ```bash
-$ ./oct generate sample.ojson ./output/entity.py \
+$ ./oct generate sample.ojson ./output/entities.py \
     --targetFormat=sqlalchemy \
     --removePrefix=db_,mydb_ \
     --uniqueNameSuffix=_uq \
     --groups=foo,bar,foobar
     --prefix=foo:F,bar:B \
     --useUTC=true
+```
+ 
+#### octopus -> GORM
+* output file: `./output/entities.go`
+    * use `./output` to generate separate `*.go` files. 
+* remove tableName prefix starting with `db_` or `mydb_`
+* unique constraint Name : tableName + `_uq`
+* filter table groups: `foo`, `bar`
+* add prefix to className: 
+    * `foo` group: append `F`
+    * `bar` group: append `B`
+* custom embedded model: `BaseModel`
+    * use `gorm.Model` if not specified.
+
+```bash
+$ ./oct generate sample.ojson ./output/entities.go \
+    --targetFormat=sqlalchemy \
+    --removePrefix=db_,mydb_ \
+    --uniqueNameSuffix=_uq \
+    --groups=foo,bar,foobar \
+    --prefix=foo:F,bar:B \
+    --gormModel=BaseModel
 ```
  
 

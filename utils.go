@@ -177,10 +177,14 @@ type StringSet struct {
 	valueMap map[string]bool
 }
 
-func NewStringSet() *StringSet {
-	return &StringSet{
+func NewStringSet(items ...string) *StringSet {
+	set := &StringSet{
 		valueMap: make(map[string]bool),
 	}
+	for _, item := range items {
+		set.Add(item)
+	}
+	return set
 }
 
 func (s *StringSet) Add(value string) {
@@ -267,6 +271,14 @@ func NewBool(value bool) *bool {
 // returns false if string conversion is insymmetric.
 func ToLowerCamel(s string) (string, bool) {
 	camel := strcase.ToLowerCamel(s)
+	snake := strcase.ToSnake(camel)
+	return camel, s == snake
+}
+
+// ToUpperCamel converts snakeCase to camelCase.
+// returns false if string conversion is insymmetric.
+func ToUpperCamel(s string) (string, bool) {
+	camel := strcase.ToCamel(s)
 	snake := strcase.ToSnake(camel)
 	return camel, s == snake
 }

@@ -23,6 +23,9 @@ func (cmd *GenerateCmd) Generate(input *Input, output *Output) error {
 	prefixMapper := newPrefixMapper(output.Get(FlagPrefix))
 
 	switch output.Format {
+	case FormatGorm:
+		gorm := &Gorm{}
+		return gorm.Generate(schema, output, tableFilterFn, prefixMapper)
 	case FormatGraphql:
 		graphql := &Graphql{}
 		return graphql.Generate(schema, output, tableFilterFn, prefixMapper)

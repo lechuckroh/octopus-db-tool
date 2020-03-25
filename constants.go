@@ -2,6 +2,7 @@ package main
 
 const (
 	FormatDbdiagramIo     = "dbdiagram.io"
+	FormatGorm            = "gorm"
 	FormatGraphql         = "graphql"
 	FormatJpaKotlin       = "jpa-kotlin"
 	FormatJpaKotlinData   = "jpa-kotlin-data"
@@ -37,6 +38,7 @@ const (
 	FlagDiff             = "diff"
 	FlagGraphqlPackage   = "graphqlPackage"
 	FlagGroups           = "groups"
+	FlagGormModel        = "gormModel"
 	FlagIdEntity         = "idEntity"
 	FlagNotNull          = "notNull"
 	FlagPackage          = "package"
