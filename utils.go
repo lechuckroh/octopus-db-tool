@@ -283,6 +283,9 @@ func ToUpperCamel(s string) (string, bool) {
 	return camel, s == snake
 }
 
-func ToLowerSnake(s string) string {
-	return strcase.ToSnake(strings.ToLower(s))
+// ToUpperCamel converts snakeCase to lower snakeCase.
+// returns false if string conversion is insymmetric.
+func ToLowerSnake(s string) (string, bool) {
+	snake := strcase.ToSnake(strings.ToLower(s))
+	return snake, s == snake
 }

@@ -39,3 +39,21 @@ func TestToLowerCamel(t *testing.T) {
 		}
 	}
 }
+
+func TestToLowerSnake(t *testing.T) {
+	trueCase := []string{"id", "user_name"}
+	for _, s := range trueCase {
+		snake, ok := ToLowerSnake(s)
+		if !ok {
+			t.Errorf("ToLowerSnake failed: %s -> %s", s, snake)
+		}
+	}
+
+	falseCase := []string{"a1_code", "value_level1"}
+	for _, s := range falseCase {
+		snake, ok := ToLowerSnake(s)
+		if ok {
+			t.Errorf("ToLowerSnake failed: %s -> %s", s, snake)
+		}
+	}
+}

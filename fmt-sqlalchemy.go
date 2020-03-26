@@ -115,7 +115,7 @@ func NewSaField(column *Column) *SaField {
 		importSet.Add(fieldType)
 	}
 
-	fieldName := ToLowerSnake(column.Name)
+	fieldName, ok := ToLowerSnake(column.Name)
 
 	// check python reserved words
 	reservedWord := IsPythonReservedWord(fieldName)
@@ -126,7 +126,7 @@ func NewSaField(column *Column) *SaField {
 	return &SaField{
 		Column:       column,
 		Name:         fieldName,
-		OverrideName: reservedWord,
+		OverrideName: reservedWord || !ok,
 		Type:         fieldType,
 		Imports:      importSet.Slice(),
 	}
