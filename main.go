@@ -243,6 +243,11 @@ func main() {
 					EnvVar: "OCTOPUS_GRAPHQL_PACKAGE",
 				},
 				cli.StringFlag{
+					Name:   FlagGormModel,
+					Usage:  "set embedded base model for GORM model",
+					EnvVar: "OCTOPUS_GORM_MODEL",
+				},
+				cli.StringFlag{
 					Name:   FlagRemovePrefix,
 					Usage:  "set prefixes to remove. set multiple values with comma separated.",
 					EnvVar: "OCTOPUS_REMOVE_PREFIX",

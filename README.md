@@ -171,7 +171,7 @@ $ ./oct generate sample.ojson ./output/entities.py \
 
 ```bash
 $ ./oct generate sample.ojson ./output/entities.go \
-    --targetFormat=sqlalchemy \
+    --targetFormat=gorm \
     --removePrefix=db_,mydb_ \
     --uniqueNameSuffix=_uq \
     --groups=foo,bar,foobar \
