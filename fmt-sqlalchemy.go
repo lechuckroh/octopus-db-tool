@@ -240,6 +240,10 @@ func (sa *SqlAlchemy) Generate(
 			if column.PrimaryKey {
 				attributes = append(attributes, "primary_key=True")
 			}
+			// Unique
+			if column.UniqueKey {
+				attributes = append(attributes, "unique=True")
+			}
 			// auto_increment
 			if column.AutoIncremental {
 				attributes = append(attributes, "autoincrement=True")
