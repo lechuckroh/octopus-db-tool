@@ -439,11 +439,11 @@ func (k *JPAKotlin) Generate(
 				"package " + reposPackage,
 				"",
 				"import " + outputPackage + ".*",
-				"import org.springframework.data.repository.PagingAndSortingRepository",
+				"import org.springframework.data.jpa.repository.JpaRepository",
 				"import org.springframework.stereotype.Repository",
 				"",
 				"@Repository",
-				fmt.Sprintf("interface %s : PagingAndSortingRepository<%s, %s>", reposClassName, class.Name, idClassName),
+				fmt.Sprintf("interface %s : JpaRepository<%s, %s>", reposClassName, class.Name, idClassName),
 				"",
 			}
 			if err := k.writeLines(path.Join(reposDir, reposClassName+".kt"), lines); err != nil {
