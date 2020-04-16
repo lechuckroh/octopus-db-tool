@@ -132,7 +132,7 @@ $ ./oct generate sample.ojson ./output \
     --graphqlPackage=com.foo.graphql \
     --removePrefix=db_,mydb_ \
     --uniqueNameSuffix=_uq \
-    --groups=foo,bar,foobar
+    --groups=foo,bar,foobar \
     --prefix=foo:F,bar:B
 ```
 
