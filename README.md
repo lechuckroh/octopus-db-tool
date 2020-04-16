@@ -123,6 +123,9 @@ $ mysqldump \
 * add prefix to className: 
     * `foo` group: append `F`
     * `bar` group: append `B`
+* add custom class annotations:
+    * `foo` group: `@Foo`
+    * `foobar` group: `@Foo`, `@Bar`
 
 ```bash
 $ ./oct generate sample.ojson ./output \
@@ -133,7 +136,8 @@ $ ./oct generate sample.ojson ./output \
     --removePrefix=db_,mydb_ \
     --uniqueNameSuffix=_uq \
     --groups=foo,bar,foobar \
-    --prefix=foo:F,bar:B
+    --prefix=foo:F,bar:B \
+    --annotation=foo:@Foo,foobar:@Foo;@Bar
 ```
 
 #### octopus -> SqlAlchemy

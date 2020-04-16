@@ -19,6 +19,8 @@ func (cmd *GenerateCmd) Generate(input *Input, output *Output) error {
 	// table filter
 	tableFilterFn := cmd.getTableFilterFn(output.Get(FlagGroups))
 
+	// annotation mapper
+	annoMapper := newAnnotationMapper(output.Get(FlagAnnotation))
 	// prefix mapper
 	prefixMapper := newPrefixMapper(output.Get(FlagPrefix))
 
@@ -31,10 +33,10 @@ func (cmd *GenerateCmd) Generate(input *Input, output *Output) error {
 		return graphql.Generate(schema, output, tableFilterFn, prefixMapper)
 	case FormatJpaKotlin:
 		jpa := &JPAKotlin{}
-		return jpa.Generate(schema, output, tableFilterFn, prefixMapper, false)
+		return jpa.Generate(schema, output, tableFilterFn, annoMapper, prefixMapper, false)
 	case FormatJpaKotlinData:
 		jpa := &JPAKotlin{}
-		return jpa.Generate(schema, output, tableFilterFn, prefixMapper, true)
+		return jpa.Generate(schema, output, tableFilterFn, annoMapper, prefixMapper, true)
 	case FormatLiquibase:
 		liquibase := &Liquibase{}
 		return liquibase.Generate(schema, output, tableFilterFn)
@@ -61,6 +63,45 @@ func (cmd *GenerateCmd) getTableFilterFn(groups string) TableFilterFn {
 		return false
 	}
 }
+
+type AnnotationMapper struct {
+	anno    string
+	annoMap map[string][]string
+	useMap  bool
+}
+
+func newAnnotationMapper(annotation string) *AnnotationMapper {
+	annoMap := make(map[string][]string)
+
+	// populate annoMap
+	if strings.Contains(annotation, ":") {
+		for _, annoToken := range strings.Split(annotation, ",") {
+			kv := strings.SplitN(annoToken, ":", 2)
+			group := kv[0]
+			annotations := strings.Split(kv[1], ";")
+			annoMap[group] = annotations
+		}
+	}
+
+	return &AnnotationMapper{
+		anno:    annotation,
+		annoMap: annoMap,
+		useMap:  len(annoMap) > 0,
+	}
+}
+
+func (m *AnnotationMapper) GetAnnotations(group string) []string {
+	if m.useMap {
+		fmt.Printf(group)
+		if annotations, ok := m.annoMap[group]; ok {
+			return annotations
+		}
+		return []string{}
+	} else {
+		return []string{m.anno}
+	}
+}
+
 
 type PrefixMapper struct {
 	prefix    string

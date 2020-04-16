@@ -14,6 +14,7 @@ import (
 type KotlinClass struct {
 	table        *Table
 	Name         string
+	Annotations  []string
 	Fields       []*KotlinField
 	PKFields     []*KotlinField
 	UniqueFields []*KotlinField
@@ -34,6 +35,7 @@ type JPAKotlin struct {
 func NewKotlinClass(
 	table *Table,
 	output *Output,
+	annoMapper *AnnotationMapper,
 	prefixMapper *PrefixMapper,
 ) *KotlinClass {
 	className := table.ClassName
@@ -67,6 +69,7 @@ func NewKotlinClass(
 	return &KotlinClass{
 		table:        table,
 		Name:         className,
+		Annotations:  annoMapper.GetAnnotations(table.Group),
 		Fields:       fields,
 		PKFields:     pkFields,
 		UniqueFields: uniqueFields,
@@ -185,6 +188,7 @@ func (k *JPAKotlin) Generate(
 	schema *Schema,
 	output *Output,
 	tableFilterFn TableFilterFn,
+	annoMapper *AnnotationMapper,
 	prefixMapper *PrefixMapper,
 	useDataClass bool,
 ) error {
@@ -223,7 +227,7 @@ func (k *JPAKotlin) Generate(
 		if tableFilterFn != nil && !tableFilterFn(table) {
 			continue
 		}
-		classes = append(classes, NewKotlinClass(table, output, prefixMapper))
+		classes = append(classes, NewKotlinClass(table, output, annoMapper, prefixMapper))
 	}
 
 	getClassNameByTable := func(table string) string {
@@ -270,6 +274,9 @@ func (k *JPAKotlin) Generate(
 
 		// class
 		appendLine("")
+		for _, anno := range class.Annotations {
+			appendLine(anno)
+		}
 		appendLine("@Entity")
 		if len(uniqueFieldNames) == 0 {
 			appendLine(fmt.Sprintf("@Table(name = \"%s\")", table.Name))

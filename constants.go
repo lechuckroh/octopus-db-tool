@@ -35,6 +35,7 @@ const (
 	ColTypeText     = "text"
 	ColTypeTime     = "time"
 
+	FlagAnnotation       = "annotation"
 	FlagDiff             = "diff"
 	FlagGraphqlPackage   = "graphqlPackage"
 	FlagGroups           = "groups"

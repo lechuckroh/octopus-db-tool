@@ -238,6 +238,11 @@ func main() {
 					EnvVar: "OCTOPUS_RELATION",
 				},
 				cli.StringFlag{
+					Name:   FlagAnnotation,
+					Usage:  "add custom class annotations",
+					EnvVar: "OCTOPUS_ANNOTATION",
+				},
+				cli.StringFlag{
 					Name:   FlagGraphqlPackage,
 					Usage:  "set target graphql package name",
 					EnvVar: "OCTOPUS_GRAPHQL_PACKAGE",
