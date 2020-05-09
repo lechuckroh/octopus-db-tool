@@ -1,0 +1,10 @@
+kind: pipeline
+type: docker
+name: default
+
+steps:
+  - name: build
+    image: golang:1.14
+    commands:
+      - make vendor
+      - make compile

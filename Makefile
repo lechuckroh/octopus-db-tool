@@ -42,13 +42,16 @@ compile-rmi:
 package: package-macos package-linux package-windows
 
 package-windows: compile-windows
-	upx -9 $(BINARY_WINDOWS)
-	zip -m oct-win64.zip $(BINARY_WINDOWS)
+#	upx -9 $(BINARY_WINDOWS)
+#	zip -m oct-win64.zip $(BINARY_WINDOWS)
+	gzip $(BINARY_WINDOWS) && mv $(BINARY_WINDOWS).gz oct-win64.gz
 package-linux: compile-linux
-	upx -9 $(BINARY_LINUX)
-	zip -m oct-linux64.zip $(BINARY_LINUX)
+#	upx -9 $(BINARY_LINUX)
+#	zip -m oct-linux64.zip $(BINARY_LINUX)
+	gzip $(BINARY_LINUX) && mv $(BINARY_LINUX).gz oct-linux64.gz
 package-macos: compile-macos
-	zip -m oct-darwin64.zip $(BINARY_MACOS)
+#	zip -m oct-darwin64.zip $(BINARY_MACOS)
+	gzip $(BINARY_MACOS) && mv $(BINARY_MACOS).gz oct-darwin64.gz
 
 # Test
 test:

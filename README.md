@@ -1,4 +1,7 @@
+[![Build Status](http://drone.lechuckcgx.com:11080/api/badges/lechuckroh/octopus-db-tool/status.svg)](http://drone.lechuckcgx.com:11080/lechuckroh/octopus-db-tool)
+
 # octopus-db-tools
+
 octopus-db-tools provides:
 * ERD definition format conversion
 * Generate SQL to create tables.
