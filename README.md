@@ -1,4 +1,4 @@
-[![Build Status](http://drone.lechuckcgx.com:11080/api/badges/lechuckroh/octopus-db-tool/status.svg)](http://drone.lechuckcgx.com:11080/lechuckroh/octopus-db-tool)
+[![Build Status](http://drone.lechuckcgx.com/api/badges/lechuckroh/octopus-db-tool/status.svg)](http://drone.lechuckcgx.com/lechuckroh/octopus-db-tool)
 
 # octopus-db-tools
 
