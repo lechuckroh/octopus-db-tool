@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"sort"
@@ -37,6 +39,23 @@ func (c *Column) IsRenamed(target *Column, excludeDescription bool) bool {
 		c.UniqueKey == target.UniqueKey &&
 		c.AutoIncremental == target.AutoIncremental &&
 		c.DefaultValue == target.DefaultValue
+}
+
+func (c *Column) Validate(autoCorrect bool) error {
+	if c.Name == "" {
+		return errors.New("column name is empty")
+	}
+	if c.AutoIncremental {
+		if c.Type != ColTypeInt && c.Type != ColTypeLong {
+			if autoCorrect {
+				log.Printf("column: '%s', type: '%s' cannnot be autoIncremental. autoIncremental disabled.", c.Name, c.Type)
+				c.AutoIncremental = false
+			} else {
+				return errors.New(fmt.Sprintf("column: '%s', type: '%s' cannnot be autoIncremental", c.Name, c.Type))
+			}
+		}
+	}
+	return nil
 }
 
 type Table struct {
@@ -162,6 +181,11 @@ func (s *Schema) Normalize() {
 		for _, column := range table.Columns {
 			if colType, ok := normalizeColumnType(column); ok {
 				column.Type = colType
+
+				// validate
+				if err := column.Validate(true); err != nil {
+					log.Panicf("table: %s, %s", table.Name, err.Error())
+				}
 			} else {
 				log.Printf("unknown column type: '%s', table: %s, column: %s",
 					column.Type, table.Name, column.Name)
