@@ -772,6 +772,13 @@ func (l *Liquibase) diffTable(
 		changeSet := newLqChangeSet(id.bumpMinor(), author)
 		changeSet.Append("renameColumn", newRenameColumn(table, newColumn, oldColumn))
 		changeSets = append(changeSets, changeSet)
+
+		// not null constraint is removed after renameColumn. (fixed in liquibase v4.0)
+		if !oldColumn.Nullable {
+			changeSet = newLqChangeSet(id.bumpMinor(), author)
+			changeSet.Append("addNotNullConstraint", newAddNotNullConstraint(table, newColumn))
+			changeSets = append(changeSets, changeSet)
+		}
 	}
 
 	// added columns
