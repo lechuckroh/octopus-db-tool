@@ -347,20 +347,19 @@ func (k *JPAKotlin) Generate(
 					attributes = append(attributes, fmt.Sprintf("scale = %d", column.Scale))
 				}
 			}
-			if len(attributes) > 0 {
-				appendLine(indent + fmt.Sprintf("@Column(%s)", strings.Join(attributes, ", ")))
-			}
-
 			// @CreationTimestamp
 			if column.Type == "datetime" && field.Name == "createdAt" {
 				appendLine(indent + "@CreationTimestamp")
-				appendLine(indent + "@Column(updatable = false)")
+				attributes = append(attributes, "updatable = false")
 				importSet.Add("org.hibernate.annotations.CreationTimestamp")
 			}
 			// @UpdateTimestamp
 			if column.Type == "datetime" && field.Name == "updatedAt" {
 				appendLine(indent + "@UpdateTimestamp")
 				importSet.Add("org.hibernate.annotations.UpdateTimestamp")
+			}
+			if len(attributes) > 0 {
+				appendLine(indent + fmt.Sprintf("@Column(%s)", strings.Join(attributes, ", ")))
 			}
 
 			line := fmt.Sprintf("var %s: %s", field.Name, field.Type)
