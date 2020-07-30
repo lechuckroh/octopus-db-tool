@@ -182,6 +182,7 @@ func (sa *SqlAlchemy) Generate(
 
 	// contents to write
 	contents := make([]string, 0)
+	useTZDateTime := false
 
 	for _, class := range classes {
 		table := class.table
@@ -213,6 +214,7 @@ func (sa *SqlAlchemy) Generate(
 		// fields
 		for _, field := range class.Fields {
 			column := field.Column
+			lcColumnType := strings.ToLower(column.Type)
 
 			// Column attributes
 			attributes := make([]string, 0)
@@ -221,9 +223,9 @@ func (sa *SqlAlchemy) Generate(
 				attributes = append(attributes, Quote(column.Name, "'"))
 			}
 
-			if column.Type == "string" && column.Size > 0 {
+			if lcColumnType == ColTypeString && column.Size > 0 {
 				attributes = append(attributes, fmt.Sprintf("%s(%d)", field.Type, column.Size))
-			} else if column.Type == ColTypeDouble || column.Type == ColTypeFloat || column.Type == ColTypeDecimal {
+			} else if lcColumnType == ColTypeDouble || lcColumnType == ColTypeFloat || lcColumnType == ColTypeDecimal {
 				colAttrs := make([]string, 0)
 				if column.Size > 0 {
 					colAttrs = append(colAttrs, fmt.Sprintf("precision=%d", column.Size))
@@ -233,6 +235,30 @@ func (sa *SqlAlchemy) Generate(
 				}
 
 				attributes = append(attributes, fmt.Sprintf("%s(%s)", field.Type, strings.Join(colAttrs, ", ")))
+			} else if lcColumnType == ColTypeDateTime {
+				if column.Name == "created_at" {
+					if useUTC {
+						attributes = append(attributes, field.Type, "default=datetime.utcnow")
+					} else {
+						attributes = append(attributes, field.Type, "default=datetime.now")
+					}
+				} else if column.Name == "updated_at" {
+					if useUTC {
+						attributes = append(attributes, field.Type, "default=datetime.utcnow", "onupdate=datetime.utcnow")
+					} else {
+						attributes = append(attributes, field.Type, "default=datetime.now", "onupdate=datetime.now")
+					}
+				} else {
+					if useUTC {
+						attributes = append(attributes, "TZDateTime")
+						useTZDateTime = true
+						saImportSet.Add("TypeDecorator")
+						importSet.Add("from datetime import timezone")
+					} else {
+						attributes = append(attributes, field.Type)
+					}
+				}
+				importSet.Add("from datetime import datetime")
 			} else {
 				attributes = append(attributes, field.Type)
 			}
@@ -251,23 +277,6 @@ func (sa *SqlAlchemy) Generate(
 			// not null
 			if !column.Nullable && !column.AutoIncremental {
 				attributes = append(attributes, "nullable=False")
-			}
-			// audit column
-			if column.Name == "created_at" {
-				if useUTC {
-					attributes = append(attributes, "default=datetime.utcnow")
-				} else {
-					attributes = append(attributes, "default=datetime.now")
-				}
-				importSet.Add("from datetime import datetime")
-			}
-			if column.Name == "updated_at" {
-				if useUTC {
-					attributes = append(attributes, "default=datetime.utcnow", "onupdate=datetime.utcnow")
-				} else {
-					attributes = append(attributes, "default=datetime.now", "onupdate=datetime.now")
-				}
-				importSet.Add("from datetime import datetime")
 			}
 
 			appendLine(indent + fmt.Sprintf("%s = Column(%s)", field.Name, strings.Join(attributes, ", ")))
@@ -300,6 +309,9 @@ func (sa *SqlAlchemy) Generate(
 	// Write to single file
 	if generateSingleFile {
 		finalOutput := sa.getHeaderLines(importSet.Slice(), saImportSet.Slice())
+		if useTZDateTime {
+			finalOutput = append(finalOutput, sa.getTZDateTimeLines()...)
+		}
 		finalOutput = append(finalOutput, contents...)
 		finalOutput = append(finalOutput, "")
 
@@ -309,6 +321,27 @@ func (sa *SqlAlchemy) Generate(
 	}
 
 	return nil
+}
+
+func (sa *SqlAlchemy) getTZDateTimeLines() []string {
+	return []string {
+		"",
+		"",
+		"class TZDateTime(TypeDecorator):",
+		"    impl = DateTime",
+		"",
+		"    def process_bind_param(self, value, dialect):",
+		"        if value is not None:",
+		"            if not value.tzinfo:",
+		"                raise TypeError(\"tzinfo is required\")",
+		"            value = value.astimezone(timezone.utc).replace(tzinfo=None)",
+		"        return value",
+		"",
+		"    def process_result_value(self, value, dialect):",
+		"        if value is not None:",
+		"            value = value.replace(tzinfo=timezone.utc)",
+		"        return value",
+	}
 }
 
 func (sa *SqlAlchemy) getHeaderLines(imports []string, saImports []string) []string {
