@@ -287,6 +287,11 @@ func main() {
 					Usage:  "use UTC for audit column default value",
 					EnvVar: "OCTOPUS_USE_UTC",
 				},
+				cli.StringFlag{
+					Name: FlagUseComments,
+					Usage:  "generate column comments",
+					EnvVar: "OCTOPUS_USE_COMMENTS",
+				},
 			},
 			Action: generate,
 		},

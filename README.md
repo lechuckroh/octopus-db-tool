@@ -195,9 +195,9 @@ Generate all:
 
 ```bash
 $ ./oct generate samples.ojson ./output \
-    --targetFormat=liquibase
-    --uniqueNameSuffix=_uq
-    --comments
+    --targetFormat=liquibase \
+    --uniqueNameSuffix=_uq \
+    --comments=true
 ```
 
 Generate diff changelog:
@@ -205,10 +205,12 @@ Generate diff changelog:
 * unique constraint Name : tableName + `_uq`
 * from octopus: `v1.ojson`
 * to octopus: `v2.ojson`
+* generate comments
 
 ```bash
 $ ./oct generate v2.ojson ./output \
-    --diff=v1.ojson
-    --targetFormat=liquibase
-    --uniqueNameSuffix=_uq
+    --diff=v1.ojson \
+    --targetFormat=liquibase \
+    --uniqueNameSuffix=_uq \
+    --comments=true
 ```
