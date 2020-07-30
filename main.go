@@ -163,7 +163,7 @@ func generate(c *cli.Context) error {
 	return cmd.Generate(input, output)
 }
 
-const VERSION = "1.0.18"
+const VERSION = "1.0.19"
 
 var buildDateVersion string
 
@@ -288,7 +288,7 @@ func main() {
 					EnvVar: "OCTOPUS_USE_UTC",
 				},
 				cli.StringFlag{
-					Name: FlagUseComments,
+					Name:   FlagUseComments,
 					Usage:  "generate column comments",
 					EnvVar: "OCTOPUS_USE_COMMENTS",
 				},
