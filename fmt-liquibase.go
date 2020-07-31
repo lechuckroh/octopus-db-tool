@@ -84,6 +84,7 @@ func newCreateTableChangeSet(
 
 	createTable := &LqCreateTable{
 		TableName: table.Name,
+		Remarks:   table.Description,
 		Columns:   make([]map[string]*LqColumn, 0),
 	}
 
@@ -137,6 +138,7 @@ func newCreateTableChangeSet(
 
 type LqCreateTable struct {
 	TableName string                 `yaml:"tableName"`
+	Remarks   string                 `yaml:"remarks,omitempty"`
 	Columns   []map[string]*LqColumn `yaml:"columns"`
 }
 
@@ -157,6 +159,18 @@ func newRenameTable(newTableName string, oldTableName string) *LqRenameTable {
 	return &LqRenameTable{
 		NewTableName: newTableName,
 		OldTableName: oldTableName,
+	}
+}
+
+type LqSetTableRemarks struct {
+	TableName  string `yaml:"tableName"`
+	Remarks    string `yaml:"remarks,omitempty"`
+}
+
+func newSetTableRemarks(table *Table) *LqSetTableRemarks {
+	return &LqSetTableRemarks{
+		TableName:  table.Name,
+		Remarks:    table.Description,
 	}
 }
 
@@ -705,6 +719,12 @@ func (l *Liquibase) diffTable(
 	uniqueNameSuffix string,
 ) ([]*LqChangeSet, error) {
 	changeSets := make([]*LqChangeSet, 0)
+
+	if useComments && table.Description != oldTable.Description {
+		changeSet := newLqChangeSet(id.bumpMinor(), author)
+		changeSet.Append("setTableRemarks", newSetTableRemarks(table))
+		changeSets = append(changeSets, changeSet)
+	}
 
 	oldColumnByName := oldTable.ColumnByName()
 
