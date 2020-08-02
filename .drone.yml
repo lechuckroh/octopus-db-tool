@@ -7,10 +7,18 @@ steps:
     image: golang:1.14
     commands:
       - make vendor
+      - make compile
+    when:
+      event:
+        exclude:
+          - tag
+  - name: package
+    image: golang:1.14
+    commands:
+      - make vendor
       - make package
     when:
-      branch:
-        - master
+      event: tag
   - name: publish
     image: plugins/github-release
     settings:
