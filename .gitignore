@@ -20,6 +20,9 @@
 .project
 /vendor
 
+# drone secrets
+/secrets.txt
+
 #
 /oct
 /samples

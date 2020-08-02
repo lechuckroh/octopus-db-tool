@@ -76,3 +76,13 @@ vendor-update:
 # see https://github.com/Shyp/bump_version
 bump-patch:
 	bump_version patch main.go
+
+# local build with drone
+drone-exec:
+	drone exec --secret-file secrets.txt
+drone-exec-tag:
+	DRONE_BUILD_EVENT=tag \
+	DRONE_REPO_OWNER=lechuckroh \
+	DRONE_REPO_NAME=octopus-db-tool \
+	DRONE_COMMIT_REF=1-test \
+	drone exec --secret-file secrets.txt --event tag

@@ -7,4 +7,16 @@ steps:
     image: golang:1.14
     commands:
       - make vendor
-      - make compile
+      - make package
+  - name: publish
+    image: plugins/github-release
+    settings:
+      api_key:
+        from_secret: github_api_key
+      files: "oct-*.gz"
+      checksum:
+        - md5
+        - sha256
+        - crc32
+    when:
+      event: tag
