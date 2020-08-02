@@ -8,6 +8,9 @@ steps:
     commands:
       - make vendor
       - make package
+    when:
+      branch:
+        - master
   - name: publish
     image: plugins/github-release
     settings:

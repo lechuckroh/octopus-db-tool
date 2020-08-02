@@ -1,6 +1,6 @@
-[![Build Status](http://drone.lechuckcgx.com/api/badges/lechuckroh/octopus-db-tool/status.svg)](http://drone.lechuckcgx.com/lechuckroh/octopus-db-tool)
-
 # octopus-db-tools
+
+[![Build Status](https://drone.lechuckcgx.com/api/badges/lechuckroh/octopus-db-tool/status.svg?ref=refs/heads/master)](https://drone.lechuckcgx.com/lechuckroh/octopus-db-tool)
 
 octopus-db-tools provides:
 * ERD definition format conversion
