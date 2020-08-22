@@ -32,11 +32,17 @@ func (cmd *GenerateCmd) Generate(input *Input, output *Output) error {
 		graphql := &Graphql{}
 		return graphql.Generate(schema, output, tableFilterFn, prefixMapper)
 	case FormatJpaKotlin:
-		jpa := &JPAKotlin{}
-		return jpa.Generate(schema, output, tableFilterFn, annoMapper, prefixMapper, false)
+		jpa := NewJPAKotlin(schema, output, tableFilterFn, annoMapper, prefixMapper, false)
+		return jpa.Generate()
 	case FormatJpaKotlinData:
-		jpa := &JPAKotlin{}
-		return jpa.Generate(schema, output, tableFilterFn, annoMapper, prefixMapper, true)
+		jpa := NewJPAKotlin(schema, output, tableFilterFn, annoMapper, prefixMapper, true)
+		return jpa.Generate()
+	case FormatJpaKotlinTpl:
+		jpa := NewJPAKotlinTpl(schema, output, tableFilterFn, annoMapper, prefixMapper, false)
+		return jpa.Generate()
+	case FormatJpaKotlinTplData:
+		jpa := NewJPAKotlinTpl(schema, output, tableFilterFn, annoMapper, prefixMapper, true)
+		return jpa.Generate()
 	case FormatLiquibase:
 		liquibase := &Liquibase{}
 		return liquibase.Generate(schema, output, tableFilterFn)
@@ -92,7 +98,6 @@ func newAnnotationMapper(annotation string) *AnnotationMapper {
 
 func (m *AnnotationMapper) GetAnnotations(group string) []string {
 	if m.useMap {
-		fmt.Printf(group)
 		if annotations, ok := m.annoMap[group]; ok {
 			return annotations
 		}

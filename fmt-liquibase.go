@@ -595,7 +595,7 @@ func (l *Liquibase) generateDiff(
 	uniqueNameSuffix := output.Get(FlagUniqueNameSuffix)
 	useComments := output.GetBool(FlagUseComments)
 
-	oldTableByName := oldSchema.TableByName()
+	oldTableByName := oldSchema.TablesByName()
 
 	addedTables := make([]*Table, 0)
 	renamedTableMap := make(map[*Table]*Table)

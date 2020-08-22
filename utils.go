@@ -6,6 +6,8 @@ import (
 	"github.com/xwb1989/sqlparser"
 	"io/ioutil"
 	"log"
+	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -288,4 +290,32 @@ func ToUpperCamel(s string) (string, bool) {
 func ToLowerSnake(s string) (string, bool) {
 	snake := strcase.ToSnake(strings.ToLower(s))
 	return snake, s == snake
+}
+
+// mkdirPackage creates nested package directories.
+func mkdirPackage(basedir, pkgName string) (string, error) {
+	if pkgName == "" {
+		return "", nil
+	}
+	dir := path.Join(append([]string{basedir}, strings.Split(pkgName, ".")...)...)
+	if err := os.MkdirAll(dir, 0777); err != nil {
+		return "", err
+	}
+	return dir, nil
+}
+
+func writeLinesToFile(filename string, lines []string) error {
+	if err := ioutil.WriteFile(filename, []byte(strings.Join(lines, "\n")), 0644); err != nil {
+		return err
+	}
+	log.Printf("[WRITE] %s", filename)
+	return nil
+}
+
+func writeStringToFile(filename string, s string) error {
+	if err := ioutil.WriteFile(filename, []byte(s), 0644); err != nil {
+		return err
+	}
+	log.Printf("[WRITE] %s", filename)
+	return nil
 }

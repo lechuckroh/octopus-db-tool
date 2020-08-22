@@ -124,7 +124,8 @@ type Schema struct {
 	Tables  []*Table `json:"tables,omitempty"`
 }
 
-func (s *Schema) TableByName() map[string]*Table {
+// TablesByName returns Table map where key is tableName
+func (s *Schema) TablesByName() map[string]*Table {
 	result := make(map[string]*Table)
 
 	for _, table := range s.Tables {
@@ -132,6 +133,16 @@ func (s *Schema) TableByName() map[string]*Table {
 	}
 
 	return result
+}
+
+//TableByName finds Table by name
+func (s *Schema) TableByName(name string) *Table {
+	for _, table := range s.Tables {
+		if table.Name == name {
+			return table
+		}
+	}
+	return nil
 }
 
 func (s *Schema) Groups() []string {

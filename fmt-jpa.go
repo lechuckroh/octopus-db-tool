@@ -6,7 +6,6 @@ import (
 	"github.com/iancoleman/strcase"
 	"io/ioutil"
 	"log"
-	"os"
 	"path"
 	"strings"
 )
@@ -30,6 +29,39 @@ type KotlinField struct {
 }
 
 type JPAKotlin struct {
+	schema       *Schema
+	classes      []*KotlinClass
+	output       *Output
+	annoMapper   *AnnotationMapper
+	prefixMapper *PrefixMapper
+	useDataClass bool
+}
+
+func NewJPAKotlin(
+	schema *Schema,
+	output *Output,
+	tableFilterFn TableFilterFn,
+	annoMapper *AnnotationMapper,
+	prefixMapper *PrefixMapper,
+	useDataClass bool,
+) *JPAKotlin {
+	// populate KotlinClass
+	classes := make([]*KotlinClass, 0)
+	for _, table := range schema.Tables {
+		if tableFilterFn != nil && !tableFilterFn(table) {
+			continue
+		}
+		classes = append(classes, NewKotlinClass(table, output, annoMapper, prefixMapper))
+	}
+
+	return &JPAKotlin{
+		schema:       schema,
+		classes:      classes,
+		output:       output,
+		annoMapper:   annoMapper,
+		prefixMapper: prefixMapper,
+		useDataClass: useDataClass,
+	}
 }
 
 func NewKotlinClass(
@@ -172,26 +204,17 @@ func NewKotlinField(column *Column) *KotlinField {
 	}
 }
 
-func (k *JPAKotlin) mkdir(basedir, pkgName string) (string, error) {
-	if pkgName == "" {
-		return "", nil
+func (k *JPAKotlin) getClassNameByTableName(tableName string) string {
+	for _, cls := range k.classes {
+		if cls.table.Name == tableName {
+			return cls.Name
+		}
 	}
-	dir := path.Join(append([]string{basedir}, strings.Split(pkgName, ".")...)...)
-	if err := os.MkdirAll(dir, 0777); err != nil {
-		return "", err
-	}
-	log.Printf("[MKDIR] %s", dir)
-	return dir, nil
+	return ""
 }
 
-func (k *JPAKotlin) Generate(
-	schema *Schema,
-	output *Output,
-	tableFilterFn TableFilterFn,
-	annoMapper *AnnotationMapper,
-	prefixMapper *PrefixMapper,
-	useDataClass bool,
-) error {
+func (k *JPAKotlin) Generate() error {
+	output := k.output
 	outputPackage := output.Get(FlagPackage)
 	reposPackage := output.Get(FlagReposPackage)
 	graphqlPackage := output.Get(FlagGraphqlPackage)
@@ -199,20 +222,20 @@ func (k *JPAKotlin) Generate(
 	uniqueNameSuffix := output.Get(FlagUniqueNameSuffix)
 	idEntityInterfaceName := output.Get(FlagIdEntity)
 
-	entityDir, err := k.mkdir(output.FilePath, outputPackage)
+	entityDir, err := mkdirPackage(output.FilePath, outputPackage)
 	if err != nil {
 		return err
 	}
-	reposDir, err := k.mkdir(output.FilePath, reposPackage)
+	reposDir, err := mkdirPackage(output.FilePath, reposPackage)
 	if err != nil {
 		return err
 	}
-	graphqlDir, err := k.mkdir(output.FilePath, graphqlPackage)
+	graphqlDir, err := mkdirPackage(output.FilePath, graphqlPackage)
 	if err != nil {
 		return err
 	}
 
-	if !useDataClass {
+	if !k.useDataClass {
 		// Generate AbstractJpaPersistable.kt
 		if err := k.generateAbstractJpaPersistable(entityDir, outputPackage); err != nil {
 			return err
@@ -221,23 +244,7 @@ func (k *JPAKotlin) Generate(
 
 	indent := strings.Repeat(" ", 8)
 
-	classes := make([]*KotlinClass, 0)
-	for _, table := range schema.Tables {
-		// filter table
-		if tableFilterFn != nil && !tableFilterFn(table) {
-			continue
-		}
-		classes = append(classes, NewKotlinClass(table, output, annoMapper, prefixMapper))
-	}
-
-	getClassNameByTable := func(table string) string {
-		for _, cls := range classes {
-			if cls.table.Name == table {
-				return cls.Name
-			}
-		}
-		return ""
-	}
+	classes := k.classes
 
 	for _, class := range classes {
 		table := class.table
@@ -290,7 +297,7 @@ func (k *JPAKotlin) Generate(
 		}
 
 		classDef := fmt.Sprintf("class %s(", class.Name)
-		if useDataClass {
+		if k.useDataClass {
 			appendLine("data " + classDef)
 		} else {
 			appendLine(classDef)
@@ -316,7 +323,7 @@ func (k *JPAKotlin) Generate(
 			// @VRelation
 			if relation == "VRelation" {
 				if ref := column.Ref; ref != nil {
-					targetClassName := getClassNameByTable(ref.Table)
+					targetClassName := k.getClassNameByTableName(ref.Table)
 					if len(targetClassName) == 0 {
 						log.Fatalf("Relation not found. %s::%s -> %s", class.Name, field.Name, ref.Table)
 					}
@@ -391,7 +398,7 @@ func (k *JPAKotlin) Generate(
 			}
 		}
 
-		if useDataClass {
+		if k.useDataClass {
 			if idEntityField != nil {
 				appendLine(fmt.Sprintf(") : %s<%s>", idEntityInterfaceName, idEntityField.Type))
 			} else {
@@ -452,7 +459,7 @@ func (k *JPAKotlin) Generate(
 				fmt.Sprintf("interface %s : JpaRepository<%s, %s>", reposClassName, class.Name, idClassName),
 				"",
 			}
-			if err := k.writeLines(path.Join(reposDir, reposClassName+".kt"), lines); err != nil {
+			if err := writeLinesToFile(path.Join(reposDir, reposClassName+".kt"), lines); err != nil {
 				return err
 			}
 		}
@@ -490,19 +497,11 @@ func (k *JPAKotlin) Generate(
 			contents = append(contents, "    }")
 		}
 		contents = append(contents, "}")
-		if err := k.writeLines(path.Join(graphqlDir, "Query.kt"), contents); err != nil {
+		if err := writeLinesToFile(path.Join(graphqlDir, "Query.kt"), contents); err != nil {
 			return err
 		}
 	}
 
-	return nil
-}
-
-func (k *JPAKotlin) writeLines(filename string, lines []string) error {
-	if err := ioutil.WriteFile(filename, []byte(strings.Join(lines, "\n")), 0644); err != nil {
-		return err
-	}
-	log.Printf("[WRITE] %s", filename)
 	return nil
 }
 
@@ -549,5 +548,5 @@ abstract class AbstractJpaPersistable<T : Serializable> {
     override fun toString() = "Entity of type ${this.javaClass.name} with id: $id"
 }
 `, packageName)
-	return ioutil.WriteFile(filename, []byte(data), 0644)
+	return writeStringToFile(filename, data)
 }
