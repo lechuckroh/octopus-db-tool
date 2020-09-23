@@ -32,16 +32,7 @@ func (cmd *GenerateCmd) Generate(input *Input, output *Output) error {
 		graphql := &Graphql{}
 		return graphql.Generate(schema, output, tableFilterFn, prefixMapper)
 	case FormatJpaKotlin:
-		jpa := NewJPAKotlin(schema, output, tableFilterFn, annoMapper, prefixMapper, false)
-		return jpa.Generate()
-	case FormatJpaKotlinData:
-		jpa := NewJPAKotlin(schema, output, tableFilterFn, annoMapper, prefixMapper, true)
-		return jpa.Generate()
-	case FormatJpaKotlinTpl:
-		jpa := NewJPAKotlinTpl(schema, output, tableFilterFn, annoMapper, prefixMapper, false)
-		return jpa.Generate()
-	case FormatJpaKotlinTplData:
-		jpa := NewJPAKotlinTpl(schema, output, tableFilterFn, annoMapper, prefixMapper, true)
+		jpa := NewJPAKotlinTpl(schema, output, tableFilterFn, annoMapper, prefixMapper)
 		return jpa.Generate()
 	case FormatLiquibase:
 		liquibase := &Liquibase{}

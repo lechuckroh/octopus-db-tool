@@ -163,7 +163,33 @@ func generate(c *cli.Context) error {
 	return cmd.Generate(input, output)
 }
 
-const VERSION = "1.0.20"
+func generateJpaKotlin(c *cli.Context) error {
+	args := c.Args()
+	argsCount := c.NArg()
+	if argsCount == 0 {
+		return cli.NewExitError("source is not set", 1)
+	}
+	if argsCount == 1 {
+		return cli.NewExitError("target is not set", 1)
+	}
+
+	inputFilename := args.Get(0)
+	input, err := NewInput(inputFilename, FormatOctopus)
+	if err != nil {
+		return err
+	}
+
+	output := &Output{
+		FilePath: args.Get(1),
+		Format:   FormatJpaKotlin,
+		Options:  getFlagValues(c),
+	}
+
+	cmd := &GenerateCmd{}
+	return cmd.Generate(input, output)
+}
+
+const VERSION = "2.0.0-beta"
 
 var buildDateVersion string
 
@@ -294,6 +320,64 @@ func main() {
 				},
 			},
 			Action: generate,
+		},
+		{
+			Name:    "jpa-kotlin",
+			Aliases: []string{"jk"},
+			Usage:   "jpa-kotlin `source` `target`",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:   FlagPackage,
+					Usage:  "set kotlin package name",
+					EnvVar: "OCTOPUS_PACKAGE",
+				},
+				cli.StringFlag{
+					Name:   FlagReposPackage,
+					Usage:  "set target repository package name",
+					EnvVar: "OCTOPUS_REPOS_PACKAGE",
+				},
+				cli.StringFlag{
+					Name:   FlagRelation,
+					Usage:  "set virtual relation annotation type",
+					EnvVar: "OCTOPUS_RELATION",
+				},
+				cli.StringFlag{
+					Name:   FlagAnnotation,
+					Usage:  "add custom kotlin class annotations",
+					EnvVar: "OCTOPUS_ANNOTATION",
+				},
+				cli.StringFlag{
+					Name:   FlagRemovePrefix,
+					Usage:  "set prefixes to remove from kotlin class name. set multiple values with comma separated.",
+					EnvVar: "OCTOPUS_REMOVE_PREFIX",
+				},
+				cli.StringFlag{
+					Name:   FlagPrefix,
+					Usage:  "set kotlin class name prefix",
+					EnvVar: "OCTOPUS_PREFIX",
+				},
+				cli.StringFlag{
+					Name:   FlagUniqueNameSuffix,
+					Usage:  "set unique constraint name suffix",
+					EnvVar: "OCTOPUS_UNIQUE_NAME_SUFFIX",
+				},
+				cli.StringFlag{
+					Name:   FlagGroups,
+					Usage:  "filter table groups to generate. set multiple values with comma separated.",
+					EnvVar: "OCTOPUS_GROUPS",
+				},
+				cli.StringFlag{
+					Name:   FlagIdEntity,
+					Usage:  "set kotlin interface name with `id` field.",
+					EnvVar: "OCTOPUS_ID_ENTITY",
+				},
+				cli.StringFlag{
+					Name:   FlagUseUTC,
+					Usage:  "use UTC for audit column default value",
+					EnvVar: "OCTOPUS_USE_UTC",
+				},
+			},
+			Action: generateJpaKotlin,
 		},
 	}
 

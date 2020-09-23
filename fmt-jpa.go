@@ -1,13 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
-	"github.com/gertd/go-pluralize"
 	"github.com/iancoleman/strcase"
-	"io/ioutil"
+	"io"
 	"log"
 	"path"
 	"strings"
+	"text/template"
 )
 
 type KotlinClass struct {
@@ -26,42 +27,6 @@ type KotlinField struct {
 	Type         string
 	Imports      []string
 	DefaultValue string
-}
-
-type JPAKotlin struct {
-	schema       *Schema
-	classes      []*KotlinClass
-	output       *Output
-	annoMapper   *AnnotationMapper
-	prefixMapper *PrefixMapper
-	useDataClass bool
-}
-
-func NewJPAKotlin(
-	schema *Schema,
-	output *Output,
-	tableFilterFn TableFilterFn,
-	annoMapper *AnnotationMapper,
-	prefixMapper *PrefixMapper,
-	useDataClass bool,
-) *JPAKotlin {
-	// populate KotlinClass
-	classes := make([]*KotlinClass, 0)
-	for _, table := range schema.Tables {
-		if tableFilterFn != nil && !tableFilterFn(table) {
-			continue
-		}
-		classes = append(classes, NewKotlinClass(table, output, annoMapper, prefixMapper))
-	}
-
-	return &JPAKotlin{
-		schema:       schema,
-		classes:      classes,
-		output:       output,
-		annoMapper:   annoMapper,
-		prefixMapper: prefixMapper,
-		useDataClass: useDataClass,
-	}
 }
 
 func NewKotlinClass(
@@ -204,7 +169,267 @@ func NewKotlinField(column *Column) *KotlinField {
 	}
 }
 
-func (k *JPAKotlin) getClassNameByTableName(tableName string) string {
+type JPAKotlinTpl struct {
+	schema       *Schema
+	classes      []*KotlinClass
+	output       *Output
+	annoMapper   *AnnotationMapper
+	prefixMapper *PrefixMapper
+}
+
+func NewJPAKotlinTpl(
+	schema *Schema,
+	output *Output,
+	tableFilterFn TableFilterFn,
+	annoMapper *AnnotationMapper,
+	prefixMapper *PrefixMapper,
+) *JPAKotlinTpl {
+	// populate KotlinClass
+	classes := make([]*KotlinClass, 0)
+	for _, table := range schema.Tables {
+		if tableFilterFn != nil && !tableFilterFn(table) {
+			continue
+		}
+		classes = append(classes, NewKotlinClass(table, output, annoMapper, prefixMapper))
+	}
+
+	return &JPAKotlinTpl{
+		schema:       schema,
+		classes:      classes,
+		output:       output,
+		annoMapper:   annoMapper,
+		prefixMapper: prefixMapper,
+	}
+}
+
+func (k *JPAKotlinTpl) getFieldAnnotations(class *KotlinClass, field *KotlinField) []string {
+	annotations := make([]string, 0)
+
+	column := field.Column
+	colAttrs := make([]string, 0)
+	if column.PrimaryKey {
+		annotations = append(annotations, "@Id")
+	}
+	if column.AutoIncremental {
+		annotations = append(annotations, "@GeneratedValue(strategy = GenerationType.AUTO)")
+	}
+	if column.Type == ColTypeText {
+		annotations = append(annotations, "@Lob")
+	}
+
+	// @VRelation
+	if k.output.Get(FlagRelation) == "VRelation" {
+		if ref := column.Ref; ref != nil {
+			targetClassName := k.getClassNameByTableName(ref.Table)
+			if len(targetClassName) == 0 {
+				log.Fatalf("Relation not found. %s::%s -> %s", class.Name, field.Name, ref.Table)
+			}
+
+			annotations = append(annotations,
+				fmt.Sprintf("@VRelation(cls = \"%s\", field = \"%s\")",
+					targetClassName,
+					strcase.ToLowerCamel(ref.Column)))
+		}
+	}
+
+	if field.OverrideName {
+		colAttrs = append(colAttrs, fmt.Sprintf("name = \"%s\"", column.Name))
+	}
+	if !column.Nullable {
+		colAttrs = append(colAttrs, "nullable = false")
+	}
+	if column.Type == ColTypeString && column.Size > 0 {
+		colAttrs = append(colAttrs, fmt.Sprintf("length = %d", column.Size))
+	}
+	if column.Type == ColTypeDouble || column.Type == ColTypeFloat || column.Type == ColTypeDecimal {
+		if column.Size > 0 {
+			colAttrs = append(colAttrs, fmt.Sprintf("precision = %d", column.Size))
+		}
+		if column.Scale > 0 {
+			colAttrs = append(colAttrs, fmt.Sprintf("scale = %d", column.Scale))
+		}
+	}
+	// @CreationTimestamp
+	if column.Type == ColTypeDateTime && field.Name == "createdAt" {
+		annotations = append(annotations, "@CreationTimestamp")
+		colAttrs = append(colAttrs, "updatable = false")
+	}
+	// @UpdateTimestamp
+	if column.Type == ColTypeDateTime && field.Name == "updatedAt" {
+		annotations = append(annotations, "@UpdateTimestamp")
+	}
+	if len(colAttrs) > 0 {
+		annotations = append(annotations, fmt.Sprintf("@Column(%s)", strings.Join(colAttrs, ", ")))
+	}
+	return annotations
+}
+
+type JPAKotlinTplData struct {
+	Package              string
+	Class                *KotlinClass
+	SuperClass           string
+	Annotations          []string
+	Table                *Table
+	IdEntityField        *KotlinField
+	IdClassName          string
+	UniqueConstraintName string
+	UniqueFieldNames     []string
+	HasUniqueFields      bool
+	UseDataClass         bool
+	Imports              []string
+	JavaImports          []string
+}
+
+// GenerateEntityClass generates entity class
+func (k *JPAKotlinTpl) GenerateEntityClass(
+	wr io.Writer,
+	class *KotlinClass,
+) error {
+	// custom functions
+	funcMap := template.FuncMap{
+		"join": strings.Join,
+		"fieldAnnotations": func(field *KotlinField) []string {
+			return k.getFieldAnnotations(class, field)
+		},
+		"hasNext": func(field *KotlinField, fields []*KotlinField) bool {
+			return field != fields[len(fields)-1]
+		},
+	}
+
+	// template
+	tplString := `{{"" -}}
+package {{.Package}}
+
+{{range .Imports}}import {{.}}
+{{end}}
+{{range .JavaImports}}import {{.}}
+{{end}}
+{{range .Annotations}}{{.}}{{end}}
+@Entity
+{{- if .HasUniqueFields}}
+@Table(name="{{.Table.Name}}", uniqueConstraints = [
+    UniqueConstraint(name = "{{.UniqueConstraintName}}", columnNames = [{{join .UniqueFieldNames ", "}}])
+])
+{{- else}}
+@Table(name = "{{.Table.Name}}")
+{{- end}}
+{{- if ne .IdClassName ""}}
+@IdClass({{.IdClassName}}::class)
+{{- end}}
+data class {{.Class.Name}}(
+{{- range .Class.Fields}}
+    {{- $annotations := fieldAnnotations .}}
+    {{- range $annotations}}
+        {{. -}}
+    {{end}}
+    {{- if .Column.Nullable}}
+        var {{.Name}}: {{.Type}}{{if hasNext . $.Class.Fields}},{{end}}
+    {{- else}}
+		{{- if eq . $.IdEntityField}}
+        override var {{.Name}}: {{.Type}} = {{.DefaultValue}},
+		{{- else}}
+        var {{.Name}}: {{.Type}} = {{.DefaultValue}}{{if hasNext . $.Class.Fields}},{{end}}
+		{{- end}}
+    {{- end}}
+{{end}}
+{{- if eq .SuperClass ""}}
+)
+{{- else}}
+): {{.SuperClass}}
+{{- end}}
+
+{{- if ne .IdClassName ""}}
+data class {{.IdClassName}}(
+{{- range .Class.PKFields}}
+        var {{.Name}}: {{.Type}} = {{.DefaultValue}}{{if hasNext . $.Class.PKFields}},{{end}}
+{{- end}}
+): Serializable
+{{- end}}
+`
+
+	// parse template
+	tmpl, err := template.New("jpaKotlinEntity").Funcs(funcMap).Parse(tplString)
+	if err != nil {
+		return err
+	}
+
+	// PK
+	var idClassName string
+	pkFieldCount := len(class.PKFields)
+	if pkFieldCount > 1 {
+		idClassName = class.Name + "PK"
+	}
+
+	// idEntity field
+	var idEntityField *KotlinField
+	idEntityInterfaceName := k.output.Get(FlagIdEntity)
+	if idEntityInterfaceName != "" && pkFieldCount == 1 && class.PKFields[0].Name == "id" {
+		idEntityField = class.PKFields[0]
+	}
+
+	// annotations
+	annotations := k.annoMapper.GetAnnotations(class.table.Group)
+
+	// super class
+	superClass := ""
+	if idEntityField != nil {
+		superClass = fmt.Sprintf("%s<%s>", idEntityInterfaceName, idEntityField.Type)
+	}
+
+	// unique constraint
+	uniqueFieldNames := make([]string, 0)
+	for _, field := range class.UniqueFields {
+		uniqueFieldNames = append(uniqueFieldNames, Quote(field.Name, "\""))
+	}
+
+	// imports
+	importSet := NewStringSet()
+	javaImportSet := NewStringSet()
+	javaImportSet.Add("javax.persistence.*")
+	if pkFieldCount > 1 {
+		javaImportSet.Add("java.io.Serializable")
+	}
+
+	for _, field := range class.Fields {
+		column := field.Column
+		for _, imp := range field.Imports {
+			if strings.HasPrefix(imp, "java.") {
+				javaImportSet.Add(imp)
+			} else {
+				importSet.Add(imp)
+			}
+		}
+
+		// @CreationTimestamp
+		if column.Type == ColTypeDateTime && field.Name == "createdAt" {
+			importSet.Add("org.hibernate.annotations.CreationTimestamp")
+		}
+		// @UpdateTimestamp
+		if column.Type == ColTypeDateTime && field.Name == "updatedAt" {
+			importSet.Add("org.hibernate.annotations.UpdateTimestamp")
+		}
+	}
+
+	// populate template data
+	data := JPAKotlinTplData{
+		Package:              k.output.Get(FlagPackage),
+		Class:                class,
+		SuperClass:           superClass,
+		Annotations:          annotations,
+		Table:                class.table,
+		IdEntityField:        idEntityField,
+		IdClassName:          idClassName,
+		UniqueConstraintName: class.table.Name + k.output.Get(FlagUniqueNameSuffix),
+		UniqueFieldNames:     uniqueFieldNames,
+		HasUniqueFields:      len(uniqueFieldNames) > 0,
+		Imports:              importSet.Slice(),
+		JavaImports:          javaImportSet.Slice(),
+	}
+
+	return tmpl.Execute(wr, &data)
+}
+
+func (k *JPAKotlinTpl) getClassNameByTableName(tableName string) string {
 	for _, cls := range k.classes {
 		if cls.table.Name == tableName {
 			return cls.Name
@@ -213,14 +438,10 @@ func (k *JPAKotlin) getClassNameByTableName(tableName string) string {
 	return ""
 }
 
-func (k *JPAKotlin) Generate() error {
+func (k *JPAKotlinTpl) Generate() error {
 	output := k.output
 	outputPackage := output.Get(FlagPackage)
 	reposPackage := output.Get(FlagReposPackage)
-	graphqlPackage := output.Get(FlagGraphqlPackage)
-	relation := output.Get(FlagRelation)
-	uniqueNameSuffix := output.Get(FlagUniqueNameSuffix)
-	idEntityInterfaceName := output.Get(FlagIdEntity)
 
 	entityDir, err := mkdirPackage(output.FilePath, outputPackage)
 	if err != nil {
@@ -230,274 +451,27 @@ func (k *JPAKotlin) Generate() error {
 	if err != nil {
 		return err
 	}
-	graphqlDir, err := mkdirPackage(output.FilePath, graphqlPackage)
-	if err != nil {
-		return err
-	}
-
-	if !k.useDataClass {
-		// Generate AbstractJpaPersistable.kt
-		if err := k.generateAbstractJpaPersistable(entityDir, outputPackage); err != nil {
-			return err
-		}
-	}
-
-	indent := strings.Repeat(" ", 8)
 
 	classes := k.classes
 
 	for _, class := range classes {
-		table := class.table
-
-		var idClassName string
-		pkFieldCount := len(class.PKFields)
-
-		// idEntity field
-		var idEntityField *KotlinField
-		if idEntityInterfaceName != "" && pkFieldCount == 1 && class.PKFields[0].Name == "id" {
-			idEntityField = class.PKFields[0]
-		}
-
-		contents := make([]string, 0)
-		classLines := make([]string, 0)
-		appendLine := func(line string) {
-			classLines = append(classLines, line)
-		}
-
-		// package
-		if outputPackage != "" {
-			contents = append(contents, fmt.Sprintf("package %s", outputPackage), "")
-		}
-		importSet := NewStringSet()
-		javaImportSet := NewStringSet()
-		javaImportSet.Add("javax.persistence.*")
-
-		// unique
-		uniqueCstName := table.Name + uniqueNameSuffix
-		uniqueFieldNames := make([]string, 0)
-		for _, field := range class.UniqueFields {
-			uniqueFieldNames = append(uniqueFieldNames, Quote(field.Name, "\""))
-		}
-
-		// class
-		appendLine("")
-		for _, anno := range class.Annotations {
-			appendLine(anno)
-		}
-		appendLine("@Entity")
-		if len(uniqueFieldNames) == 0 {
-			appendLine(fmt.Sprintf("@Table(name = \"%s\")", table.Name))
-		} else {
-			appendLine(fmt.Sprintf("@Table(name = \"%s\", uniqueConstraints = [\n    UniqueConstraint(name = \"%s\", columnNames = [%s])\n])",
-				table.Name, uniqueCstName, strings.Join(uniqueFieldNames, ", ")))
-		}
-		if pkFieldCount > 1 {
-			idClassName = class.Name + "PK"
-			appendLine(fmt.Sprintf("@IdClass(%s::class)", idClassName))
-		}
-
-		classDef := fmt.Sprintf("class %s(", class.Name)
-		if k.useDataClass {
-			appendLine("data " + classDef)
-		} else {
-			appendLine(classDef)
-		}
-
-		// fields
-		fieldCount := len(class.Fields)
-		for i, field := range class.Fields {
-			column := field.Column
-			if column.PrimaryKey {
-				appendLine(indent + "@Id")
-				if idClassName == "" {
-					idClassName = field.Type
-				}
-			}
-			if column.AutoIncremental {
-				appendLine(indent + "@GeneratedValue(strategy = GenerationType.AUTO)")
-			}
-			if column.Type == "text" {
-				appendLine(indent + "@Lob")
-			}
-
-			// @VRelation
-			if relation == "VRelation" {
-				if ref := column.Ref; ref != nil {
-					targetClassName := k.getClassNameByTableName(ref.Table)
-					if len(targetClassName) == 0 {
-						log.Fatalf("Relation not found. %s::%s -> %s", class.Name, field.Name, ref.Table)
-					}
-
-					appendLine(indent +
-						fmt.Sprintf("@VRelation(cls = \"%s\", field = \"%s\")",
-							targetClassName,
-							strcase.ToLowerCamel(ref.Column)))
-				}
-			}
-
-			// @Column attributes
-			attributes := make([]string, 0)
-			if field.OverrideName {
-				attributes = append(attributes, fmt.Sprintf("name = \"%s\"", column.Name))
-			}
-			if !column.Nullable {
-				attributes = append(attributes, "nullable = false")
-			}
-			if column.Type == "string" && column.Size > 0 {
-				attributes = append(attributes, fmt.Sprintf("length = %d", column.Size))
-			}
-			if column.Type == ColTypeDouble || column.Type == ColTypeFloat || column.Type == ColTypeDecimal {
-				if column.Size > 0 {
-					attributes = append(attributes, fmt.Sprintf("precision = %d", column.Size))
-				}
-				if column.Scale > 0 {
-					attributes = append(attributes, fmt.Sprintf("scale = %d", column.Scale))
-				}
-			}
-			// @CreationTimestamp
-			if column.Type == "datetime" && field.Name == "createdAt" {
-				appendLine(indent + "@CreationTimestamp")
-				attributes = append(attributes, "updatable = false")
-				importSet.Add("org.hibernate.annotations.CreationTimestamp")
-			}
-			// @UpdateTimestamp
-			if column.Type == "datetime" && field.Name == "updatedAt" {
-				appendLine(indent + "@UpdateTimestamp")
-				importSet.Add("org.hibernate.annotations.UpdateTimestamp")
-			}
-			if len(attributes) > 0 {
-				appendLine(indent + fmt.Sprintf("@Column(%s)", strings.Join(attributes, ", ")))
-			}
-
-			line := fmt.Sprintf("var %s: %s", field.Name, field.Type)
-
-			// override
-			if field == idEntityField {
-				line = "override " + line
-			}
-
-			// set default value
-			if field.DefaultValue != "" {
-				line = line + " = " + field.DefaultValue
-			}
-
-			if i < fieldCount-1 {
-				appendLine(indent + line + ",")
-				appendLine("")
-			} else {
-				appendLine(indent + line)
-			}
-
-			// import
-			for _, imp := range field.Imports {
-				if strings.HasPrefix(imp, "java") {
-					javaImportSet.Add(imp)
-				} else {
-					importSet.Add(imp)
-				}
-			}
-		}
-
-		if k.useDataClass {
-			if idEntityField != nil {
-				appendLine(fmt.Sprintf(") : %s<%s>", idEntityInterfaceName, idEntityField.Type))
-			} else {
-				appendLine(")")
-			}
-		} else {
-			appendLine("")
-			appendLine(fmt.Sprintf(") : AbstractJpaPersistable<%s>()", idClassName))
-		}
-		appendLine("")
-
-		// Composite Key
-		idClassLines := make([]string, 0)
-		if pkFieldCount > 1 {
-			addLine := func(s string) { idClassLines = append(idClassLines, s) }
-
-			javaImportSet.Add("java.io.Serializable")
-			addLine(fmt.Sprintf("data class %s(", idClassName))
-			for i, pkField := range class.PKFields {
-				line := indent + fmt.Sprintf("var %s: %s = %s", pkField.Name, pkField.Type, pkField.DefaultValue)
-				if i < pkFieldCount-1 {
-					line = line + ","
-				}
-				addLine(line)
-			}
-			addLine("): Serializable")
-			addLine("")
-		}
-
-		// contents
-		for _, imp := range importSet.Slice() {
-			contents = append(contents, "import "+imp)
-		}
-		for _, imp := range javaImportSet.Slice() {
-			contents = append(contents, "import "+imp)
-		}
-		contents = append(contents, classLines...)
-		contents = append(contents, idClassLines...)
-
-		// Write file
-		outputFile := path.Join(entityDir, fmt.Sprintf("%s.kt", class.Name))
-		if err := ioutil.WriteFile(outputFile, []byte(strings.Join(contents, "\n")), 0644); err != nil {
+		// write entity class
+		buf := new(bytes.Buffer)
+		if err := k.GenerateEntityClass(buf, class); err != nil {
 			return err
 		}
-		log.Printf("[WRITE] %s", outputFile)
-
-		// Write Repos
-		if reposDir != "" {
-			reposClassName := fmt.Sprintf("%sRepository", class.Name)
-			lines := []string{
-				"package " + reposPackage,
-				"",
-				"import " + outputPackage + ".*",
-				"import org.springframework.data.jpa.repository.JpaRepository",
-				"import org.springframework.stereotype.Repository",
-				"",
-				"@Repository",
-				fmt.Sprintf("interface %s : JpaRepository<%s, %s>", reposClassName, class.Name, idClassName),
-				"",
-			}
-			if err := writeLinesToFile(path.Join(reposDir, reposClassName+".kt"), lines); err != nil {
-				return err
-			}
+		filename := path.Join(entityDir, fmt.Sprintf("%s.kt", class.Name))
+		if err := writeStringToFile(filename, buf.String()); err != nil {
+			return err
 		}
-	}
 
-	// write graphql
-	if graphqlDir != "" {
-		contents := []string{
-			"package " + graphqlPackage,
-			"",
-			"import com.coxautodev.graphql.tools.GraphQLQueryResolver",
-			"import org.springframework.stereotype.Component",
-			"import java.util.*",
-			"import " + outputPackage + ".*",
-			"import " + reposPackage + ".*",
-			"",
-			"@Component",
-			"class Query(",
+		// write repository
+		buf = new(bytes.Buffer)
+		if err := k.generateRepository(buf, class, outputPackage, reposPackage); err != nil {
+			return err
 		}
-		ctorArgs := make([]string, 0)
-		for _, class := range classes {
-			ctorArgs = append(ctorArgs,
-				fmt.Sprintf("        private val %sRepos: %sRepository", strcase.ToLowerCamel(class.Name), class.Name))
-		}
-		contents = append(contents, strings.Join(ctorArgs, ",\n"))
-		contents = append(contents, ") : GraphQLQueryResolver {")
-
-		client := pluralize.NewClient()
-		for _, class := range classes {
-			lowerClassName := strcase.ToLowerCamel(class.Name)
-
-			contents = append(contents, "")
-			contents = append(contents, fmt.Sprintf("    fun %s(): Iterable<%s> {", client.Plural(lowerClassName), class.Name))
-			contents = append(contents, fmt.Sprintf("        return %sRepos.findAll()", lowerClassName))
-			contents = append(contents, "    }")
-		}
-		contents = append(contents, "}")
-		if err := writeLinesToFile(path.Join(graphqlDir, "Query.kt"), contents); err != nil {
+		reposFilename := path.Join(reposDir, fmt.Sprintf("%sRepository.kt", class.Name))
+		if err := writeStringToFile(reposFilename, buf.String()); err != nil {
 			return err
 		}
 	}
@@ -505,48 +479,59 @@ func (k *JPAKotlin) Generate() error {
 	return nil
 }
 
-func (k *JPAKotlin) generateAbstractJpaPersistable(outputDir string, packageName string) error {
-	filename := path.Join(outputDir, "AbstractJpaPersistable.kt")
-	data := fmt.Sprintf(`package %s
+func (k *JPAKotlinTpl) generateRepository(
+	wr io.Writer,
+	class *KotlinClass,
+	entityPackageName string,
+	reposPackageName string,
+) error {
+	// custom functions
+	funcMap := template.FuncMap{
+		"join": strings.Join,
+		"fieldAnnotations": func(field *KotlinField) []string {
+			return k.getFieldAnnotations(class, field)
+		},
+		"hasNext": func(field *KotlinField, fields []*KotlinField) bool {
+			return field != fields[len(fields)-1]
+		},
+	}
 
-import org.springframework.data.util.ProxyUtils
-import java.io.Serializable
-import javax.persistence.GeneratedValue
-import javax.persistence.Id
-import javax.persistence.MappedSuperclass
+	tplString := `{{"" -}}
+package {{.ReposPackage}}
 
-@MappedSuperclass
-abstract class AbstractJpaPersistable<T : Serializable> {
-    companion object {
-        private val serialVersionUID = -5554308939380869754L
-    }
+import {{.EntityPackage}}.*
+import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.stereotype.Repository
 
-    @Id
-    @GeneratedValue
-    private var id: T? = null
+@Repository
+interface {{.ClassName}}Repository : JpaRepository<{{.ClassName}}, {{.IdClassName}}>
+`
 
-    fun getId(): T? {
-        return id
-    }
+	// parse template
+	tmpl, err := template.New("jpaKotlinEntity").Funcs(funcMap).Parse(tplString)
+	if err != nil {
+		return err
+	}
 
-    override fun equals(other: Any?): Boolean {
-        other ?: return false
+	// FIXME: duplicated
+	var idClassName string
+	pkFieldCount := len(class.PKFields)
+	if pkFieldCount > 1 {
+		idClassName = class.Name + "PK"
+	} else {
+		idClassName = class.PKFields[0].Type
+	}
 
-        if (this === other) return true
-
-        if (javaClass != ProxyUtils.getUserClass(other)) return false
-
-        other as AbstractJpaPersistable<*>
-
-        return if (null == this.getId()) false else this.getId() == other.getId()
-    }
-
-    override fun hashCode(): Int {
-        return 31
-    }
-
-    override fun toString() = "Entity of type ${this.javaClass.name} with id: $id"
-}
-`, packageName)
-	return writeStringToFile(filename, data)
+	data := struct {
+		EntityPackage string
+		ReposPackage  string
+		ClassName     string
+		IdClassName   string
+	}{
+		EntityPackage: entityPackageName,
+		ReposPackage:  reposPackageName,
+		ClassName:     class.Name,
+		IdClassName:   idClassName,
+	}
+	return tmpl.Execute(wr, &data)
 }

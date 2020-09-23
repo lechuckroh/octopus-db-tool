@@ -79,6 +79,43 @@ $ ./oct generate <sourceFile> <targetFile> \
 
 You can omit `--sorceFormat`, `--targetFormat` if file format can be detected.
 
+### octopus -> JPA-kotlin
+
+|       option       | Description                                                  |
+| :----------------: | ------------------------------------------------------------ |
+|       --help       | Show help |
+|     --package      | Entity class package name.<br />Example: `com.foo.entity`    |
+|   --reposPackage   | Repository class package name. Generated if not empty.<br />Example: `com.foo.repos` |
+|     --relation     | Virtual relation annotation type. <br />Only `VRelation` is available. |
+|    --annotation    | Custom Entity class annotation<br />Format: `{group1}:{annotations1}[,{group2}:{annotations2}]`<br />Group can be omitted if applies to all groups<br />Multiple annotations are separated by `;`<br />Example: `foo:@Foo,foobar:@Foo;@Bar` |
+|   --removePrefix   | Table prefixes to remove from class name.<br />Multiple prefixes are separated by comma(`,`)<br />Example: `tbl_,table_` |
+|      --prefix      | Class name prefix.<br />Format: `{group1}:{prefix1}[,{group2}:{prefix2}]`<br />Group can be omitted if applies to all groups<br />Example: `foo:F,bar:B` |
+| --uniqueNameSuffix | Unique constraint name suffix.<br />Example: `_uq` |
+|      --groups      | Filter table groups to generate.<br />Groups are separated by comma(`,`)<br />Example: `foo,bar` |
+|     --idEntity     | Interface name with `id` field.<br />Example: `IdEntity` |
+|      --useUTC      | set `true` to use UTC for audit columns (`created_at`, `updated_at` column) |
+
+Example:
+
+```bash
+# show helo
+$ ./oct jpa-kotlin --help
+
+# generate jpa-kotlin
+$ ./oct jpa-kotlin sample.ojson ./output \
+    --package=com.foo.entity \
+    --reposPackage=com.foo.repos \
+    --relation=VRelation \
+    --annotation=foo:@Foo,foobar:@Foo;@Bar \
+    --removePrefix=tbl_,table_ \
+    --prefix=foo:F,bar:B \
+    --uniqueNameSuffix=_uq \
+    --groups=foo,bar \
+    --idEntity=IdEntity \
+    --useUTC=true
+```
+
+
 ### Convert
 ```bash
 # starUML2 -> octopus
@@ -163,7 +200,7 @@ $ ./oct generate sample.ojson ./output/entities.py \
     --prefix=foo:F,bar:B \
     --useUTC=true
 ```
- 
+
 #### octopus -> GORM
 * output file: `./output/entities.go`
     * use `./output` to generate separate `*.go` files. 
@@ -185,7 +222,7 @@ $ ./oct generate sample.ojson ./output/entities.go \
     --prefix=foo:F,bar:B \
     --gormModel=BaseModel
 ```
- 
+
 
 #### octopus -> liquibase yaml
 Generate all:
