@@ -318,7 +318,16 @@ func (k *JPAKotlin) Generate(
 				if ref := column.Ref; ref != nil {
 					targetClassName := getClassNameByTable(ref.Table)
 					if len(targetClassName) == 0 {
-						log.Fatalf("Relation not found. %s::%s -> %s", class.Name, field.Name, ref.Table)
+						log.Printf("Relation not found. %s::%s -> %s\n", class.Name, field.Name, ref.Table)
+						appendLine(indent +
+							fmt.Sprintf("@VRelation(cls = \"%s\", field = \"%s\")",
+								class.Name,
+								strcase.ToLowerCamel(ref.Column)))
+					} else {
+						appendLine(indent +
+							fmt.Sprintf("@VRelation(cls = \"%s\", field = \"%s\")",
+								targetClassName,
+								strcase.ToLowerCamel(ref.Column)))
 					}
 
 					appendLine(indent +
