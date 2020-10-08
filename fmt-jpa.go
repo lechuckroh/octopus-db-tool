@@ -321,7 +321,7 @@ func (k *JPAKotlin) Generate(
 						log.Printf("Relation not found. %s::%s -> %s\n", class.Name, field.Name, ref.Table)
 						appendLine(indent +
 							fmt.Sprintf("@VRelation(cls = \"%s\", field = \"%s\")",
-								class.Name,
+								strcase.ToCamel(ref.Table),
 								strcase.ToLowerCamel(ref.Column)))
 					} else {
 						appendLine(indent +
