@@ -215,7 +215,7 @@ func generateProtobuf(c *cli.Context) error {
 	return cmd.Generate(input, output)
 }
 
-const VERSION = "2.0.0-beta"
+const VERSION = "2.0.0-beta1"
 
 var buildDateVersion string
 

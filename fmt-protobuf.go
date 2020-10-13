@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/iancoleman/strcase"
 	"io"
+	"log"
 	"strings"
 	"text/template"
 )
@@ -100,6 +101,7 @@ func NewProtoField(number int, column *Column) *ProtoField {
 			}
 		}
 		fieldType = column.Type
+		log.Printf("unsupported columnType: %s", columnType)
 	}
 
 	fieldName, _ := ToLowerCamel(column.Name)
