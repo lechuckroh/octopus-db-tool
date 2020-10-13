@@ -85,7 +85,7 @@ func NewGormField(column *Column) *GormField {
 	var fieldType string
 	importSet := NewStringSet()
 	if column.Nullable {
-		importSet.Add("gopkg.in/guregu/null.v3")
+		importSet.Add("gopkg.in/guregu/null.v4")
 	}
 
 	columnType := strings.ToLower(column.Type)
@@ -107,11 +107,20 @@ func NewGormField(column *Column) *GormField {
 	case ColTypeLong:
 		fallthrough
 	case ColTypeInt:
-		if column.Name == "id" && column.PrimaryKey {
-			fieldType = "uint"
+		if column.Nullable {
+			fieldType = "null.Int"
 		} else {
-			if column.Nullable {
-				fieldType = "null.Int"
+			colSize := column.Size
+			if colSize > 0 {
+				if colSize <= 3 {
+					fieldType = "int8"
+				} else if colSize <= 5 {
+					fieldType = "int16"
+				} else if colSize <= 10 {
+					fieldType = "int32"
+				} else {
+					fieldType = "int64"
+				}
 			} else {
 				fieldType = "int64"
 			}
@@ -160,18 +169,24 @@ func NewGormField(column *Column) *GormField {
 	}
 
 	fieldName, ok := ToUpperCamel(column.Name)
+	overrideName := !ok
 
 	// replace fieldname: Id -> ID
 	if strings.HasSuffix(fieldName, "Id") {
 		re := regexp.MustCompile(`Id$`)
 		fieldName = string(re.ReplaceAll([]byte(fieldName), []byte("ID")))
 	}
+	// number prefix
+	if matched, _ := regexp.MatchString(`\d+.*`, fieldName); matched {
+		fieldName = "_" + fieldName
+		overrideName = true
+	}
 
 	return &GormField{
 		Column:       column,
 		Name:         fieldName,
 		Type:         fieldType,
-		OverrideName: !ok,
+		OverrideName: overrideName,
 		Imports:      importSet.Slice(),
 	}
 }

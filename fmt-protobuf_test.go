@@ -60,27 +60,27 @@ func TestProtobufTpl_Generate(t *testing.T) {
 package com.lechuck.hello;
 
 option go_package = "proto/hello";
-option java_multiple_files = true;
 
-import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
 message CUser {
   int64 id = 1;
   string name = 2;
   double dec = 3;
-  google.protobuf.Timestamp created_at = 4;
-  google.protobuf.Timestamp updated_at = 5;
+  google.protobuf.Timestamp createdAt = 4;
+  google.protobuf.Timestamp updatedAt = 5;
 }
 `,
 	}
 
-	protobuf := NewProtobufTpl(jpaKotlinTplTestSchema, output, nil, prefixMapper)
+	protobuf := NewProtobufTpl(protobufTplTestSchema, output, nil, prefixMapper)
 
 	for i, table := range jpaKotlinTplTestSchema.Tables {
-		msg := NewProtobufMessage(table, output, prefixMapper)
+		messages := []*ProtoMessage{
+			NewProtobufMessage(table, output, prefixMapper),
+		}
 		buf := new(bytes.Buffer)
-		if err := protobuf.GenerateProto(buf, msg); err != nil {
+		if err := protobuf.GenerateProto(buf, messages, "com.lechuck.hello", "proto/hello"); err != nil {
 			t.Error(err)
 		}
 		actual := buf.String()
