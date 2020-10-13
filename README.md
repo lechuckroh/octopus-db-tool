@@ -25,6 +25,7 @@ octopus-db-tools provides:
 | `liquibase`         |   |   | O |`yaml`  |
 | `opti-studio`       |   |   |   |`xml`   |
 | `plantuml`          |   | O |   |`plantuml`|
+| `protobuf`          |   | O |   |`proto` |
 | `schema-converter`  |   |   |   |`schema`|
 | `sql-h2`            |   |   |   |`sql`   |
 | `sql-mysql`         | O | O |   |`sql`   |
@@ -93,12 +94,12 @@ You can omit `--sorceFormat`, `--targetFormat` if file format can be detected.
 | --uniqueNameSuffix | Unique constraint name suffix.<br />Example: `_uq` |
 |      --groups      | Filter table groups to generate.<br />Groups are separated by comma(`,`)<br />Example: `foo,bar` |
 |     --idEntity     | Interface name with `id` field.<br />Example: `IdEntity` |
-|      --useUTC      | set `true` to use UTC for audit columns (`created_at`, `updated_at` column) |
+|      --useUTC      | Set `true` to use UTC for audit columns (`created_at`, `updated_at` column) |
 
 Example:
 
 ```bash
-# show helo
+# show help
 $ ./oct jpa-kotlin --help
 
 # generate jpa-kotlin
@@ -113,6 +114,33 @@ $ ./oct jpa-kotlin sample.ojson ./output \
     --groups=foo,bar \
     --idEntity=IdEntity \
     --useUTC=true
+```
+
+
+### octopus -> protobuf
+
+|       option       | Description                                                  |
+| :----------------: | ------------------------------------------------------------ |
+|       --help       | Show help |
+|     --package      | Package name.<br />Example: `com.foo`    |
+|   --goPackage      | Golang package name.<br />Example: `foo/proto` |
+|   --removePrefix   | Table prefixes to remove from message name.<br />Multiple prefixes are separated by comma(`,`)<br />Example: `tbl_,table_` |
+|      --prefix      | Message name prefix.<br />Format: `{group1}:{prefix1}[,{group2}:{prefix2}]`<br />Group can be omitted if applies to all groups<br />Example: `foo:F,bar:B` |
+|      --groups      | Filter table groups to generate.<br />Groups are separated by comma(`,`)<br />Example: `foo,bar` |
+
+Example:
+
+```bash
+# show help
+$ ./oct protobuf --help
+
+# generate protobuf file
+$ ./oct protobuf sample.ojson ./output/sample.proto \
+    --package=com.foo \
+    --goPackage=foo/proto \
+    --removePrefix=tbl_,table_ \
+    --prefix=foo:F,bar:B \
+    --groups=foo,bar
 ```
 
 

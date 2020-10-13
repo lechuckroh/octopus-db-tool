@@ -189,7 +189,33 @@ func generateJpaKotlin(c *cli.Context) error {
 	return cmd.Generate(input, output)
 }
 
-const VERSION = "2.0.0-beta"
+func generateProtobuf(c *cli.Context) error {
+	args := c.Args()
+	argsCount := c.NArg()
+	if argsCount == 0 {
+		return cli.NewExitError("source is not set", 1)
+	}
+	if argsCount == 1 {
+		return cli.NewExitError("target is not set", 1)
+	}
+
+	inputFilename := args.Get(0)
+	input, err := NewInput(inputFilename, FormatOctopus)
+	if err != nil {
+		return err
+	}
+
+	output := &Output{
+		FilePath: args.Get(1),
+		Format:   FormatProtobuf,
+		Options:  getFlagValues(c),
+	}
+
+	cmd := &GenerateCmd{}
+	return cmd.Generate(input, output)
+}
+
+const VERSION = "2.0.0-beta1"
 
 var buildDateVersion string
 
@@ -378,6 +404,39 @@ func main() {
 				},
 			},
 			Action: generateJpaKotlin,
+		},
+		{
+			Name:    "protobuf",
+			Aliases: []string{"proto"},
+			Usage:   "protobuf `source` `target`",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:   FlagPackage,
+					Usage:  "set package name",
+					EnvVar: "OCTOPUS_PACKAGE",
+				},
+				cli.StringFlag{
+					Name:   FlagGoPackage,
+					Usage:  "set golang package name",
+					EnvVar: "OCTOPUS_GO_PACKAGE",
+				},
+				cli.StringFlag{
+					Name:   FlagRemovePrefix,
+					Usage:  "set prefixes to remove from message name. set multiple values with comma separated.",
+					EnvVar: "OCTOPUS_REMOVE_PREFIX",
+				},
+				cli.StringFlag{
+					Name:   FlagPrefix,
+					Usage:  "set message name prefix",
+					EnvVar: "OCTOPUS_PREFIX",
+				},
+				cli.StringFlag{
+					Name:   FlagGroups,
+					Usage:  "filter table groups to generate. set multiple values with comma separated.",
+					EnvVar: "OCTOPUS_GROUPS",
+				},
+			},
+			Action: generateProtobuf,
 		},
 	}
 

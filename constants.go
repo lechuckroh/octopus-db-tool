@@ -9,6 +9,7 @@ const (
 	FormatOctopus         = "octopus"
 	FormatOptiStudio      = "opti-studio"
 	FormatPlantuml        = "plantuml"
+	FormatProtobuf        = "protobuf"
 	FormatQuickdbd        = "quickdbd"
 	FormatSchemaConverter = "schema-converter"
 	FormatSqlalchemy      = "sqlalchemy"
@@ -36,6 +37,7 @@ const (
 
 	FlagAnnotation       = "annotation"
 	FlagDiff             = "diff"
+	FlagGoPackage        = "goPackage"
 	FlagGraphqlPackage   = "graphqlPackage"
 	FlagGroups           = "groups"
 	FlagGormModel        = "gormModel"
