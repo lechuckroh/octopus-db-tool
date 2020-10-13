@@ -85,7 +85,7 @@ func NewGormField(column *Column) *GormField {
 	var fieldType string
 	importSet := NewStringSet()
 	if column.Nullable {
-		importSet.Add("gopkg.in/guregu/null.v3")
+		importSet.Add("gopkg.in/guregu/null.v4")
 	}
 
 	columnType := strings.ToLower(column.Type)
