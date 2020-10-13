@@ -225,12 +225,18 @@ func (m *Mysql) fromColumnType(colType sqlparser.ColumnType) string {
 		return ColTypeString
 	case "longtext":
 		fallthrough
+	case "mediumtext":
+		fallthrough
+	case "tinytext":
+		fallthrough
 	case "text":
 		return ColTypeText
 	case "bit":
 		return ColTypeBoolean
 	case "bigint":
 		return ColTypeLong
+	case "tinyint":
+		fallthrough
 	case "int":
 		return ColTypeInt
 	case "decimal":
@@ -240,6 +246,8 @@ func (m *Mysql) fromColumnType(colType sqlparser.ColumnType) string {
 	case "double":
 		return ColTypeDouble
 	case "datetime":
+		fallthrough
+	case "timestamp":
 		return ColTypeDateTime
 	case "date":
 		return ColTypeDate
