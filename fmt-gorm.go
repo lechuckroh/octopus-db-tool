@@ -160,18 +160,24 @@ func NewGormField(column *Column) *GormField {
 	}
 
 	fieldName, ok := ToUpperCamel(column.Name)
+	overrideName := !ok
 
 	// replace fieldname: Id -> ID
 	if strings.HasSuffix(fieldName, "Id") {
 		re := regexp.MustCompile(`Id$`)
 		fieldName = string(re.ReplaceAll([]byte(fieldName), []byte("ID")))
 	}
+	// number prefix
+	if matched, _ := regexp.MatchString(`\d+.*`, fieldName); matched {
+		fieldName = "_" + fieldName
+		overrideName = true
+	}
 
 	return &GormField{
 		Column:       column,
 		Name:         fieldName,
 		Type:         fieldType,
-		OverrideName: !ok,
+		OverrideName: overrideName,
 		Imports:      importSet.Slice(),
 	}
 }
