@@ -25,7 +25,7 @@ octopus-db-tools provides:
 | `liquibase`         |   |   | O |`yaml`  |
 | `opti-studio`       |   |   |   |`xml`   |
 | `plantuml`          |   | O |   |`plantuml`|
-| `protobuf`          |   | O |   |`proto` |
+| `protobuf`          |   |   | O |`proto` |
 | `schema-converter`  |   |   |   |`schema`|
 | `sql-h2`            |   |   |   |`sql`   |
 | `sql-mysql`         | O | O |   |`sql`   |
