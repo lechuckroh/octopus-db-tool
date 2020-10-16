@@ -52,4 +52,5 @@ const (
 	FlagUniqueNameSuffix = "uniqueNameSuffix"
 	FlagUseComments      = "comments"
 	FlagUseUTC           = "useUTC"
+	FlagIgnoreUnknownRelation = "ignoreUnknownRelation"
 )

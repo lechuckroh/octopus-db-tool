@@ -196,6 +196,7 @@ func (k *JPAKotlin) Generate(
 	reposPackage := output.Get(FlagReposPackage)
 	graphqlPackage := output.Get(FlagGraphqlPackage)
 	relation := output.Get(FlagRelation)
+	ignoreUnknownRelation := output.Get(FlagIgnoreUnknownRelation)
 	uniqueNameSuffix := output.Get(FlagUniqueNameSuffix)
 	idEntityInterfaceName := output.Get(FlagIdEntity)
 
@@ -318,7 +319,20 @@ func (k *JPAKotlin) Generate(
 				if ref := column.Ref; ref != nil {
 					targetClassName := getClassNameByTable(ref.Table)
 					if len(targetClassName) == 0 {
-						log.Fatalf("Relation not found. %s::%s -> %s", class.Name, field.Name, ref.Table)
+						if ignoreUnknownRelation == "true"{
+							log.Printf("Relation not found. %s::%s -> %s\n", class.Name, field.Name, ref.Table)
+							appendLine(indent +
+								fmt.Sprintf("@VRelation(cls = \"%s\", field = \"%s\")",
+									strcase.ToCamel(ref.Table),
+									strcase.ToLowerCamel(ref.Column)))
+						}else{
+							log.Fatalf("Relation not found. %s::%s -> %s\n", class.Name, field.Name, ref.Table)
+						}
+					} else {
+						appendLine(indent +
+							fmt.Sprintf("@VRelation(cls = \"%s\", field = \"%s\")",
+								targetClassName,
+								strcase.ToLowerCamel(ref.Column)))
 					}
 
 					appendLine(indent +

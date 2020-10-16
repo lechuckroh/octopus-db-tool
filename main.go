@@ -238,6 +238,11 @@ func main() {
 					EnvVar: "OCTOPUS_RELATION",
 				},
 				cli.StringFlag{
+					Name:	FlagIgnoreUnknownRelation,
+					Usage:	"ignore unknown relation",
+					EnvVar: "OCTOPUS_IGNORE_UNKNOWN_RELATION",
+				},
+				cli.StringFlag{
 					Name:   FlagAnnotation,
 					Usage:  "add custom class annotations",
 					EnvVar: "OCTOPUS_ANNOTATION",
