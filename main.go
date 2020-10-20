@@ -163,7 +163,7 @@ func generate(c *cli.Context) error {
 	return cmd.Generate(input, output)
 }
 
-const VERSION = "1.0.20"
+const VERSION = "1.0.21"
 
 var buildDateVersion string
 
@@ -238,8 +238,8 @@ func main() {
 					EnvVar: "OCTOPUS_RELATION",
 				},
 				cli.StringFlag{
-					Name:	FlagIgnoreUnknownRelation,
-					Usage:	"ignore unknown relation",
+					Name:   FlagIgnoreUnknownRelation,
+					Usage:  "ignore unknown relation",
 					EnvVar: "OCTOPUS_IGNORE_UNKNOWN_RELATION",
 				},
 				cli.StringFlag{
