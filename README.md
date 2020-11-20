@@ -117,6 +117,33 @@ $ ./oct jpa-kotlin sample.ojson ./output \
 ```
 
 
+### octopus -> GORM
+
+|       option       | Description                                                  |
+| :----------------: | ------------------------------------------------------------ |
+|       --help       | Show help |
+|      --package     | go package name.<br />Example: `model`    |
+|     --gormModel    | embedded base model for GORM model.<br />default: `gorm.Model` |
+|      --groups      | Filter table groups to generate.<br />Groups are separated by comma(`,`)<br />Example: `foo,bar` |
+|   --removePrefix   | Table prefixes to remove from class name.<br />Multiple prefixes are separated by comma(`,`)<br />Example: `tbl_,table_` |
+|      --prefix      | Class name prefix.<br />Format: `{group1}:{prefix1}[,{group2}:{prefix2}]`<br />Group can be omitted if applies to all groups<br />Example: `foo:F,bar:B` |
+| --uniqueNameSuffix | Unique constraint name suffix.<br />Example: `_uq` |
+
+Example:
+
+```bash
+# show help
+$ ./oct gorm --help
+
+# generate gorm models
+$ ./oct gorm sample.ojson ./output/sample.go \
+    --package=model \
+    --removePrefix=tbl_,table_ \
+    --prefix=foo:F,bar:B \
+    --uniqueNameSuffix=_uq \
+    --groups=foo,bar
+```
+
 ### octopus -> protobuf
 
 |       option       | Description                                                  |
@@ -180,33 +207,6 @@ $ mysqldump \
 ```
 
 ### Generate
-#### octopus -> JPA-kotlin
-* entity package: `com.foo.entity`
-* repository package: `com.foo.repos`
-* graphql package: `com.foo.graphql`
-* output directory: `./output`
-* remove tableName prefix starting with `db_` or `mydb_`
-* unique constraint Name : tableName + `_uq`
-* filter table groups: `foo`, `bar`
-* add prefix to className: 
-    * `foo` group: append `F`
-    * `bar` group: append `B`
-* add custom class annotations:
-    * `foo` group: `@Foo`
-    * `foobar` group: `@Foo`, `@Bar`
-
-```bash
-$ ./oct generate sample.ojson ./output \
-    --targetFormat=jpa-kotlin-data \
-    --package=com.foo.entity \
-    --reposPackage=com.foo.repos \
-    --graphqlPackage=com.foo.graphql \
-    --removePrefix=db_,mydb_ \
-    --uniqueNameSuffix=_uq \
-    --groups=foo,bar,foobar \
-    --prefix=foo:F,bar:B \
-    --annotation=foo:@Foo,foobar:@Foo;@Bar
-```
 
 #### octopus -> SqlAlchemy
 * output file: `./output/entities.py`
@@ -228,29 +228,6 @@ $ ./oct generate sample.ojson ./output/entities.py \
     --prefix=foo:F,bar:B \
     --useUTC=true
 ```
-
-#### octopus -> GORM
-* output file: `./output/entities.go`
-    * use `./output` to generate separate `*.go` files. 
-* remove tableName prefix starting with `db_` or `mydb_`
-* unique constraint Name : tableName + `_uq`
-* filter table groups: `foo`, `bar`
-* add prefix to className: 
-    * `foo` group: append `F`
-    * `bar` group: append `B`
-* custom embedded model: `BaseModel`
-    * use `gorm.Model` if not specified.
-
-```bash
-$ ./oct generate sample.ojson ./output/entities.go \
-    --targetFormat=gorm \
-    --removePrefix=db_,mydb_ \
-    --uniqueNameSuffix=_uq \
-    --groups=foo,bar,foobar \
-    --prefix=foo:F,bar:B \
-    --gormModel=BaseModel
-```
-
 
 #### octopus -> liquibase yaml
 Generate all:
