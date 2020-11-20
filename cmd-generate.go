@@ -26,8 +26,8 @@ func (cmd *GenerateCmd) Generate(input *Input, output *Output) error {
 
 	switch output.Format {
 	case FormatGorm:
-		gorm := &Gorm{}
-		return gorm.Generate(schema, output, tableFilterFn, prefixMapper)
+		gorm := NewGormTpl(schema, output, tableFilterFn, prefixMapper)
+		return gorm.Generate()
 	case FormatGraphql:
 		graphql := &Graphql{}
 		return graphql.Generate(schema, output, tableFilterFn, prefixMapper)
@@ -100,7 +100,6 @@ func (m *AnnotationMapper) GetAnnotations(group string) []string {
 		return []string{m.anno}
 	}
 }
-
 
 type PrefixMapper struct {
 	prefix    string

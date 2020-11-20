@@ -215,6 +215,32 @@ func generateProtobuf(c *cli.Context) error {
 	return cmd.Generate(input, output)
 }
 
+func generateGorm(c *cli.Context) error {
+	args := c.Args()
+	argsCount := c.NArg()
+	if argsCount == 0 {
+		return cli.NewExitError("source is not set", 1)
+	}
+	if argsCount == 1 {
+		return cli.NewExitError("target is not set", 1)
+	}
+
+	inputFilename := args.Get(0)
+	input, err := NewInput(inputFilename, FormatOctopus)
+	if err != nil {
+		return err
+	}
+
+	output := &Output{
+		FilePath: args.Get(1),
+		Format:   FormatGorm,
+		Options:  getFlagValues(c),
+	}
+
+	cmd := &GenerateCmd{}
+	return cmd.Generate(input, output)
+}
+
 const VERSION = "2.0.0-beta1"
 
 var buildDateVersion string
@@ -437,6 +463,44 @@ func main() {
 				},
 			},
 			Action: generateProtobuf,
+		},
+		{
+			Name:    "gorm",
+			Aliases: []string{"g"},
+			Usage:   "gorm `source` `target`",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:   FlagGormModel,
+					Usage:  "set embedded base model for GORM model",
+					EnvVar: "OCTOPUS_GORM_MODEL",
+				},
+				cli.StringFlag{
+					Name:   FlagGroups,
+					Usage:  "filter table groups to generate. set multiple values with comma separated.",
+					EnvVar: "OCTOPUS_GROUPS",
+				},
+				cli.StringFlag{
+					Name:   FlagPackage,
+					Usage:  "set package name",
+					EnvVar: "OCTOPUS_PACKAGE",
+				},
+				cli.StringFlag{
+					Name:   FlagPrefix,
+					Usage:  "set model struct name prefix",
+					EnvVar: "OCTOPUS_PREFIX",
+				},
+				cli.StringFlag{
+					Name:   FlagRemovePrefix,
+					Usage:  "set prefixes to remove from model struct name. set multiple values with comma separated.",
+					EnvVar: "OCTOPUS_REMOVE_PREFIX",
+				},
+				cli.StringFlag{
+					Name:   FlagUniqueNameSuffix,
+					Usage:  "set unique constraint name suffix",
+					EnvVar: "OCTOPUS_UNIQUE_NAME_SUFFIX",
+				},
+			},
+			Action: generateGorm,
 		},
 	}
 

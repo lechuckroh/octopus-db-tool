@@ -1,17 +1,19 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/iancoleman/strcase"
+	"io"
 	"log"
 	"os"
-	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
+	"text/template"
 )
 
-type GormClass struct {
+type GormStruct struct {
 	table        *Table
 	Name         string
 	EmbedModel   bool
@@ -20,26 +22,11 @@ type GormClass struct {
 	UniqueFields []*GormField
 }
 
-type GormField struct {
-	Column       *Column
-	Name         string
-	Type         string
-	OverrideName bool
-	Imports      []string
-}
-
-type Gorm struct {
-}
-
-func getGormModelColumns() []string {
-	return []string{"id", "created_at", "updated_at", "deleted_at"}
-}
-
-func NewGormClass(
+func NewGormStruct(
 	table *Table,
 	output *Output,
 	prefixMapper *PrefixMapper,
-) *GormClass {
+) *GormStruct {
 	className := table.ClassName
 	if className == "" {
 		tableName := table.Name
@@ -56,7 +43,7 @@ func NewGormClass(
 	fields := make([]*GormField, 0)
 	pkFields := make([]*GormField, 0)
 	uniqueFields := make([]*GormField, 0)
-	modelColumnSet := NewStringSet(getGormModelColumns()...)
+	gormModelColumnCount := 0
 	for _, column := range table.Columns {
 		field := NewGormField(column)
 		fields = append(fields, field)
@@ -68,17 +55,27 @@ func NewGormClass(
 			uniqueFields = append(uniqueFields, field)
 		}
 
-		modelColumnSet.Remove(column.Name)
+		if isGormModelColumn(column.Name) {
+			gormModelColumnCount++
+		}
 	}
 
-	return &GormClass{
+	return &GormStruct{
 		table:        table,
 		Name:         className,
-		EmbedModel:   modelColumnSet.Size() == 0,
+		EmbedModel:   gormModelColumnCount < len(gormModelColumns),
 		Fields:       fields,
 		PKFields:     pkFields,
 		UniqueFields: uniqueFields,
 	}
+}
+
+type GormField struct {
+	Column       *Column
+	Name         string
+	Type         string
+	OverrideName bool
+	Imports      []string
 }
 
 func NewGormField(column *Column) *GormField {
@@ -191,7 +188,47 @@ func NewGormField(column *Column) *GormField {
 	}
 }
 
-func (g *Gorm) mkdir(dir string) (string, error) {
+var gormModelColumns = [...]string{"id", "created_at", "updated_at", "deleted_at"}
+
+func isGormModelColumn(column string) bool {
+	for _, gormModelColumn := range gormModelColumns {
+		if column == gormModelColumn {
+			return true
+		}
+	}
+	return false
+}
+
+type GormTpl struct {
+	schema       *Schema
+	structs      []*GormStruct
+	output       *Output
+	prefixMapper *PrefixMapper
+}
+
+func NewGormTpl(
+	schema *Schema,
+	output *Output,
+	tableFilterFn TableFilterFn,
+	prefixMapper *PrefixMapper,
+) *GormTpl {
+	structs := make([]*GormStruct, 0)
+	for _, table := range schema.Tables {
+		if tableFilterFn != nil && !tableFilterFn(table) {
+			continue
+		}
+		structs = append(structs, NewGormStruct(table, output, prefixMapper))
+	}
+
+	return &GormTpl{
+		schema:       schema,
+		structs:      structs,
+		output:       output,
+		prefixMapper: prefixMapper,
+	}
+}
+
+func (g *GormTpl) mkdir(dir string) (string, error) {
 	if err := os.MkdirAll(dir, 0777); err != nil {
 		return "", err
 	}
@@ -199,13 +236,8 @@ func (g *Gorm) mkdir(dir string) (string, error) {
 	return dir, nil
 }
 
-func (g *Gorm) Generate(
-	schema *Schema,
-	output *Output,
-	tableFilterFn TableFilterFn,
-	prefixMapper *PrefixMapper,
-) error {
-	uniqueNameSuffix := output.Get(FlagUniqueNameSuffix)
+func (g *GormTpl) Generate() error {
+	output := g.output
 	gormModel := output.Get(FlagGormModel)
 	if gormModel == "" {
 		gormModel = "gorm.Model"
@@ -216,177 +248,199 @@ func (g *Gorm) Generate(
 	}
 
 	// write to single file if extension is '.go'
-	var outputDir string
-	generateSingleFile := false
+	var outputDir, filename string
 	if ext := strings.ToLower(filepath.Ext(output.FilePath)); ext == ".go" {
 		outputDir = filepath.Dir(output.FilePath)
-		generateSingleFile = true
+		filename = output.FilePath
 	} else {
 		outputDir = output.FilePath
+		filename = filepath.Join(output.FilePath, "output.go")
 	}
 
+	// ensure directory is created
 	if _, err := g.mkdir(outputDir); err != nil {
 		return err
 	}
 
-	indent := strings.Repeat(" ", 4)
-
-	classes := make([]*GormClass, 0)
-	for _, table := range schema.Tables {
-		// filter table
-		if tableFilterFn != nil && !tableFilterFn(table) {
-			continue
-		}
-		classes = append(classes, NewGormClass(table, output, prefixMapper))
+	gormStructs := make([]*GormStruct, 0)
+	for _, table := range g.schema.Tables {
+		gormStructs = append(gormStructs, NewGormStruct(table, output, g.prefixMapper))
 	}
 
-	// imports
+	buf := new(bytes.Buffer)
+
+	// create import set
 	importSet := NewStringSet()
-
-	// contents to write
-	contents := make([]string, 0)
-
-	// embedded model columns
-	embeddedModelColumns := NewStringSet(getGormModelColumns()...)
-
-	for _, class := range classes {
-		table := class.table
-
-		classLines := make([]string, 0)
-		appendLine := func(lines ...string) {
-			classLines = append(classLines, lines...)
-		}
-
-		// embedded model
-		if class.EmbedModel {
+	for _, gormStruct := range gormStructs {
+		if gormStruct.EmbedModel {
 			importSet.Add("github.com/jinzhu/gorm")
 		}
 
-		// unique
-		uniqueCstName := ""
-		uniqueFieldNames := make([]string, 0)
-		for _, field := range class.UniqueFields {
-			uniqueFieldNames = append(uniqueFieldNames, Quote(field.Name, "'"))
-		}
-		if len(uniqueFieldNames) > 1 {
-			uniqueCstName = table.Name + uniqueNameSuffix
-		}
-
-		// struct
-		appendLine("", "",
-			fmt.Sprintf("type %s struct {", class.Name),
-		)
-		if class.EmbedModel {
-			appendLine(indent + "gorm.Model")
-		}
-
-		// fields
-		for _, field := range class.Fields {
-			column := field.Column
-
-			// embedded model column
-			if class.EmbedModel && embeddedModelColumns.Contains(column.Name){
-				continue
-			}
-
-			// Column gormTags
-			gormTags := make([]string, 0)
-
-			if field.OverrideName {
-				gormTags = append(gormTags, fmt.Sprintf("column:%s", column.Name))
-			}
-
-			if column.Type == "string" && column.Size > 0 {
-				gormTags = append(gormTags, fmt.Sprintf("type:varchar(%d)", column.Size))
-			} else if (column.Type == ColTypeDouble || column.Type == ColTypeFloat || column.Type == ColTypeDecimal) &&
-				(column.Size > 0 && column.Scale > 0) {
-				gormTags = append(gormTags, fmt.Sprintf("type:%s(%d,%d)", column.Type, column.Size, column.Scale))
-			}
-			// PK
-			if column.PrimaryKey {
-				gormTags = append(gormTags, "primary_key")
-			}
-			// Unique
-			if column.UniqueKey {
-				if uniqueCstName == "" {
-					gormTags = append(gormTags, "unique")
-				} else {
-					gormTags = append(gormTags, fmt.Sprintf("unique_index:%s", uniqueCstName))
-				}
-			}
-			// auto_increment
-			if column.AutoIncremental {
-				gormTags = append(gormTags, "auto_increment")
-			}
-			// not null
-			if !column.Nullable && !column.AutoIncremental {
-				gormTags = append(gormTags, "not null")
-			}
-
-			// GORM tag
-			if len(gormTags) == 0 {
-				appendLine(indent + fmt.Sprintf("%s %s", field.Name, field.Type))
-			} else {
-				tag := fmt.Sprintf("`gorm:\"%s\"`", strings.Join(gormTags, ";"))
-				appendLine(indent + fmt.Sprintf("%s %s %s", field.Name, field.Type, tag))
-			}
-
-			// import
+		for _, field := range gormStruct.Fields {
 			for _, imp := range field.Imports {
 				importSet.Add(imp)
 			}
 		}
-		classLines = append(classLines,
-			"}",
-			fmt.Sprintf("func (c *%s) TableName() string { return \"%s\" }", class.Name, table.Name))
+	}
 
-		if generateSingleFile {
-			contents = append(contents, classLines...)
-		} else {
-			contents = append(contents, fmt.Sprintf("package %s", pkg))
-			contents = append(contents, g.getHeaderLines(indent, importSet.Slice())...)
-			contents = append(contents, classLines...)
-			contents = append(contents, "")
+	// generate header
+	tplString := `{{"" -}}
+package {{.Package}}
 
-			outputFile := path.Join(outputDir, fmt.Sprintf("%s.go", table.Name))
-			if err := WriteLinesToFile(outputFile, contents); err != nil {
-				return err
-			}
+import (
+{{- range .Imports}}
+	"{{.}}"
+{{- end}}
+)
+`
+	tmpl, err := template.New("gormHeader").Parse(tplString)
+	if err != nil {
+		return err
+	}
 
-			// reset slice
-			contents = make([]string, 0)
-			importSet.Clear()
+	if err := tmpl.Execute(buf, &GormTplHeaderData{
+		Package: pkg,
+		Imports: importSet.Slice(),
+	}); err != nil {
+		return err
+	}
+
+	// write structs
+	for _, gormStruct := range gormStructs {
+		// write GORM struct
+		if err := g.GenerateStruct(buf, gormStruct); err != nil {
+			return err
 		}
 	}
 
-	// Write to single file
-	if generateSingleFile {
-		finalOutput := []string{
-			fmt.Sprintf("package %s", pkg),
-			"",
-		}
-		finalOutput = append(finalOutput, g.getHeaderLines(indent, importSet.Slice())...)
-		finalOutput = append(finalOutput, contents...)
-		finalOutput = append(finalOutput, "")
-
-		if err := WriteLinesToFile(output.FilePath, finalOutput); err != nil {
-			return err
-		}
+	// write buffer to file
+	if err := writeStringToFile(filename, buf.String()); err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func (g *Gorm) getHeaderLines(indent string, imports []string) []string {
-	lines := make([]string, 0)
+type GormTplHeaderData struct {
+	Package string
+	Imports []string
+}
 
-	if len(imports) > 0 {
-		lines = append(lines, "import (")
-		for _, imp := range imports {
-			lines = append(lines, indent+Quote(imp, "\""))
-		}
-		lines = append(lines, ")")
+type GormTplData struct {
+	Package       string
+	Struct        *GormStruct
+	Table         *Table
+	UniqueCstName string
+	Fields        []*GormTplFieldData
+}
+
+type GormTplFieldData struct {
+	Name string
+	Type string
+	Tag  string
+}
+
+func (g *GormTpl) GenerateStruct(
+	wr io.Writer,
+	gormStruct *GormStruct,
+) error {
+	funcMap := template.FuncMap{
+		"join": strings.Join,
 	}
 
-	return lines
+	// unique constraint name
+	uniqueCstName := ""
+	uniqueFieldNames := make([]string, 0)
+	for _, field := range gormStruct.UniqueFields {
+		uniqueFieldNames = append(uniqueFieldNames, Quote(field.Name, "'"))
+	}
+	if len(uniqueFieldNames) > 1 {
+		uniqueCstName = gormStruct.table.Name + g.output.Get(FlagUniqueNameSuffix)
+	}
+
+	// fields
+	tplFields := make([]*GormTplFieldData, 0)
+	for _, field := range gormStruct.Fields {
+		column := field.Column
+
+		// embedded model column
+		if gormStruct.EmbedModel && isGormModelColumn(column.Name) {
+			continue
+		}
+
+		// Column gormTags
+		gormTags := make([]string, 0)
+
+		if field.OverrideName {
+			gormTags = append(gormTags, fmt.Sprintf("column:%s", column.Name))
+		}
+
+		if column.Type == "string" && column.Size > 0 {
+			gormTags = append(gormTags, fmt.Sprintf("type:varchar(%d)", column.Size))
+		} else if (column.Type == ColTypeDouble || column.Type == ColTypeFloat || column.Type == ColTypeDecimal) &&
+			(column.Size > 0 && column.Scale > 0) {
+			gormTags = append(gormTags, fmt.Sprintf("type:%s(%d,%d)", column.Type, column.Size, column.Scale))
+		}
+		// PK
+		if column.PrimaryKey {
+			gormTags = append(gormTags, "primary_key")
+		}
+		// Unique
+		if column.UniqueKey {
+			if uniqueCstName == "" {
+				gormTags = append(gormTags, "unique")
+			} else {
+				gormTags = append(gormTags, fmt.Sprintf("unique_index:%s", uniqueCstName))
+			}
+		}
+		// auto_increment
+		if column.AutoIncremental {
+			gormTags = append(gormTags, "auto_increment")
+		}
+		// not null
+		if !column.Nullable && !column.AutoIncremental {
+			gormTags = append(gormTags, "not null")
+		}
+
+		// GORM tag
+		var tag string
+		if len(gormTags) > 0 {
+			tag = fmt.Sprintf("`gorm:\"%s\"`", strings.Join(gormTags, ";"))
+		}
+
+		tplFields = append(tplFields, &GormTplFieldData{
+			Name: field.Name,
+			Type: field.Type,
+			Tag:  tag,
+		})
+	}
+
+	// populate template data
+	data := GormTplData{
+		Package:       g.output.Get(FlagPackage),
+		Struct:        gormStruct,
+		Table:         gormStruct.table,
+		UniqueCstName: uniqueCstName,
+		Fields:        tplFields,
+	}
+
+	tplString := `{{"" -}}
+type {{.Struct.Name}} struct {
+{{- if .Struct.EmbedModel}}
+	gorm.Model
+{{- end}}
+{{- range .Fields}}
+	{{.Name}} {{.Type}} {{.Tag}}
+{{- end}}
+}
+
+func (c *{{.Struct.Name}}) TableName() string { return "{{.Table.Name}}" }
+
+`
+	tmpl, err := template.New("gormStruct").Funcs(funcMap).Parse(tplString)
+	if err != nil {
+		return err
+	}
+
+	return tmpl.Execute(wr, &data)
 }

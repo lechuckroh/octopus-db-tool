@@ -18,6 +18,7 @@
 .vscode
 .idea
 .project
+.run
 /vendor
 
 # drone secrets
@@ -26,3 +27,4 @@
 #
 /oct
 /samples
+/output
