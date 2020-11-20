@@ -241,7 +241,7 @@ func generateGorm(c *cli.Context) error {
 	return cmd.Generate(input, output)
 }
 
-const VERSION = "2.0.0-beta1"
+const VERSION = "2.0.0-beta2"
 
 var buildDateVersion string
 
