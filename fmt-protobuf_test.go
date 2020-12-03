@@ -2,7 +2,7 @@ package main
 
 import (
 	"bytes"
-	"github.com/google/go-cmp/cmp"
+	. "github.com/smartystreets/goconvey/convey"
 	"testing"
 )
 
@@ -47,15 +47,16 @@ var protobufTplTestSchema = &Schema{
 
 // data class
 func TestProtobufTpl_Generate(t *testing.T) {
-	output := &Output{
-		Options: map[string]string{
-			FlagPackage:   "com.lechuck.foo",
-			FlagGoPackage: "lechuck/foo",
-		},
-	}
-	prefixMapper := newPrefixMapper("common:C")
-	expected := []string{
-		`syntax = "proto3";
+	Convey("Generate", t, func() {
+		output := &Output{
+			Options: map[string]string{
+				FlagPackage:   "com.lechuck.foo",
+				FlagGoPackage: "lechuck/foo",
+			},
+		}
+		prefixMapper := newPrefixMapper("common:C")
+		expected := []string{
+			`syntax = "proto3";
 
 package com.lechuck.hello;
 
@@ -71,21 +72,20 @@ message CUser {
   google.protobuf.Timestamp updatedAt = 5;
 }
 `,
-	}
+		}
 
-	protobuf := NewProtobufTpl(protobufTplTestSchema, output, nil, prefixMapper)
+		protobuf := NewProtobufTpl(protobufTplTestSchema, output, nil, prefixMapper)
 
-	for i, table := range jpaKotlinTplTestSchema.Tables {
-		messages := []*ProtoMessage{
-			NewProtobufMessage(table, output, prefixMapper),
+		for i, table := range jpaKotlinTplTestSchema.Tables {
+			messages := []*ProtoMessage{
+				NewProtobufMessage(table, output, prefixMapper),
+			}
+			buf := new(bytes.Buffer)
+			if err := protobuf.GenerateProto(buf, messages, "com.lechuck.hello", "proto/hello"); err != nil {
+				t.Error(err)
+			}
+			actual := buf.String()
+			So(actual, ShouldResemble, expected[i])
 		}
-		buf := new(bytes.Buffer)
-		if err := protobuf.GenerateProto(buf, messages, "com.lechuck.hello", "proto/hello"); err != nil {
-			t.Error(err)
-		}
-		actual := buf.String()
-		if diff := cmp.Diff(expected[i], actual); diff != "" {
-			t.Errorf("mismatch [%d] (-expected +actual):\n%s", i, diff)
-		}
-	}
+	})
 }
