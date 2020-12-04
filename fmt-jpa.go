@@ -334,11 +334,6 @@ func (k *JPAKotlin) Generate(
 								targetClassName,
 								strcase.ToLowerCamel(ref.Column)))
 					}
-
-					appendLine(indent +
-						fmt.Sprintf("@VRelation(cls = \"%s\", field = \"%s\")",
-							targetClassName,
-							strcase.ToLowerCamel(ref.Column)))
 				}
 			}
 
