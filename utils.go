@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"text/template"
 )
 
 func ToInt(value interface{}, defaultValue int) int {
@@ -119,11 +120,15 @@ func ParseType(str string) (string, uint16, uint16) {
 	return name, uint16(size), uint16(scale)
 }
 
-func GetFileFormat(fileFormat string, filename string) string {
+func GetFileFormatIfNotSet(fileFormat string, filename string) string {
 	if fileFormat != "" {
 		return fileFormat
+	} else {
+		return GetFileFormat(filename)
 	}
+}
 
+func GetFileFormat(filename string) string {
 	ext := filepath.Ext(filename)
 	switch strings.ToLower(ext) {
 	case ".graphql":
@@ -318,4 +323,8 @@ func writeStringToFile(filename string, s string) error {
 	}
 	log.Printf("[WRITE] %s", filename)
 	return nil
+}
+
+func NewTemplate(tmplName, tmplText string, funcMap template.FuncMap) (*template.Template, error) {
+	return template.New(tmplName).Funcs(funcMap).Parse(tmplText)
 }
