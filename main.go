@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"github.com/urfave/cli"
@@ -17,7 +18,7 @@ type Input struct {
 }
 
 func NewInput(filename string, fileFormat string) (*Input, error) {
-	inputFormat := GetFileFormat(fileFormat, filename)
+	inputFormat := GetFileFormatIfNotSet(fileFormat, filename)
 	if inputFormat == "" {
 		return nil, errors.New("cannot find sourceFormat")
 	}
@@ -26,6 +27,23 @@ func NewInput(filename string, fileFormat string) (*Input, error) {
 		Filename: filename,
 		Format:   inputFormat,
 	}, nil
+}
+
+func loadSchema(filename string) (*Schema, error) {
+	inputFormat := GetFileFormat(filename)
+	if inputFormat != FormatOctopus {
+		return nil, fmt.Errorf("'%s' is not octopus file", filename)
+	}
+	reader := &Schema{}
+	if err := reader.FromFile(filename); err != nil {
+		return nil, err
+	}
+	if schema, err := reader.ToSchema(); err != nil {
+		return nil, err
+	} else {
+		schema.Normalize()
+		return schema, nil
+	}
 }
 
 func (i *Input) ToSchema() (*Schema, error) {
@@ -114,11 +132,11 @@ func convert(c *cli.Context) error {
 	inputFilename := args.Get(0)
 	outputFilename := args.Get(1)
 
-	inputFormat := GetFileFormat(c.String(FlagSourceFormat), inputFilename)
+	inputFormat := GetFileFormatIfNotSet(c.String(FlagSourceFormat), inputFilename)
 	if inputFormat == "" {
 		return errors.New("cannot find sourceFormat")
 	}
-	outputFormat := GetFileFormat(c.String(FlagTargetFormat), outputFilename)
+	outputFormat := GetFileFormatIfNotSet(c.String(FlagTargetFormat), outputFilename)
 	if outputFormat == "" {
 		return errors.New("cannot find targetFormat")
 	}
@@ -239,6 +257,50 @@ func generateGorm(c *cli.Context) error {
 
 	cmd := &GenerateCmd{}
 	return cmd.Generate(input, output)
+}
+
+// requireArgs check argument count and return error if arguments are insufficient
+func requireArgs(c *cli.Context, requiredCount int) error {
+	argsCount := c.NArg()
+	if argsCount < requiredCount {
+		return cli.NewExitError("insufficient arguments", 1)
+	}
+	return nil
+}
+
+// exportMysqlDDL exports octopus schma to mysql DDL
+func exportMysqlDDL(c *cli.Context) error {
+	if err := requireArgs(c, 2); err != nil {
+		return err
+	}
+	inputFilename := c.Args().Get(0)
+	outputFilename := c.Args().Get(1)
+
+	// load schema
+	schema, err := loadSchema(inputFilename)
+	if err != nil {
+		return err
+	}
+
+	// export mysql DDL
+	exporter := MysqlExport{
+		schema: schema,
+	}
+	option := MysqlExportOption{
+		TableFilter:      getTableFilterFn(c.String(FlagGroups)),
+		UniqueNameSuffix: c.String(FlagUniqueNameSuffix),
+	}
+	buf := new(bytes.Buffer)
+	if err = exporter.Export(buf, &option); err != nil {
+		return err
+	}
+
+	// write to file
+	if err = writeStringToFile(outputFilename, buf.String()); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 const VERSION = "2.0.0-beta2"
@@ -374,9 +436,8 @@ func main() {
 			Action: generate,
 		},
 		{
-			Name:    "jpa-kotlin",
-			Aliases: []string{"jk"},
-			Usage:   "jpa-kotlin `source` `target`",
+			Name:  "jpa-kotlin",
+			Usage: "jpa-kotlin `source` `target`",
 			Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:   FlagPackage,
@@ -432,9 +493,8 @@ func main() {
 			Action: generateJpaKotlin,
 		},
 		{
-			Name:    "protobuf",
-			Aliases: []string{"proto"},
-			Usage:   "protobuf `source` `target`",
+			Name:  "protobuf",
+			Usage: "protobuf `source` `target`",
 			Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:   FlagPackage,
@@ -465,9 +525,8 @@ func main() {
 			Action: generateProtobuf,
 		},
 		{
-			Name:    "gorm",
-			Aliases: []string{"g"},
-			Usage:   "gorm `source` `target`",
+			Name:  "gorm",
+			Usage: "gorm `source` `target`",
 			Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:   FlagGormModel,
@@ -501,6 +560,23 @@ func main() {
 				},
 			},
 			Action: generateGorm,
+		},
+		{
+			Name:  "mysql",
+			Usage: "mysql `source` `target`",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:   FlagGroups,
+					Usage:  "filter table groups to generate. set multiple values with comma separated.",
+					EnvVar: "OCTOPUS_GROUPS",
+				},
+				cli.StringFlag{
+					Name:   FlagUniqueNameSuffix,
+					Usage:  "set unique constraint name suffix",
+					EnvVar: "OCTOPUS_UNIQUE_NAME_SUFFIX",
+				},
+			},
+			Action: exportMysqlDDL,
 		},
 	}
 

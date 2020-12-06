@@ -80,6 +80,33 @@ $ ./oct generate <sourceFile> <targetFile> \
 
 You can omit `--sorceFormat`, `--targetFormat` if file format can be detected.
 
+### octopus -> GORM
+
+|       option       | Description                                                  |
+| :----------------: | ------------------------------------------------------------ |
+|       --help       | Show help |
+|      --package     | go package name.<br />Example: `model`    |
+|     --gormModel    | embedded base model for GORM model.<br />default: `gorm.Model` |
+|      --groups      | Filter table groups to generate.<br />Groups are separated by comma(`,`)<br />Example: `foo,bar` |
+|   --removePrefix   | Table prefixes to remove from class name.<br />Multiple prefixes are separated by comma(`,`)<br />Example: `tbl_,table_` |
+|      --prefix      | Class name prefix.<br />Format: `{group1}:{prefix1}[,{group2}:{prefix2}]`<br />Group can be omitted if applies to all groups<br />Example: `foo:F,bar:B` |
+| --uniqueNameSuffix | Unique constraint name suffix.<br />Example: `_uq` |
+
+Example:
+
+```bash
+# show help
+$ ./oct gorm --help
+
+# generate gorm models
+$ ./oct gorm sample.ojson ./output/sample.go \
+    --package=model \
+    --removePrefix=tbl_,table_ \
+    --prefix=foo:F,bar:B \
+    --uniqueNameSuffix=_uq \
+    --groups=foo,bar
+```
+
 ### octopus -> JPA-kotlin
 
 |       option       | Description                                                  |
@@ -116,33 +143,26 @@ $ ./oct jpa-kotlin sample.ojson ./output \
     --useUTC=true
 ```
 
-
-### octopus -> GORM
+### octopus -> MySQL DDL
 
 |       option       | Description                                                  |
 | :----------------: | ------------------------------------------------------------ |
 |       --help       | Show help |
-|      --package     | go package name.<br />Example: `model`    |
-|     --gormModel    | embedded base model for GORM model.<br />default: `gorm.Model` |
 |      --groups      | Filter table groups to generate.<br />Groups are separated by comma(`,`)<br />Example: `foo,bar` |
-|   --removePrefix   | Table prefixes to remove from class name.<br />Multiple prefixes are separated by comma(`,`)<br />Example: `tbl_,table_` |
-|      --prefix      | Class name prefix.<br />Format: `{group1}:{prefix1}[,{group2}:{prefix2}]`<br />Group can be omitted if applies to all groups<br />Example: `foo:F,bar:B` |
 | --uniqueNameSuffix | Unique constraint name suffix.<br />Example: `_uq` |
 
 Example:
 
 ```bash
 # show help
-$ ./oct gorm --help
+$ ./oct mysql --help
 
-# generate gorm models
-$ ./oct gorm sample.ojson ./output/sample.go \
-    --package=model \
-    --removePrefix=tbl_,table_ \
-    --prefix=foo:F,bar:B \
+# generate mysql DDL
+$ ./oct mysql sample.ojson ./output/sample-mysql.sql \
     --uniqueNameSuffix=_uq \
     --groups=foo,bar
 ```
+
 
 ### octopus -> protobuf
 
@@ -184,9 +204,6 @@ $ ./oct convert sample.ojson sample.xlsx --notNull=true
 
 # xlsx -> octopus
 $ ./oct convert sample.xlsx sample.ojson
-
-# octopus -> mysql DDL
-$ ./oct convert sample.ojson sample-mysql.sql --targetFormat=mysql
 
 # mysql DDL -> octopus
 $ ./oct convert sample-mysql.sql sample.ojson --sourceFormat=mysql

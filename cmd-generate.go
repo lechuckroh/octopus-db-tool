@@ -5,8 +5,6 @@ import (
 	"strings"
 )
 
-type TableFilterFn func(*Table) bool
-
 type GenerateCmd struct {
 }
 
@@ -17,7 +15,7 @@ func (cmd *GenerateCmd) Generate(input *Input, output *Output) error {
 	}
 
 	// table filter
-	tableFilterFn := cmd.getTableFilterFn(output.Get(FlagGroups))
+	tableFilterFn := getTableFilterFn(output.Get(FlagGroups))
 
 	// annotation mapper
 	annoMapper := newAnnotationMapper(output.Get(FlagAnnotation))
@@ -46,22 +44,6 @@ func (cmd *GenerateCmd) Generate(input *Input, output *Output) error {
 	}
 
 	return fmt.Errorf("unsupported output format: %s", output.Format)
-}
-
-func (cmd *GenerateCmd) getTableFilterFn(groups string) TableFilterFn {
-	if groups == "" {
-		return nil
-	}
-
-	groupSlice := strings.Split(groups, ",")
-	return func(table *Table) bool {
-		for _, group := range groupSlice {
-			if table.Group == group {
-				return true
-			}
-		}
-		return false
-	}
 }
 
 type AnnotationMapper struct {
