@@ -1,0 +1,68 @@
+# Initialize
+
+```bash
+# show help
+$ oct init --help
+
+# create a new file
+$ oct init -o user.ojson
+```
+
+`user.ojson` file will be created:
+
+```json
+{
+  "version": "1.0.0",
+  "tables": [
+    {
+      "name": "group",
+      "columns": [
+        {
+          "name": "id",
+          "type": "long",
+          "desc": "unique id",
+          "pk": true,
+          "autoinc": true
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "desc": "group name",
+          "size": 40,
+          "unique": true
+        }
+      ],
+      "desc": "Group table"
+    },
+    {
+      "name": "user",
+      "columns": [
+        {
+          "name": "id",
+          "type": "long",
+          "desc": "unique id",
+          "pk": true,
+          "autoinc": true
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "desc": "user login name",
+          "size": 40,
+          "unique": true
+        },
+        {
+          "name": "group_id",
+          "type": "long",
+          "desc": "group ID",
+          "ref": {
+            "table": "group",
+            "column": "id"
+          }
+        }
+      ],
+      "desc": "User table"
+    }
+  ]
+}
+```

@@ -1,584 +1,350 @@
 package main
 
 import (
-	"bytes"
-	"errors"
-	"fmt"
-	"github.com/urfave/cli"
+	"github.com/lechuckroh/octopus-db-tools/format/dbml"
+	"github.com/lechuckroh/octopus-db-tools/format/gorm"
+	"github.com/lechuckroh/octopus-db-tools/format/graphql"
+	"github.com/lechuckroh/octopus-db-tools/format/jpa"
+	"github.com/lechuckroh/octopus-db-tools/format/liquibase"
+	"github.com/lechuckroh/octopus-db-tools/format/mysql"
+	"github.com/lechuckroh/octopus-db-tools/format/octopus"
+	"github.com/lechuckroh/octopus-db-tools/format/plantuml"
+	"github.com/lechuckroh/octopus-db-tools/format/protobuf"
+	"github.com/lechuckroh/octopus-db-tools/format/quickdbd"
+	"github.com/lechuckroh/octopus-db-tools/format/sqlalchemy"
+	"github.com/lechuckroh/octopus-db-tools/format/staruml"
+	"github.com/lechuckroh/octopus-db-tools/format/xlsx"
+	"github.com/urfave/cli/v2"
 	"log"
 	"os"
 	"sort"
-	"strings"
 	"time"
 )
-
-type Input struct {
-	Filename string
-	Format   string
-}
-
-func NewInput(filename string, fileFormat string) (*Input, error) {
-	inputFormat := GetFileFormatIfNotSet(fileFormat, filename)
-	if inputFormat == "" {
-		return nil, errors.New("cannot find sourceFormat")
-	}
-
-	return &Input{
-		Filename: filename,
-		Format:   inputFormat,
-	}, nil
-}
-
-func loadSchema(filename string) (*Schema, error) {
-	inputFormat := GetFileFormat(filename)
-	if inputFormat != FormatOctopus {
-		return nil, fmt.Errorf("'%s' is not octopus file", filename)
-	}
-	reader := &Schema{}
-	if err := reader.FromFile(filename); err != nil {
-		return nil, err
-	}
-	if schema, err := reader.ToSchema(); err != nil {
-		return nil, err
-	} else {
-		schema.Normalize()
-		return schema, nil
-	}
-}
-
-func (i *Input) ToSchema() (*Schema, error) {
-	var reader FormatReader
-
-	switch i.Format {
-	case FormatOctopus:
-		reader = &Schema{}
-	case FormatStaruml2:
-		reader = &StarUML2{}
-	case FormatXlsx:
-		reader = &Xlsx{}
-	case FormatSqlMysql:
-		reader = &Mysql{}
-	}
-
-	if reader == nil {
-		return nil, fmt.Errorf("unsupported input format: %s", i.Format)
-	}
-	if err := reader.FromFile(i.Filename); err != nil {
-		return nil, err
-	}
-	if schema, err := reader.ToSchema(); err != nil {
-		return nil, err
-	} else {
-		schema.Normalize()
-		return schema, nil
-	}
-}
-
-type Output struct {
-	FilePath string
-	Format   string
-	Options  map[string]string
-}
-
-func (o *Output) Get(name string) string {
-	return o.Options[name]
-}
-func (o *Output) GetBool(name string) bool {
-	return o.Options[name] == "true"
-}
-func (o *Output) GetSlice(name string) []string {
-	return strings.Split(o.Options[name], ",")
-}
-
-func getFlagValues(c *cli.Context) map[string]string {
-	result := make(map[string]string)
-
-	for _, flagName := range c.FlagNames() {
-		flagValue := c.String(flagName)
-		result[flagName] = flagValue
-	}
-
-	return result
-}
-
-func create(c *cli.Context) error {
-	args := c.Args()
-	argsCount := c.NArg()
-	var filename string
-	if argsCount == 0 {
-		filename = "db.ojson"
-	} else {
-		filename = args.Get(0)
-	}
-
-	cmd := &CreateCmd{}
-	return cmd.Create(&Output{
-		FilePath: filename,
-		Format:   "",
-		Options:  getFlagValues(c),
-	})
-}
-
-func convert(c *cli.Context) error {
-	args := c.Args()
-	argsCount := c.NArg()
-	if argsCount == 0 {
-		return cli.NewExitError("source is not set", 1)
-	}
-	if argsCount == 1 {
-		return cli.NewExitError("target is not set", 1)
-	}
-
-	inputFilename := args.Get(0)
-	outputFilename := args.Get(1)
-
-	inputFormat := GetFileFormatIfNotSet(c.String(FlagSourceFormat), inputFilename)
-	if inputFormat == "" {
-		return errors.New("cannot find sourceFormat")
-	}
-	outputFormat := GetFileFormatIfNotSet(c.String(FlagTargetFormat), outputFilename)
-	if outputFormat == "" {
-		return errors.New("cannot find targetFormat")
-	}
-
-	input := &Input{
-		Filename: inputFilename,
-		Format:   inputFormat,
-	}
-	output := &Output{
-		FilePath: outputFilename,
-		Format:   outputFormat,
-		Options:  getFlagValues(c),
-	}
-
-	cmd := &ConvertCmd{}
-	return cmd.Convert(input, output)
-}
-
-func generate(c *cli.Context) error {
-	args := c.Args()
-	argsCount := c.NArg()
-	if argsCount == 0 {
-		return cli.NewExitError("source is not set", 1)
-	}
-	if argsCount == 1 {
-		return cli.NewExitError("target is not set", 1)
-	}
-
-	inputFilename := args.Get(0)
-	input, err := NewInput(inputFilename, c.String(FlagSourceFormat))
-	if err != nil {
-		return err
-	}
-
-	output := &Output{
-		FilePath: args.Get(1),
-		Format:   c.String(FlagTargetFormat),
-		Options:  getFlagValues(c),
-	}
-
-	cmd := &GenerateCmd{}
-	return cmd.Generate(input, output)
-}
-
-func generateJpaKotlin(c *cli.Context) error {
-	args := c.Args()
-	argsCount := c.NArg()
-	if argsCount == 0 {
-		return cli.NewExitError("source is not set", 1)
-	}
-	if argsCount == 1 {
-		return cli.NewExitError("target is not set", 1)
-	}
-
-	inputFilename := args.Get(0)
-	input, err := NewInput(inputFilename, FormatOctopus)
-	if err != nil {
-		return err
-	}
-
-	output := &Output{
-		FilePath: args.Get(1),
-		Format:   FormatJpaKotlin,
-		Options:  getFlagValues(c),
-	}
-
-	cmd := &GenerateCmd{}
-	return cmd.Generate(input, output)
-}
-
-func generateProtobuf(c *cli.Context) error {
-	args := c.Args()
-	argsCount := c.NArg()
-	if argsCount == 0 {
-		return cli.NewExitError("source is not set", 1)
-	}
-	if argsCount == 1 {
-		return cli.NewExitError("target is not set", 1)
-	}
-
-	inputFilename := args.Get(0)
-	input, err := NewInput(inputFilename, FormatOctopus)
-	if err != nil {
-		return err
-	}
-
-	output := &Output{
-		FilePath: args.Get(1),
-		Format:   FormatProtobuf,
-		Options:  getFlagValues(c),
-	}
-
-	cmd := &GenerateCmd{}
-	return cmd.Generate(input, output)
-}
-
-func generateGorm(c *cli.Context) error {
-	args := c.Args()
-	argsCount := c.NArg()
-	if argsCount == 0 {
-		return cli.NewExitError("source is not set", 1)
-	}
-	if argsCount == 1 {
-		return cli.NewExitError("target is not set", 1)
-	}
-
-	inputFilename := args.Get(0)
-	input, err := NewInput(inputFilename, FormatOctopus)
-	if err != nil {
-		return err
-	}
-
-	output := &Output{
-		FilePath: args.Get(1),
-		Format:   FormatGorm,
-		Options:  getFlagValues(c),
-	}
-
-	cmd := &GenerateCmd{}
-	return cmd.Generate(input, output)
-}
-
-// requireArgs check argument count and return error if arguments are insufficient
-func requireArgs(c *cli.Context, requiredCount int) error {
-	argsCount := c.NArg()
-	if argsCount < requiredCount {
-		return cli.NewExitError("insufficient arguments", 1)
-	}
-	return nil
-}
-
-// exportMysqlDDL exports octopus schma to mysql DDL
-func exportMysqlDDL(c *cli.Context) error {
-	if err := requireArgs(c, 2); err != nil {
-		return err
-	}
-	inputFilename := c.Args().Get(0)
-	outputFilename := c.Args().Get(1)
-
-	// load schema
-	schema, err := loadSchema(inputFilename)
-	if err != nil {
-		return err
-	}
-
-	// export mysql DDL
-	exporter := MysqlExport{
-		schema: schema,
-	}
-	option := MysqlExportOption{
-		TableFilter:      getTableFilterFn(c.String(FlagGroups)),
-		UniqueNameSuffix: c.String(FlagUniqueNameSuffix),
-	}
-	buf := new(bytes.Buffer)
-	if err = exporter.Export(buf, &option); err != nil {
-		return err
-	}
-
-	// write to file
-	if err = writeStringToFile(outputFilename, buf.String()); err != nil {
-		return err
-	}
-
-	return nil
-}
 
 const VERSION = "2.0.0-beta2"
 
 var buildDateVersion string
 
+func initCommand() *cli.Command {
+	return &cli.Command{
+		Name:   "init",
+		Action: octopus.InitAction,
+		Flags:  octopus.InitCliFlags,
+	}
+}
+
+func importCommand() *cli.Command {
+	return &cli.Command{
+		Name: "import",
+		Subcommands: []*cli.Command{
+			{
+				Name:   "mysql",
+				Action: mysql.ImportAction,
+				Flags:  mysql.ImportCliFlags,
+			},
+			{
+				Name:   "staruml",
+				Action: staruml.ImportAction,
+				Flags:  staruml.ImportCliFlags,
+			},
+			{
+				Name:   "xlsx",
+				Action: xlsx.ImportAction,
+				Flags:  xlsx.ImportCliFlags,
+			},
+		},
+	}
+}
+
+func exportCommand() *cli.Command {
+	return &cli.Command{
+		Name: "export",
+		Subcommands: []*cli.Command{
+			{
+				Name:   "dbml",
+				Action: dbml.ExportAction,
+				Flags:  dbml.ExportCliFlags,
+			},
+			{
+				Name:   "quickdbd",
+				Action: quickdbd.ExportAction,
+				Flags:  quickdbd.ExportCliFlags,
+			},
+			{
+				Name:   "mysql",
+				Action: mysql.ExportAction,
+				Flags:  mysql.ExportCliFlags,
+			},
+			{
+				Name:   "xlsx",
+				Action: xlsx.ExportAction,
+				Flags:  xlsx.ExportCliFlags,
+			},
+		},
+	}
+}
+
+func generateCommand() *cli.Command {
+	return &cli.Command{
+		Name: "generate",
+		Subcommands: []*cli.Command{
+			{
+				Name:   "gorm",
+				Action: gorm.Action,
+				Flags:  gorm.CliFlags,
+			},
+			{
+				Name:   "graphql",
+				Action: graphql.Action,
+				Flags:  graphql.CliFlags,
+			},
+			{
+				Name:   "kt",
+				Action: jpa.KotlinAction,
+				Flags:  jpa.KotlinCliFlags,
+			},
+			{
+				Name:   "liquibase",
+				Action: liquibase.Action,
+				Flags:  liquibase.CliFlags,
+			},
+			{
+				Name:   "plantuml",
+				Action: plantuml.Action,
+				Flags:  plantuml.CliFlags,
+			},
+			{
+				Name:   "pb",
+				Action: protobuf.Action,
+				Flags:  protobuf.CliFlags,
+			},
+			{
+				Name:   "sqlalchemy",
+				Action: sqlalchemy.Action,
+				Flags:  sqlalchemy.CliFlags,
+			},
+		},
+	}
+}
+
 func main() {
 	cliApp := cli.NewApp()
+	cliApp.EnableBashCompletion = true
 	cliApp.Name = "oct"
 	cliApp.Version = VERSION + buildDateVersion
 	cliApp.Compiled = time.Now()
-	cliApp.Authors = []cli.Author{
-		{Name: "Lechuck Roh"},
+	cliApp.Authors = []*cli.Author{
+		{
+			Name:  "Lechuck Roh",
+			Email: "lechuckroh@gmail.com",
+		},
 	}
-	cliApp.Copyright = "(c) 2019 Lechuck Roh"
+	cliApp.Copyright = "(c) 2019-2020 Lechuck Roh"
 	cliApp.Usage = "octopus-db-tools"
-	cliApp.Commands = []cli.Command{
-		{
-			Name:    "create",
-			Aliases: []string{"c"},
-			Usage:   "create `filename`",
-			Action:  create,
-		},
-		{
-			Name:    "convert",
-			Aliases: []string{"c"},
-			Usage:   "convert `source` `target`",
-			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:   FlagSourceFormat,
-					Usage:  "set source format",
-					EnvVar: "OCTOPUS_SOURCE_FORMAT",
-				},
-				cli.StringFlag{
-					Name:   FlagTargetFormat,
-					Usage:  "set target format",
-					EnvVar: "OCTOPUS_TARGET_FORMAT",
-				},
-				cli.StringFlag{
-					Name:   FlagNotNull,
-					Usage:  "use 'not null' instead of 'nullable'",
-					EnvVar: "OCTOPUS_NOT_NULL",
-				},
-			},
-			Action: convert,
-		},
-		{
-			Name:    "generate",
-			Aliases: []string{"g"},
-			Usage:   "generate `source` `target`",
-			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:   FlagSourceFormat,
-					Usage:  "set source format",
-					EnvVar: "OCTOPUS_SOURCE_FORMAT",
-				},
-				cli.StringFlag{
-					Name:   FlagTargetFormat,
-					Usage:  "set target format",
-					EnvVar: "OCTOPUS_TARGET_FORMAT",
-				},
-				cli.StringFlag{
-					Name:   FlagPackage,
-					Usage:  "set target package name",
-					EnvVar: "OCTOPUS_PACKAGE",
-				},
-				cli.StringFlag{
-					Name:   FlagReposPackage,
-					Usage:  "set target repository package name",
-					EnvVar: "OCTOPUS_REPOS_PACKAGE",
-				},
-				cli.StringFlag{
-					Name:   FlagRelation,
-					Usage:  "set relation annotation type",
-					EnvVar: "OCTOPUS_RELATION",
-				},
-				cli.StringFlag{
-					Name:   FlagAnnotation,
-					Usage:  "add custom class annotations",
-					EnvVar: "OCTOPUS_ANNOTATION",
-				},
-				cli.StringFlag{
-					Name:   FlagGraphqlPackage,
-					Usage:  "set target graphql package name",
-					EnvVar: "OCTOPUS_GRAPHQL_PACKAGE",
-				},
-				cli.StringFlag{
-					Name:   FlagGormModel,
-					Usage:  "set embedded base model for GORM model",
-					EnvVar: "OCTOPUS_GORM_MODEL",
-				},
-				cli.StringFlag{
-					Name:   FlagRemovePrefix,
-					Usage:  "set prefixes to remove. set multiple values with comma separated.",
-					EnvVar: "OCTOPUS_REMOVE_PREFIX",
-				},
-				cli.StringFlag{
-					Name:   FlagPrefix,
-					Usage:  "set prefix to add",
-					EnvVar: "OCTOPUS_PREFIX",
-				},
-				cli.StringFlag{
-					Name:   FlagUniqueNameSuffix,
-					Usage:  "set unique constraint name suffix",
-					EnvVar: "OCTOPUS_UNIQUE_NAME_SUFFIX",
-				},
-				cli.StringFlag{
-					Name:   FlagGroups,
-					Usage:  "filter table groups to generate. set multiple values with comma separated.",
-					EnvVar: "OCTOPUS_GROUPS",
-				},
-				cli.StringFlag{
-					Name:   FlagDiff,
-					Usage:  "diff octopus filename.",
-					EnvVar: "OCTOPUS_DIFF",
-				},
-				cli.StringFlag{
-					Name:   FlagIdEntity,
-					Usage:  "set IdEntity interface name",
-					EnvVar: "OCTOPUS_ID_ENTITY",
-				},
-				cli.StringFlag{
-					Name:   FlagUseUTC,
-					Usage:  "use UTC for audit column default value",
-					EnvVar: "OCTOPUS_USE_UTC",
-				},
-				cli.StringFlag{
-					Name:   FlagUseComments,
-					Usage:  "generate column comments",
-					EnvVar: "OCTOPUS_USE_COMMENTS",
-				},
-			},
-			Action: generate,
-		},
-		{
-			Name:  "jpa-kotlin",
-			Usage: "jpa-kotlin `source` `target`",
-			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:   FlagPackage,
-					Usage:  "set kotlin package name",
-					EnvVar: "OCTOPUS_PACKAGE",
-				},
-				cli.StringFlag{
-					Name:   FlagReposPackage,
-					Usage:  "set target repository package name",
-					EnvVar: "OCTOPUS_REPOS_PACKAGE",
-				},
-				cli.StringFlag{
-					Name:   FlagRelation,
-					Usage:  "set virtual relation annotation type",
-					EnvVar: "OCTOPUS_RELATION",
-				},
-				cli.StringFlag{
-					Name:   FlagAnnotation,
-					Usage:  "add custom kotlin class annotations",
-					EnvVar: "OCTOPUS_ANNOTATION",
-				},
-				cli.StringFlag{
-					Name:   FlagRemovePrefix,
-					Usage:  "set prefixes to remove from kotlin class name. set multiple values with comma separated.",
-					EnvVar: "OCTOPUS_REMOVE_PREFIX",
-				},
-				cli.StringFlag{
-					Name:   FlagPrefix,
-					Usage:  "set kotlin class name prefix",
-					EnvVar: "OCTOPUS_PREFIX",
-				},
-				cli.StringFlag{
-					Name:   FlagUniqueNameSuffix,
-					Usage:  "set unique constraint name suffix",
-					EnvVar: "OCTOPUS_UNIQUE_NAME_SUFFIX",
-				},
-				cli.StringFlag{
-					Name:   FlagGroups,
-					Usage:  "filter table groups to generate. set multiple values with comma separated.",
-					EnvVar: "OCTOPUS_GROUPS",
-				},
-				cli.StringFlag{
-					Name:   FlagIdEntity,
-					Usage:  "set kotlin interface name with `id` field.",
-					EnvVar: "OCTOPUS_ID_ENTITY",
-				},
-				cli.StringFlag{
-					Name:   FlagUseUTC,
-					Usage:  "use UTC for audit column default value",
-					EnvVar: "OCTOPUS_USE_UTC",
-				},
-			},
-			Action: generateJpaKotlin,
-		},
-		{
-			Name:  "protobuf",
-			Usage: "protobuf `source` `target`",
-			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:   FlagPackage,
-					Usage:  "set package name",
-					EnvVar: "OCTOPUS_PACKAGE",
-				},
-				cli.StringFlag{
-					Name:   FlagGoPackage,
-					Usage:  "set golang package name",
-					EnvVar: "OCTOPUS_GO_PACKAGE",
-				},
-				cli.StringFlag{
-					Name:   FlagRemovePrefix,
-					Usage:  "set prefixes to remove from message name. set multiple values with comma separated.",
-					EnvVar: "OCTOPUS_REMOVE_PREFIX",
-				},
-				cli.StringFlag{
-					Name:   FlagPrefix,
-					Usage:  "set message name prefix",
-					EnvVar: "OCTOPUS_PREFIX",
-				},
-				cli.StringFlag{
-					Name:   FlagGroups,
-					Usage:  "filter table groups to generate. set multiple values with comma separated.",
-					EnvVar: "OCTOPUS_GROUPS",
-				},
-			},
-			Action: generateProtobuf,
-		},
-		{
-			Name:  "gorm",
-			Usage: "gorm `source` `target`",
-			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:   FlagGormModel,
-					Usage:  "set embedded base model for GORM model",
-					EnvVar: "OCTOPUS_GORM_MODEL",
-				},
-				cli.StringFlag{
-					Name:   FlagGroups,
-					Usage:  "filter table groups to generate. set multiple values with comma separated.",
-					EnvVar: "OCTOPUS_GROUPS",
-				},
-				cli.StringFlag{
-					Name:   FlagPackage,
-					Usage:  "set package name",
-					EnvVar: "OCTOPUS_PACKAGE",
-				},
-				cli.StringFlag{
-					Name:   FlagPrefix,
-					Usage:  "set model struct name prefix",
-					EnvVar: "OCTOPUS_PREFIX",
-				},
-				cli.StringFlag{
-					Name:   FlagRemovePrefix,
-					Usage:  "set prefixes to remove from model struct name. set multiple values with comma separated.",
-					EnvVar: "OCTOPUS_REMOVE_PREFIX",
-				},
-				cli.StringFlag{
-					Name:   FlagUniqueNameSuffix,
-					Usage:  "set unique constraint name suffix",
-					EnvVar: "OCTOPUS_UNIQUE_NAME_SUFFIX",
-				},
-			},
-			Action: generateGorm,
-		},
-		{
-			Name:  "mysql",
-			Usage: "mysql `source` `target`",
-			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:   FlagGroups,
-					Usage:  "filter table groups to generate. set multiple values with comma separated.",
-					EnvVar: "OCTOPUS_GROUPS",
-				},
-				cli.StringFlag{
-					Name:   FlagUniqueNameSuffix,
-					Usage:  "set unique constraint name suffix",
-					EnvVar: "OCTOPUS_UNIQUE_NAME_SUFFIX",
-				},
-			},
-			Action: exportMysqlDDL,
-		},
+	cliApp.Commands = []*cli.Command{
+		initCommand(),
+		importCommand(),
+		exportCommand(),
+		generateCommand(),
 	}
+	//
+	//	{
+	//		Name:    "create",
+	//		Aliases: []string{"c"},
+	//		Usage:   "create `filename`",
+	//		ExportAction:  create,
+	//	},
+	//	{
+	//		Name:    "convert",
+	//		Aliases: []string{"c"},
+	//		Usage:   "convert `source` `target`",
+	//		Flags: []cli.Flag{
+	//			cli.StringFlag{
+	//				Name:   FlagSourceFormat,
+	//				Usage:  "set source format",
+	//				EnvVar: "OCTOPUS_SOURCE_FORMAT",
+	//			},
+	//			cli.StringFlag{
+	//				Name:   FlagTargetFormat,
+	//				Usage:  "set target format",
+	//				EnvVar: "OCTOPUS_TARGET_FORMAT",
+	//			},
+	//			cli.StringFlag{
+	//				Name:   FlagNotNull,
+	//				Usage:  "use 'not null' instead of 'nullable'",
+	//				EnvVar: "OCTOPUS_NOT_NULL",
+	//			},
+	//		},
+	//		ExportAction: convert,
+	//	},
+	//	{
+	//		Name:    "generate",
+	//		Aliases: []string{"g"},
+	//		Usage:   "generate `source` `target`",
+	//		Flags: []cli.Flag{
+	//			cli.StringFlag{
+	//				Name:   FlagSourceFormat,
+	//				Usage:  "set source format",
+	//				EnvVar: "OCTOPUS_SOURCE_FORMAT",
+	//			},
+	//			cli.StringFlag{
+	//				Name:   FlagTargetFormat,
+	//				Usage:  "set target format",
+	//				EnvVar: "OCTOPUS_TARGET_FORMAT",
+	//			},
+	//			cli.StringFlag{
+	//				Name:   FlagPackage,
+	//				Usage:  "set target package name",
+	//				EnvVar: "OCTOPUS_PACKAGE",
+	//			},
+	//			cli.StringFlag{
+	//				Name:   FlagReposPackage,
+	//				Usage:  "set target repository package name",
+	//				EnvVar: "OCTOPUS_REPOS_PACKAGE",
+	//			},
+	//			cli.StringFlag{
+	//				Name:   FlagRelation,
+	//				Usage:  "set relation annotation type",
+	//				EnvVar: "OCTOPUS_RELATION",
+	//			},
+	//			cli.StringFlag{
+	//				Name:   FlagAnnotation,
+	//				Usage:  "add custom class annotations",
+	//				EnvVar: "OCTOPUS_ANNOTATION",
+	//			},
+	//			cli.StringFlag{
+	//				Name:   FlagRemovePrefix,
+	//				Usage:  "set prefixes to remove. set multiple values with comma separated.",
+	//				EnvVar: "OCTOPUS_REMOVE_PREFIX",
+	//			},
+	//			cli.StringFlag{
+	//				Name:   FlagPrefix,
+	//				Usage:  "set prefix to add",
+	//				EnvVar: "OCTOPUS_PREFIX",
+	//			},
+	//			cli.StringFlag{
+	//				Name:   FlagUniqueNameSuffix,
+	//				Usage:  "set unique constraint name suffix",
+	//				EnvVar: "OCTOPUS_UNIQUE_NAME_SUFFIX",
+	//			},
+	//			cli.StringFlag{
+	//				Name:   FlagGroups,
+	//				Usage:  "filter table groups to generate. set multiple values with comma separated.",
+	//				EnvVar: "OCTOPUS_GROUPS",
+	//			},
+	//			cli.StringFlag{
+	//				Name:   FlagDiff,
+	//				Usage:  "diff octopus filename.",
+	//				EnvVar: "OCTOPUS_DIFF",
+	//			},
+	//			cli.StringFlag{
+	//				Name:   FlagIdEntity,
+	//				Usage:  "set IdEntity interface name",
+	//				EnvVar: "OCTOPUS_ID_ENTITY",
+	//			},
+	//			cli.StringFlag{
+	//				Name:   FlagUseUTC,
+	//				Usage:  "use UTC for audit column default value",
+	//				EnvVar: "OCTOPUS_USE_UTC",
+	//			},
+	//			cli.StringFlag{
+	//				Name:   FlagUseComments,
+	//				Usage:  "generate column comments",
+	//				EnvVar: "OCTOPUS_USE_COMMENTS",
+	//			},
+	//		},
+	//		ExportAction: generate,
+	//	},
+	//	{
+	//		Name:  "jpa-kotlin",
+	//		Usage: "jpa-kotlin `source` `target`",
+	//		Flags: []cli.Flag{
+	//			cli.StringFlag{
+	//				Name:   jpa.FlagPackage,
+	//				Usage:  "set kotlin package name",
+	//				EnvVar: "OCTOPUS_PACKAGE",
+	//			},
+	//			cli.StringFlag{
+	//				Name:   jpa.FlagReposPackage,
+	//				Usage:  "set target repository package name",
+	//				EnvVar: "OCTOPUS_REPOS_PACKAGE",
+	//			},
+	//			cli.StringFlag{
+	//				Name:   jpa.FlagRelation,
+	//				Usage:  "set virtual relation annotation type",
+	//				EnvVar: "OCTOPUS_RELATION",
+	//			},
+	//			cli.StringFlag{
+	//				Name:   jpa.FlagAnnotation,
+	//				Usage:  "add custom kotlin class annotations",
+	//				EnvVar: "OCTOPUS_ANNOTATION",
+	//			},
+	//			cli.StringFlag{
+	//				Name:   jpa.FlagRemovePrefix,
+	//				Usage:  "set prefixes to remove from kotlin class name. set multiple values with comma separated.",
+	//				EnvVar: "OCTOPUS_REMOVE_PREFIX",
+	//			},
+	//			cli.StringFlag{
+	//				Name:   jpa.FlagPrefix,
+	//				Usage:  "set kotlin class name prefix",
+	//				EnvVar: "OCTOPUS_PREFIX",
+	//			},
+	//			cli.StringFlag{
+	//				Name:   jpa.FlagUniqueNameSuffix,
+	//				Usage:  "set unique constraint name suffix",
+	//				EnvVar: "OCTOPUS_UNIQUE_NAME_SUFFIX",
+	//			},
+	//			cli.StringFlag{
+	//				Name:   jpa.FlagGroups,
+	//				Usage:  "filter table groups to generate. set multiple values with comma separated.",
+	//				EnvVar: "OCTOPUS_GROUPS",
+	//			},
+	//			cli.StringFlag{
+	//				Name:   jpa.FlagIdEntity,
+	//				Usage:  "set kotlin interface name with `id` field.",
+	//				EnvVar: "OCTOPUS_ID_ENTITY",
+	//			},
+	//			cli.StringFlag{
+	//				Name:   jpa.FlagUseUTC,
+	//				Usage:  "use UTC for audit column default value",
+	//				EnvVar: "OCTOPUS_USE_UTC",
+	//			},
+	//		},
+	//		ExportAction: generateJpaKotlin,
+	//	},
+	//	{
+	//		Name:  "protobuf",
+	//		Usage: "protobuf `source` `target`",
+	//		Flags: []cli.Flag{
+	//			cli.StringFlag{
+	//				Name:   protobuf.FlagPackage,
+	//				Usage:  "set package name",
+	//				EnvVar: "OCTOPUS_PACKAGE",
+	//			},
+	//			cli.StringFlag{
+	//				Name:   protobuf.FlagGoPackage,
+	//				Usage:  "set golang package name",
+	//				EnvVar: "OCTOPUS_GO_PACKAGE",
+	//			},
+	//			cli.StringFlag{
+	//				Name:   protobuf.FlagRemovePrefix,
+	//				Usage:  "set prefixes to remove from message name. set multiple values with comma separated.",
+	//				EnvVar: "OCTOPUS_REMOVE_PREFIX",
+	//			},
+	//			cli.StringFlag{
+	//				Name:   protobuf.FlagPrefix,
+	//				Usage:  "set message name prefix",
+	//				EnvVar: "OCTOPUS_PREFIX",
+	//			},
+	//			cli.StringFlag{
+	//				Name:   protobuf.FlagGroups,
+	//				Usage:  "filter table groups to generate. set multiple values with comma separated.",
+	//				EnvVar: "OCTOPUS_GROUPS",
+	//			},
+	//		},
+	//		ExportAction: generateProtobuf,
+	//	},
+	//}
 
 	sort.Sort(cli.FlagsByName(cliApp.Flags))
 	sort.Sort(cli.CommandsByName(cliApp.Commands))
