@@ -199,6 +199,7 @@ func (k *JPAKotlin) Generate(
 	ignoreUnknownRelation := output.Get(FlagIgnoreUnknownRelation)
 	uniqueNameSuffix := output.Get(FlagUniqueNameSuffix)
 	idEntityInterfaceName := output.Get(FlagIdEntity)
+	useDefaultNull := output.Get(FlagUseDefaultNull)
 
 	entityDir, err := k.mkdir(output.FilePath, outputPackage)
 	if err != nil {
@@ -381,6 +382,10 @@ func (k *JPAKotlin) Generate(
 			// set default value
 			if field.DefaultValue != "" {
 				line = line + " = " + field.DefaultValue
+			}else{
+				if useDefaultNull == "true" && column.Nullable{
+					line = line + " = null"
+				}
 			}
 
 			if i < fieldCount-1 {

@@ -297,6 +297,11 @@ func main() {
 					Usage:  "generate column comments",
 					EnvVar: "OCTOPUS_USE_COMMENTS",
 				},
+				cli.StringFlag{
+					Name: FlagUseDefaultNull,
+					Usage: "set default value of nullable column to null",
+					EnvVar: "OCTOPUS_USE_DEFAULT_NULL",
+				},
 			},
 			Action: generate,
 		},
