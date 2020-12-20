@@ -163,7 +163,7 @@ func generate(c *cli.Context) error {
 	return cmd.Generate(input, output)
 }
 
-const VERSION = "1.0.22"
+const VERSION = "1.0.23"
 
 var buildDateVersion string
 
@@ -298,8 +298,8 @@ func main() {
 					EnvVar: "OCTOPUS_USE_COMMENTS",
 				},
 				cli.StringFlag{
-					Name: FlagUseDefaultNull,
-					Usage: "set default value of nullable column to null",
+					Name:   FlagUseDefaultNull,
+					Usage:  "set default value of nullable column to null",
 					EnvVar: "OCTOPUS_USE_DEFAULT_NULL",
 				},
 			},
