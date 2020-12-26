@@ -1,11 +1,16 @@
 package mysql
 
 import (
+	"fmt"
 	"github.com/lechuckroh/octopus-db-tools/format/octopus"
 	"github.com/lechuckroh/octopus-db-tools/util"
-	"github.com/xwb1989/sqlparser"
+	"github.com/pingcap/parser"
+	"github.com/pingcap/parser/ast"
+	"github.com/pingcap/parser/mysql"
+	_ "github.com/pingcap/parser/test_driver"
 	"io"
 	"io/ioutil"
+	"strings"
 )
 
 type ImportOption struct {
@@ -19,7 +24,7 @@ func (c *Importer) Import(reader io.Reader) (*octopus.Schema, error) {
 	if bytes, err := ioutil.ReadAll(reader); err != nil {
 		return nil, err
 	} else {
-		return c.ImportBytes(bytes)
+		return c.ImportSql(string(bytes))
 	}
 }
 
@@ -27,163 +32,232 @@ func (c *Importer) ImportFile(filename string) (*octopus.Schema, error) {
 	if data, err := ioutil.ReadFile(filename); err != nil {
 		return nil, err
 	} else {
-		return c.ImportBytes(data)
+		return c.ImportSql(string(data))
 	}
 }
 
-func (c *Importer) ImportBytes(data []byte) (*octopus.Schema, error) {
-	tokens := sqlparser.NewStringTokenizer(string(data))
+func (c *Importer) ImportSql(sql string) (*octopus.Schema, error) {
+	p := parser.New()
 
-	tables := make([]*octopus.Table, 0)
-	for {
-		stmt, err := sqlparser.ParseNext(tokens)
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return nil, err
-		}
+	charset := ""
+	collation := ""
+	stmtNodes, _, err := p.Parse(sql, charset, collation)
+	if err != nil {
+		return nil, err
+	}
 
-		switch stmt.(type) {
-		case *sqlparser.DDL:
-			ddl := stmt.(*sqlparser.DDL)
-			columns := make([]*octopus.Column, 0)
+	tableX := TableX{}
+	stmtNodes[0].Accept(&tableX)
 
-			tableSpec := ddl.TableSpec
+	return &octopus.Schema{
+		Tables: tableX.tables,
+	}, nil
+}
 
-			if tableSpec != nil {
-				pkSet := util.NewStringSet()
-				uniqueSet := util.NewStringSet()
-				for _, idx := range tableSpec.Indexes {
-					info := idx.Info
-					if info.Primary {
-						for _, c := range idx.Columns {
-							pkSet.Add(c.Column.String())
-						}
-					} else if info.Unique {
-						for _, c := range idx.Columns {
-							uniqueSet.Add(c.Column.String())
-						}
-					}
+// TableX is TableExtractor
+type TableX struct {
+	tables []*octopus.Table
+}
+
+func (x *TableX) Enter(in ast.Node) (ast.Node, bool) {
+	if createTableStmt, ok := in.(*ast.CreateTableStmt); ok {
+		tableName := createTableStmt.Table.Name.String()
+
+		// constraints
+		pkSet := util.NewStringSet()
+		uniqSet := util.NewStringSet()
+		for _, cst := range createTableStmt.Constraints {
+			switch cst.Tp {
+			case ast.ConstraintPrimaryKey:
+				for _, key := range cst.Keys {
+					pkSet.Add(key.Column.Name.String())
 				}
-
-				for _, col := range ddl.TableSpec.Columns {
-					name := col.Name.String()
-					nullable := !bool(col.Type.NotNull)
-					defaultValue := util.SQLValToString(col.Type.Default, "")
-					if nullable && defaultValue == "null" {
-						defaultValue = ""
-					}
-					comment := util.SQLValToString(col.Type.Comment, "")
-					columns = append(columns, &octopus.Column{
-						Name:            name,
-						Type:            c.fromColumnType(col.Type),
-						Description:     comment,
-						Size:            uint16(util.SQLValToInt(col.Type.Length, 0)),
-						Scale:           uint16(util.SQLValToInt(col.Type.Scale, 0)),
-						Nullable:        nullable,
-						PrimaryKey:      pkSet.Contains(name),
-						UniqueKey:       uniqueSet.Contains(name),
-						AutoIncremental: bool(col.Type.Autoincrement),
-						DefaultValue:    defaultValue,
-					})
+			case ast.ConstraintKey:
+				break
+			case ast.ConstraintIndex:
+				break
+			case ast.ConstraintUniq:
+				for _, key := range cst.Keys {
+					uniqSet.Add(key.Column.Name.String())
 				}
-				tables = append(tables, &octopus.Table{
-					Name:    ddl.NewName.Name.String(),
-					Columns: columns,
-				})
+			case ast.ConstraintUniqKey:
+				break
+			case ast.ConstraintUniqIndex:
+				break
+			case ast.ConstraintForeignKey:
+				break
+			case ast.ConstraintFulltext:
+				break
+			case ast.ConstraintCheck:
+				break
 			}
 		}
-	}
 
-	schema := octopus.Schema{
-		Tables: tables,
-	}
+		// columns
+		var columns []*octopus.Column
+		for _, colDef := range createTableStmt.Cols {
+			column := x.column(colDef, pkSet, uniqSet)
+			columns = append(columns, column)
+		}
 
-	return &schema, nil
+		table := &octopus.Table{
+			Name:    tableName,
+			Columns: columns,
+		}
+		x.tables = append(x.tables, table)
+	}
+	return in, false
 }
 
-func (c *Importer) fromColumnType(colType sqlparser.ColumnType) string {
-	switch colType.Type {
-	case "bit":
-		fallthrough
-	case "bool":
-		fallthrough
-	case "boolean":
-		return octopus.ColTypeBoolean
-	case "tinyint":
-		fallthrough
-	case "smallint":
-		fallthrough
-	case "mediumint":
-		fallthrough
-	case "int":
-		fallthrough
-	case "integer":
-		return octopus.ColTypeInt
-	case "bigint":
-		return octopus.ColTypeLong
-	case "decimal":
-		return octopus.ColTypeDecimal
-	case "float":
-		return octopus.ColTypeFloat
-	case "double":
-		return octopus.ColTypeDouble
-	case "binary":
-		fallthrough
-	case "varbinary":
-		fallthrough
-	case "char":
-		fallthrough
-	case "varchar":
-		return octopus.ColTypeString
-	case "longtext":
-		fallthrough
-	case "mediumtext":
-		fallthrough
-	case "tinytext":
-		fallthrough
-	case "text":
-		return octopus.ColTypeText
-	case "enum":
-		return colType.Type
-	case "set":
-		return colType.Type
-	case "datetime":
-		fallthrough
-	case "timestamp":
-		return octopus.ColTypeDateTime
-	case "date":
-		return octopus.ColTypeDate
-	case "time":
-		return octopus.ColTypeTime
-	case "year":
-		return colType.Type
-	case "longblob":
-		fallthrough
-	case "mediumblob":
-		fallthrough
-	case "blob":
-		return octopus.ColTypeBlob
-	case "geometry":
-		return colType.Type
-	case "point":
-		return colType.Type
-	case "linestring":
-		return colType.Type
-	case "polygon":
-		return colType.Type
-	case "geometrycollection":
-		return colType.Type
-	case "multilinestring":
-		return colType.Type
-	case "multipoint":
-		return colType.Type
-	case "multipolygon":
-		return colType.Type
-	case "json":
-		return colType.Type
+func (x *TableX) Leave(in ast.Node) (ast.Node, bool) {
+	return in, true
+}
+
+func (x *TableX) column(
+	colDef *ast.ColumnDef,
+	pkSet *util.StringSet,
+	uniqSet *util.StringSet,
+) *octopus.Column {
+	name := colDef.Name.String()
+	colType, colLength, colScale := x.columnType(colDef)
+	column := octopus.Column{
+		Name:       name,
+		Type:       colType,
+		Size:       colLength,
+		Scale:      colScale,
+		PrimaryKey: pkSet.Contains(name),
+		UniqueKey:  uniqSet.Contains(name),
+		Nullable:   true,
+	}
+
+	for _, colOption := range colDef.Options {
+		switch colOption.Tp {
+		case ast.ColumnOptionPrimaryKey:
+			column.PrimaryKey = true
+		case ast.ColumnOptionNotNull:
+			column.Nullable = false
+		case ast.ColumnOptionAutoIncrement:
+			column.AutoIncremental = true
+		case ast.ColumnOptionDefaultValue:
+			valueExpr := colOption.Expr.(ast.ValueExpr)
+			column.DefaultValue = fmt.Sprintf("%v", valueExpr.GetValue())
+		case ast.ColumnOptionNull:
+			column.Nullable = true
+		case ast.ColumnOptionOnUpdate:
+			break
+		case ast.ColumnOptionFulltext:
+			break
+		case ast.ColumnOptionComment:
+			valueExpr := colOption.Expr.(ast.ValueExpr)
+			column.Description = fmt.Sprintf("%v", valueExpr.GetValue())
+		case ast.ColumnOptionGenerated:
+			break
+		case ast.ColumnOptionReference:
+			break
+		case ast.ColumnOptionCollate:
+			break
+		case ast.ColumnOptionCheck:
+			break
+		case ast.ColumnOptionColumnFormat:
+			break
+		case ast.ColumnOptionStorage:
+			break
+		case ast.ColumnOptionAutoRandom:
+			break
+		}
+	}
+	return &column
+}
+
+func (x *TableX) columnType(colDef *ast.ColumnDef) (string, uint16, uint16) {
+	var size, scale uint16
+	if colDef.Tp.Flen > 0 {
+		size = uint16(colDef.Tp.Flen)
+	}
+	if colDef.Tp.Decimal > 0 {
+		scale = uint16(colDef.Tp.Decimal)
+	}
+
+	switch colDef.Tp.Tp {
+	case mysql.TypeDecimal:
+		return octopus.ColTypeDecimal, size, scale
+	case mysql.TypeTiny:
+		if colDef.Tp.Flen == 1 {
+			return octopus.ColTypeBoolean, 0, 0
+		} else {
+			return octopus.ColTypeInt8, size, 0
+		}
+	case mysql.TypeShort:
+		return octopus.ColTypeInt16, size, 0
+	case mysql.TypeLong:
+		return octopus.ColTypeInt32, size, 0
+	case mysql.TypeFloat:
+		return octopus.ColTypeFloat, size, scale
+	case mysql.TypeDouble:
+		return octopus.ColTypeDouble, size, scale
+	case mysql.TypeNull:
+		return colDef.Tp.InfoSchemaStr(), size, scale
+	case mysql.TypeTimestamp:
+		return octopus.ColTypeDateTime, 0, 0
+	case mysql.TypeLonglong:
+		return octopus.ColTypeInt64, size, 0
+	case mysql.TypeInt24:
+		return octopus.ColTypeInt24, size, 0
+	case mysql.TypeDate:
+		return octopus.ColTypeDate, 0, 0
+	case mysql.TypeDuration:
+		return octopus.ColTypeTime, 0, 0
+	case mysql.TypeDatetime:
+		return octopus.ColTypeDateTime, 0, 0
+	case mysql.TypeYear:
+		return octopus.ColTypeYear, 0, 0
+	case mysql.TypeNewDate:
+		return octopus.ColTypeDate, 0, 0
+	case mysql.TypeVarchar:
+		return octopus.ColTypeVarchar, size, 0
+	case mysql.TypeBit:
+		if colDef.Tp.Flen == 1 {
+			return octopus.ColTypeBoolean, 0, 0
+		} else {
+			return octopus.ColTypeBit, size, 0
+		}
+	case mysql.TypeJSON:
+		return octopus.ColTypeJSON, 0, 0
+	case mysql.TypeNewDecimal:
+		return octopus.ColTypeDecimal, size, scale
+	case mysql.TypeEnum:
+		return octopus.ColTypeEnum, 0, 0
+	case mysql.TypeSet:
+		return octopus.ColTypeSet, 0, 0
+	case mysql.TypeTinyBlob:
+		if strings.ToLower(colDef.Tp.String()) == "tinytext" {
+			return octopus.ColTypeText8, 0, 0
+		} else {
+			return octopus.ColTypeBlob8, 0, 0
+		}
+	case mysql.TypeMediumBlob:
+		if strings.ToLower(colDef.Tp.String()) == "mediumtext" {
+			return octopus.ColTypeText24, 0, 0
+		} else {
+			return octopus.ColTypeBlob24, 0, 0
+		}
+	case mysql.TypeLongBlob:
+		if strings.ToLower(colDef.Tp.String()) == "longtext" {
+			return octopus.ColTypeText32, 0, 0
+		} else {
+			return octopus.ColTypeBlob32, 0, 0
+		}
+	case mysql.TypeBlob:
+		if strings.ToLower(colDef.Tp.String()) == "text" {
+			return octopus.ColTypeText16, 0, 0
+		} else {
+			return octopus.ColTypeBlob16, 0, 0
+		}
+	case mysql.TypeString:
+		return octopus.ColTypeChar, size, 0
+	case mysql.TypeGeometry:
+		return octopus.ColTypeGeometry, 0, 0
 	default:
-		return colType.Type
+		return colDef.Tp.InfoSchemaStr(), size, scale
 	}
 }
