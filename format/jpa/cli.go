@@ -45,7 +45,7 @@ var KotlinCliFlags = []cli.Flag{
 	&cli.StringFlag{
 		Name:     FlagInput,
 		Aliases:  []string{"i"},
-		Usage:    "input octopus schema `FILE`",
+		Usage:    "read octopus schema from `FILE`",
 		EnvVars:  []string{"OCTOPUS_INPUT"},
 		Required: true,
 	},

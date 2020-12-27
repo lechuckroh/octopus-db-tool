@@ -35,14 +35,14 @@ var ExportCliFlags = []cli.Flag{
 	&cli.StringFlag{
 		Name:     FlagInput,
 		Aliases:  []string{"i"},
-		Usage:    "load input octopus schema from `FILE`",
+		Usage:    "read octopus schema from `FILE`",
 		EnvVars:  []string{"OCTOPUS_INPUT"},
 		Required: true,
 	},
 	&cli.StringFlag{
 		Name:     FlagOutput,
 		Aliases:  []string{"o"},
-		Usage:    "export mysql DDL to `FILE`",
+		Usage:    "export quickdbd to `FILE`",
 		EnvVars:  []string{"OCTOPUS_OUTPUT"},
 		Required: true,
 	},

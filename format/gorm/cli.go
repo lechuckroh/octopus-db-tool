@@ -64,14 +64,14 @@ var CliFlags = []cli.Flag{
 	&cli.StringFlag{
 		Name:     FlagInput,
 		Aliases:  []string{"i"},
-		Usage:    "import mysql DDL from `FILE`",
+		Usage:    "read octopus schema from `FILE`",
 		EnvVars:  []string{"OCTOPUS_INPUT"},
 		Required: true,
 	},
 	&cli.StringFlag{
 		Name:     FlagOutput,
 		Aliases:  []string{"o"},
-		Usage:    "export octopus schema to `FILE`",
+		Usage:    "generate GORM source file(s) to `FILE`/`DIR`",
 		EnvVars:  []string{"OCTOPUS_OUTPUT"},
 		Required: true,
 	},
