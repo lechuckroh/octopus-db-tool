@@ -158,7 +158,7 @@ func (c *Exporter) toMysqlColumnType(col *octopus.Column) string {
 func (c *Exporter) columnConstraints(column *octopus.Column) string {
 	constraints := make([]string, 0)
 
-	if !column.Nullable {
+	if column.NotNull {
 		constraints = append(constraints, "NOT NULL")
 	}
 

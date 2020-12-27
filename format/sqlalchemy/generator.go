@@ -165,7 +165,7 @@ func (c *Generator) Generate(outputPath string) error {
 				attributes = append(attributes, "autoincrement=True")
 			}
 			// not null
-			if !column.Nullable && !column.AutoIncremental {
+			if column.NotNull && !column.AutoIncremental {
 				attributes = append(attributes, "nullable=False")
 			}
 

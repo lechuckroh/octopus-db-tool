@@ -75,7 +75,8 @@ type GoField struct {
 func NewGoField(column *octopus.Column) *GoField {
 	var fieldType string
 	importSet := util.NewStringSet()
-	if column.Nullable {
+	nullable := !column.NotNull
+	if nullable {
 		importSet.Add("gopkg.in/guregu/null.v4")
 	}
 
@@ -92,25 +93,25 @@ func NewGoField(column *octopus.Column) *GoField {
 	case octopus.ColTypeText24:
 		fallthrough
 	case octopus.ColTypeText32:
-		if column.Nullable {
+		if nullable {
 			fieldType = "null.String"
 		} else {
 			fieldType = "string"
 		}
 	case octopus.ColTypeBoolean:
-		if column.Nullable {
+		if nullable {
 			fieldType = "null.Bool"
 		} else {
 			fieldType = "bool"
 		}
 	case octopus.ColTypeInt8:
-		if column.Nullable {
+		if nullable {
 			fieldType = "null.Int"
 		} else {
 			fieldType = "int8"
 		}
 	case octopus.ColTypeInt16:
-		if column.Nullable {
+		if nullable {
 			fieldType = "null.Int"
 		} else {
 			fieldType = "int16"
@@ -118,20 +119,20 @@ func NewGoField(column *octopus.Column) *GoField {
 	case octopus.ColTypeInt24:
 		fallthrough
 	case octopus.ColTypeInt32:
-		if column.Nullable {
+		if nullable {
 			fieldType = "null.Int"
 		} else {
 			fieldType = "int32"
 		}
 	case octopus.ColTypeInt64:
-		if column.Nullable {
+		if nullable {
 			fieldType = "null.Int"
 		} else {
 			fieldType = "int64"
 		}
 	case octopus.ColTypeDecimal:
 		importSet.Add("github.com/shopspring/decimal")
-		if column.Nullable {
+		if nullable {
 			fieldType = "decimal.NullDecimal"
 		} else {
 			fieldType = "decimal.Decimal"
@@ -139,7 +140,7 @@ func NewGoField(column *octopus.Column) *GoField {
 	case octopus.ColTypeFloat:
 		fallthrough
 	case octopus.ColTypeDouble:
-		if column.Nullable {
+		if nullable {
 			fieldType = "null.Float"
 		} else {
 			fieldType = "float64"
@@ -150,7 +151,7 @@ func NewGoField(column *octopus.Column) *GoField {
 	case octopus.ColTypeDate:
 		fallthrough
 	case octopus.ColTypeTime:
-		if column.Nullable {
+		if nullable {
 			fieldType = "null.Time"
 		} else {
 			importSet.Add("time")
@@ -167,7 +168,7 @@ func NewGoField(column *octopus.Column) *GoField {
 	default:
 		if columnType == "bit" {
 			if column.Size == 1 {
-				if column.Nullable {
+				if nullable {
 					fieldType = "null.Bool"
 				} else {
 					fieldType = "bool"

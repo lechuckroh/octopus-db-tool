@@ -169,7 +169,7 @@ func (c *Importer) readGroupSheet(groupName string, sheet *xlsx.Sheet) ([]*octop
 			Description:     description,
 			Size:            colSize,
 			Scale:           colScale,
-			Nullable:        util.TernaryBool(useNotNullColumn, nullableValue == "", nullableValue != ""),
+			NotNull:         util.TernaryBool(useNotNullColumn, nullableValue != "", nullableValue == ""),
 			PrimaryKey:      keyValue == "P",
 			UniqueKey:       keyValue == "U",
 			AutoIncremental: attrSet.ContainsAny([]string{"ai", "autoinc", "auto_inc", "auto_incremental"}),

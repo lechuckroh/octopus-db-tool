@@ -52,7 +52,7 @@ func (c *Exporter) getColumnDef(col *octopus.Column) string {
 	if col.AutoIncremental {
 		params = append(params, "AUTOINCREMENT")
 	}
-	if col.Nullable {
+	if !col.NotNull {
 		params = append(params, "NULLABLE")
 	}
 	if col.DefaultValue != "" {

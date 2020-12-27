@@ -47,7 +47,7 @@ func (c *Exporter) exportToString() ([]byte, error) {
 			//if column.AutoIncremental {
 			//	params = append(params, "auto increment")
 			//}
-			if !column.Nullable {
+			if column.NotNull {
 				params = append(params, "not null")
 			}
 			if column.DefaultValue != "" {

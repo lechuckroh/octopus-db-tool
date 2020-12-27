@@ -36,9 +36,8 @@ var testSchema = &octopus.Schema{
 					Type: "datetime",
 				},
 				{
-					Name:     "updated_at",
-					Type:     "datetime",
-					Nullable: true,
+					Name: "updated_at",
+					Type: "datetime",
 				},
 			},
 			Description: "",

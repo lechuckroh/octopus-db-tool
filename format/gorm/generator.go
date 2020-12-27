@@ -170,7 +170,7 @@ func (g *Generator) GenerateStruct(
 			gormTags = append(gormTags, "auto_increment")
 		}
 		// not null
-		if !column.Nullable && !column.AutoIncremental {
+		if column.NotNull && !column.AutoIncremental {
 			gormTags = append(gormTags, "not null")
 		}
 

@@ -78,7 +78,7 @@ func (c *Importer) fromOjsonColumn(column1 *Column) *octopus.Column {
 		Description:     column1.Description,
 		Size:            column1.Size,
 		Scale:           column1.Scale,
-		Nullable:        column1.Nullable,
+		NotNull:         column1.NotNull,
 		PrimaryKey:      column1.PrimaryKey,
 		UniqueKey:       column1.UniqueKey,
 		AutoIncremental: column1.AutoIncremental,
