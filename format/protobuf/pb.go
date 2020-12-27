@@ -60,20 +60,30 @@ func NewPbField(number int, column *octopus.Column) *PbField {
 
 	columnType := strings.ToLower(column.Type)
 	switch columnType {
-	case octopus.ColTypeString:
+	case octopus.ColTypeChar:
 		fallthrough
-	case octopus.ColTypeText:
+	case octopus.ColTypeVarchar:
+		fallthrough
+	case octopus.ColTypeText8:
+		fallthrough
+	case octopus.ColTypeText16:
+		fallthrough
+	case octopus.ColTypeText24:
+		fallthrough
+	case octopus.ColTypeText32:
 		fieldType = "string"
 	case octopus.ColTypeBoolean:
 		fieldType = "bool"
-	case octopus.ColTypeLong:
+	case octopus.ColTypeInt64:
 		fieldType = "int64"
-	case octopus.ColTypeInt:
-		if column.Size <= 10 {
-			fieldType = "int32"
-		} else {
-			fieldType = "int64"
-		}
+	case octopus.ColTypeInt8:
+		fallthrough
+	case octopus.ColTypeInt16:
+		fallthrough
+	case octopus.ColTypeInt24:
+		fallthrough
+	case octopus.ColTypeInt32:
+		fieldType = "int32"
 	case octopus.ColTypeDecimal:
 		fieldType = "double"
 	case octopus.ColTypeFloat:

@@ -81,9 +81,17 @@ func NewGoField(column *octopus.Column) *GoField {
 
 	columnType := strings.ToLower(column.Type)
 	switch columnType {
-	case octopus.ColTypeString:
+	case octopus.ColTypeChar:
 		fallthrough
-	case octopus.ColTypeText:
+	case octopus.ColTypeVarchar:
+		fallthrough
+	case octopus.ColTypeText8:
+		fallthrough
+	case octopus.ColTypeText16:
+		fallthrough
+	case octopus.ColTypeText24:
+		fallthrough
+	case octopus.ColTypeText32:
 		if column.Nullable {
 			fieldType = "null.String"
 		} else {
@@ -95,26 +103,31 @@ func NewGoField(column *octopus.Column) *GoField {
 		} else {
 			fieldType = "bool"
 		}
-	case octopus.ColTypeLong:
-		fallthrough
-	case octopus.ColTypeInt:
+	case octopus.ColTypeInt8:
 		if column.Nullable {
 			fieldType = "null.Int"
 		} else {
-			colSize := column.Size
-			if colSize > 0 {
-				if colSize <= 3 {
-					fieldType = "int8"
-				} else if colSize <= 5 {
-					fieldType = "int16"
-				} else if colSize <= 10 {
-					fieldType = "int32"
-				} else {
-					fieldType = "int64"
-				}
-			} else {
-				fieldType = "int64"
-			}
+			fieldType = "int8"
+		}
+	case octopus.ColTypeInt16:
+		if column.Nullable {
+			fieldType = "null.Int"
+		} else {
+			fieldType = "int16"
+		}
+	case octopus.ColTypeInt24:
+		fallthrough
+	case octopus.ColTypeInt32:
+		if column.Nullable {
+			fieldType = "null.Int"
+		} else {
+			fieldType = "int32"
+		}
+	case octopus.ColTypeInt64:
+		if column.Nullable {
+			fieldType = "null.Int"
+		} else {
+			fieldType = "int64"
 		}
 	case octopus.ColTypeDecimal:
 		importSet.Add("github.com/shopspring/decimal")
@@ -143,7 +156,13 @@ func NewGoField(column *octopus.Column) *GoField {
 			importSet.Add("time")
 			fieldType = "time.Time"
 		}
-	case octopus.ColTypeBlob:
+	case octopus.ColTypeBlob8:
+		fallthrough
+	case octopus.ColTypeBlob16:
+		fallthrough
+	case octopus.ColTypeBlob24:
+		fallthrough
+	case octopus.ColTypeBlob32:
 		fieldType = "[]byte"
 	default:
 		if columnType == "bit" {

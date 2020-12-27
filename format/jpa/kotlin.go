@@ -76,9 +76,17 @@ func NewKotlinField(column *octopus.Column) *KotlinField {
 
 	columnType := strings.ToLower(column.Type)
 	switch columnType {
-	case octopus.ColTypeString:
+	case octopus.ColTypeChar:
 		fallthrough
-	case octopus.ColTypeText:
+	case octopus.ColTypeVarchar:
+		fallthrough
+	case octopus.ColTypeText8:
+		fallthrough
+	case octopus.ColTypeText16:
+		fallthrough
+	case octopus.ColTypeText24:
+		fallthrough
+	case octopus.ColTypeText32:
 		fieldType = "String"
 		if !nullable {
 			defaultValue = "\"\""
@@ -88,15 +96,21 @@ func NewKotlinField(column *octopus.Column) *KotlinField {
 		if !nullable {
 			defaultValue = "false"
 		}
-	case octopus.ColTypeLong:
-		fieldType = "Long"
-		if !nullable {
-			defaultValue = "0L"
-		}
-	case octopus.ColTypeInt:
+	case octopus.ColTypeInt8:
+		fallthrough
+	case octopus.ColTypeInt16:
+		fallthrough
+	case octopus.ColTypeInt24:
+		fallthrough
+	case octopus.ColTypeInt32:
 		fieldType = "Int"
 		if !nullable {
 			defaultValue = "0"
+		}
+	case octopus.ColTypeInt64:
+		fieldType = "Long"
+		if !nullable {
+			defaultValue = "0L"
 		}
 	case octopus.ColTypeDecimal:
 		fieldType = "BigDecimal"
@@ -132,19 +146,16 @@ func NewKotlinField(column *octopus.Column) *KotlinField {
 		if !nullable {
 			defaultValue = "LocalTime.now()"
 		}
-	case octopus.ColTypeBlob:
+	case octopus.ColTypeBlob8:
+		fallthrough
+	case octopus.ColTypeBlob16:
+		fallthrough
+	case octopus.ColTypeBlob24:
+		fallthrough
+	case octopus.ColTypeBlob32:
 		fieldType = "Blob"
 		importSet.Add("java.sql.Blob")
 	default:
-		if columnType == "bit" {
-			if column.Size == 1 {
-				fieldType = "Boolean"
-				if !nullable {
-					defaultValue = "false"
-				}
-				break
-			}
-		}
 		fieldType = "Any"
 	}
 	if nullable {

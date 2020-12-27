@@ -65,7 +65,7 @@ func (c *KtGenerator) getFieldAnnotations(class *KotlinClass, field *KotlinField
 	if column.AutoIncremental {
 		annotations = append(annotations, "@GeneratedValue(strategy = GenerationType.AUTO)")
 	}
-	if column.Type == octopus.ColTypeText {
+	if octopus.IsColTypeClob(column.Type) {
 		annotations = append(annotations, "@Lob")
 	}
 
@@ -90,10 +90,10 @@ func (c *KtGenerator) getFieldAnnotations(class *KotlinClass, field *KotlinField
 	if !column.Nullable {
 		colAttrs = append(colAttrs, "nullable = false")
 	}
-	if column.Type == octopus.ColTypeString && column.Size > 0 {
+	if octopus.IsColTypeString(column.Type) && column.Size > 0 {
 		colAttrs = append(colAttrs, fmt.Sprintf("length = %d", column.Size))
 	}
-	if column.Type == octopus.ColTypeDouble || column.Type == octopus.ColTypeFloat || column.Type == octopus.ColTypeDecimal {
+	if octopus.IsColTypeDecimal(column.Type) {
 		if column.Size > 0 {
 			colAttrs = append(colAttrs, fmt.Sprintf("precision = %d", column.Size))
 		}

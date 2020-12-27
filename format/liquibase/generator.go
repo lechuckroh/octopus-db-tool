@@ -914,16 +914,30 @@ func (c *Generator) diffColumn(
 func getLiquibaseType(column *octopus.Column) string {
 	typ := ""
 	switch strings.ToLower(column.Type) {
-	case octopus.ColTypeString:
+	case octopus.ColTypeChar:
+		typ = "char"
+	case octopus.ColTypeVarchar:
 		typ = "varchar"
-	case octopus.ColTypeText:
+	case octopus.ColTypeText8:
+		fallthrough
+	case octopus.ColTypeText16:
+		fallthrough
+	case octopus.ColTypeText24:
+		fallthrough
+	case octopus.ColTypeText32:
 		typ = "clob"
 	case octopus.ColTypeBoolean:
 		typ = "boolean"
-	case octopus.ColTypeLong:
-		typ = "bigint"
-	case octopus.ColTypeInt:
+	case octopus.ColTypeInt8:
+		typ = "tinyint"
+	case octopus.ColTypeInt16:
+		typ = "smallint"
+	case octopus.ColTypeInt24:
+		typ = "mediumint"
+	case octopus.ColTypeInt32:
 		typ = "int"
+	case octopus.ColTypeInt64:
+		typ = "bigint"
 	case octopus.ColTypeDecimal:
 		typ = "decimal"
 	case octopus.ColTypeFloat:
@@ -936,7 +950,13 @@ func getLiquibaseType(column *octopus.Column) string {
 		typ = "date"
 	case octopus.ColTypeTime:
 		typ = "time"
-	case octopus.ColTypeBlob:
+	case octopus.ColTypeBlob8:
+		fallthrough
+	case octopus.ColTypeBlob16:
+		fallthrough
+	case octopus.ColTypeBlob24:
+		fallthrough
+	case octopus.ColTypeBlob32:
 		typ = "blob"
 	default:
 		typ = column.Type

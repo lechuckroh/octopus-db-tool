@@ -88,15 +88,21 @@ func NewField(column *octopus.Column) *Field {
 		fallthrough
 	case octopus.ColTypeTime:
 		fallthrough
-	case octopus.ColTypeString:
+	case octopus.ColTypeChar:
 		fallthrough
-	case octopus.ColTypeText:
+	case octopus.ColTypeVarchar:
 		fieldType = "String"
 	case octopus.ColTypeBoolean:
 		fieldType = "Boolean"
-	case octopus.ColTypeLong:
+	case octopus.ColTypeInt8:
 		fallthrough
-	case octopus.ColTypeInt:
+	case octopus.ColTypeInt16:
+		fallthrough
+	case octopus.ColTypeInt24:
+		fallthrough
+	case octopus.ColTypeInt32:
+		fallthrough
+	case octopus.ColTypeInt64:
 		fieldType = "Int"
 	case octopus.ColTypeDecimal:
 		fallthrough

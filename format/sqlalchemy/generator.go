@@ -113,7 +113,7 @@ func (c *Generator) Generate(outputPath string) error {
 				attributes = append(attributes, util.Quote(column.Name, "'"))
 			}
 
-			if lcColumnType == octopus.ColTypeString && column.Size > 0 {
+			if (lcColumnType == octopus.ColTypeVarchar || lcColumnType == octopus.ColTypeChar) && column.Size > 0 {
 				attributes = append(attributes, fmt.Sprintf("%s(%d)", field.Type, column.Size))
 			} else if lcColumnType == octopus.ColTypeDouble || lcColumnType == octopus.ColTypeFloat || lcColumnType == octopus.ColTypeDecimal {
 				colAttrs := make([]string, 0)

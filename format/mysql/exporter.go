@@ -98,21 +98,31 @@ func (c *Exporter) quote(name string) string {
 
 func (c *Exporter) toMysqlColumnType(col *octopus.Column) string {
 	switch col.Type {
-	case octopus.ColTypeString:
+	case octopus.ColTypeChar:
+		return fmt.Sprintf("char(%d)", col.Size)
+	case octopus.ColTypeVarchar:
 		return fmt.Sprintf("varchar(%d)", col.Size)
-	case octopus.ColTypeText:
+	case octopus.ColTypeText8:
+		return "tinytext"
+	case octopus.ColTypeText16:
 		return "text"
+	case octopus.ColTypeText24:
+		return "mediumtext"
+	case octopus.ColTypeText32:
+		return "longtext"
 	case octopus.ColTypeBoolean:
 		return "bit(1)"
-	case octopus.ColTypeLong:
+	case octopus.ColTypeInt8:
+		return "tinyint"
+	case octopus.ColTypeInt16:
+		return "smallint"
+	case octopus.ColTypeInt24:
+		return "mediumint"
+	case octopus.ColTypeInt32:
+		return "tinyint"
+	case octopus.ColTypeInt64:
 		return "bigint"
-	case octopus.ColTypeInt:
-		return "int"
 	case octopus.ColTypeDecimal:
-		fallthrough
-	case octopus.ColTypeFloat:
-		fallthrough
-	case octopus.ColTypeDouble:
 		if col.Size > 0 {
 			if col.Scale > 0 {
 				return fmt.Sprintf("decimal(%d, %d)", col.Size, col.Scale)
@@ -122,14 +132,24 @@ func (c *Exporter) toMysqlColumnType(col *octopus.Column) string {
 		} else {
 			return col.Type
 		}
+	case octopus.ColTypeFloat:
+		return "float"
+	case octopus.ColTypeDouble:
+		return "double"
 	case octopus.ColTypeDateTime:
 		return "datetime"
 	case octopus.ColTypeDate:
 		return "date"
 	case octopus.ColTypeTime:
 		return "time"
-	case octopus.ColTypeBlob:
+	case octopus.ColTypeBlob8:
+		return "tinyblob"
+	case octopus.ColTypeBlob16:
 		return "blob"
+	case octopus.ColTypeBlob24:
+		return "mediumblob"
+	case octopus.ColTypeBlob32:
+		return "longblob"
 	default:
 		return col.Type
 	}

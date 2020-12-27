@@ -70,16 +70,30 @@ func NewSaField(column *octopus.Column) *SaField {
 
 	columnType := strings.ToLower(column.Type)
 	switch columnType {
-	case octopus.ColTypeString:
+	case octopus.ColTypeChar:
 		fallthrough
-	case octopus.ColTypeText:
+	case octopus.ColTypeVarchar:
+		fallthrough
+	case octopus.ColTypeText8:
+		fallthrough
+	case octopus.ColTypeText16:
+		fallthrough
+	case octopus.ColTypeText24:
+		fallthrough
+	case octopus.ColTypeText32:
 		fieldType = "String"
 	case octopus.ColTypeBoolean:
 		fieldType = "Boolean"
-	case octopus.ColTypeLong:
-		fieldType = "BigInteger"
-	case octopus.ColTypeInt:
+	case octopus.ColTypeInt8:
+		fallthrough
+	case octopus.ColTypeInt16:
+		fallthrough
+	case octopus.ColTypeInt24:
+		fallthrough
+	case octopus.ColTypeInt32:
 		fieldType = "Integer"
+	case octopus.ColTypeInt64:
+		fieldType = "BigInteger"
 	case octopus.ColTypeDecimal:
 		fieldType = "Numeric"
 	case octopus.ColTypeFloat:
@@ -92,7 +106,13 @@ func NewSaField(column *octopus.Column) *SaField {
 		fieldType = "Date"
 	case octopus.ColTypeTime:
 		fieldType = "Time"
-	case octopus.ColTypeBlob:
+	case octopus.ColTypeBlob8:
+		fallthrough
+	case octopus.ColTypeBlob16:
+		fallthrough
+	case octopus.ColTypeBlob24:
+		fallthrough
+	case octopus.ColTypeBlob32:
 		fieldType = "LargeBinary"
 	default:
 		if columnType == "bit" {

@@ -15,14 +15,14 @@ func TestMysqlExport_Export(t *testing.T) {
 				Columns: []*octopus.Column{
 					{
 						Name:            "id",
-						Type:            octopus.ColTypeLong,
+						Type:            octopus.ColTypeInt64,
 						PrimaryKey:      true,
 						Nullable:        false,
 						AutoIncremental: true,
 					},
 					{
 						Name:         "name",
-						Type:         octopus.ColTypeString,
+						Type:         octopus.ColTypeVarchar,
 						Size:         20,
 						Nullable:     false,
 						UniqueKey:    true,

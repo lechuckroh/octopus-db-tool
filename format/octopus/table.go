@@ -2,11 +2,10 @@ package octopus
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/lechuckroh/octopus-db-tools/util"
 	"io/ioutil"
-	"log"
 	"sort"
-	"strings"
 )
 
 type Table struct {
@@ -119,7 +118,9 @@ func (s *Schema) ToFile(filename string) error {
 }
 
 func (s *Schema) ToJson() ([]byte, error) {
-	s.Normalize()
+	if err := s.Normalize(); err != nil {
+		return nil, err
+	}
 	return json.MarshalIndent(s, "", "  ")
 }
 
@@ -136,63 +137,17 @@ func (s *Schema) FromJson(data []byte) error {
 }
 
 // Normalize converts colume types to lowercase
-func (s *Schema) Normalize() {
+func (s *Schema) Normalize() error {
 	sort.Sort(TableSlice(s.Tables))
 
 	for _, table := range s.Tables {
 		for _, column := range table.Columns {
-			if colType, ok := normalizeColumnType(column); ok {
-				column.Type = colType
+			column.NormalizeType()
 
-				// validate
-				if err := column.Validate(true); err != nil {
-					log.Panicf("table: %s, %s", table.Name, err.Error())
-				}
-			} else {
-				log.Printf("unknown column type: '%s', table: %s, column: %s",
-					column.Type, table.Name, column.Name)
+			if err := column.Validate(true); err != nil {
+				return fmt.Errorf("table: '%s': %w", table.Name, err)
 			}
 		}
 	}
-}
-
-// normalizeColumnType converts column type to octopus generalized column type
-func normalizeColumnType(col *Column) (string, bool) {
-	colType := strings.ToLower(col.Type)
-
-	if colType == "string" || colType == "varchar" || colType == "char" {
-		return ColTypeString, true
-	}
-	if colType == "int" || colType == "integer" || colType == "smallint" {
-		return ColTypeInt, true
-	}
-	if colType == "bigint" || colType == "long" {
-		return ColTypeLong, true
-	}
-	if colType == "datetime" {
-		return ColTypeDateTime, true
-	}
-	if colType == "bool" || colType == "boolean" {
-		return ColTypeBoolean, true
-	}
-	if colType == "number" || colType == "double" || colType == "decimal" {
-		return ColTypeDecimal, true
-	}
-	if colType == "float" {
-		return ColTypeFloat, true
-	}
-	if colType == "text" {
-		return ColTypeText, true
-	}
-	if colType == "date" {
-		return ColTypeDate, true
-	}
-	if colType == "time" {
-		return ColTypeTime, true
-	}
-	if colType == "blob" {
-		return ColTypeBlob, true
-	}
-
-	return colType, false
+	return nil
 }

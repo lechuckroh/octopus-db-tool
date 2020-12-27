@@ -16,29 +16,29 @@ var testSchema = &octopus.Schema{
 			Columns: []*octopus.Column{
 				{
 					Name:            "id",
-					Type:            "long",
+					Type:            octopus.ColTypeInt64,
 					PrimaryKey:      true,
 					AutoIncremental: true,
 				},
 				{
 					Name:      "name",
-					Type:      "string",
+					Type:      octopus.ColTypeVarchar,
 					Size:      100,
 					UniqueKey: true,
 				},
 				{
 					Name:  "dec",
-					Type:  "decimal",
+					Type:  octopus.ColTypeDecimal,
 					Size:  20,
 					Scale: 5,
 				},
 				{
 					Name: "created_at",
-					Type: "datetime",
+					Type: octopus.ColTypeDateTime,
 				},
 				{
 					Name:     "updated_at",
-					Type:     "datetime",
+					Type:     octopus.ColTypeDateTime,
 					Nullable: true,
 				},
 			},

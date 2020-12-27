@@ -1,9 +1,8 @@
 package octopus
 
 import (
-	"errors"
-	"fmt"
 	"log"
+	"strings"
 )
 
 type Reference struct {
@@ -25,6 +24,54 @@ type Column struct {
 	Ref             *Reference `json:"ref,omitempty"`
 }
 
+func (c *Column) NormalizeType() {
+	c.Type = c.toNormalizedType(strings.ToLower(c.Type))
+}
+
+func (c *Column) toNormalizedType(colType string) string {
+	switch colType {
+	case "string":
+		return ColTypeVarchar
+	case "tinyint":
+		return ColTypeInt8
+	case "smallint":
+		return ColTypeInt16
+	case "mediumint":
+		return ColTypeInt24
+	case "int":
+		fallthrough
+	case "integer":
+		return ColTypeInt32
+	case "bigint":
+		fallthrough
+	case "long":
+		return ColTypeInt64
+	case "numeric":
+		return ColTypeDecimal
+	case "real":
+		return ColTypeDouble
+	case "timestamp":
+		return ColTypeDateTime
+	case "tinyblob":
+		return ColTypeBlob8
+	case "blob":
+		return ColTypeBlob16
+	case "mediumblob":
+		return ColTypeBlob24
+	case "longblob":
+		return ColTypeBlob32
+	case "tinytext":
+		return ColTypeText8
+	case "text":
+		return ColTypeText16
+	case "mediumtext":
+		return ColTypeText24
+	case "longtext":
+		return ColTypeText32
+	}
+	return colType
+}
+
 func (c *Column) IsRenamed(target *Column, excludeDescription bool) bool {
 	return c.Type == target.Type &&
 		(excludeDescription || (c.Description == target.Description)) &&
@@ -39,17 +86,21 @@ func (c *Column) IsRenamed(target *Column, excludeDescription bool) bool {
 
 func (c *Column) Validate(autoCorrect bool) error {
 	if c.Name == "" {
-		return errors.New("column name is empty")
+		return &EmptyColumnNameError{Column: c}
 	}
-	if c.AutoIncremental {
-		if c.Type != ColTypeInt && c.Type != ColTypeLong {
-			if autoCorrect {
-				log.Printf("column: '%s', type: '%s' cannnot be autoIncremental. autoIncremental disabled.", c.Name, c.Type)
-				c.AutoIncremental = false
-			} else {
-				return errors.New(fmt.Sprintf("column: '%s', type: '%s' cannnot be autoIncremental", c.Name, c.Type))
-			}
+
+	if c.AutoIncremental && !IsColTypeAutoIncremental(c.Type) {
+		if autoCorrect {
+			log.Printf("column: '%s', type: '%s' cannnot be autoIncremental. autoIncremental disabled.", c.Name, c.Type)
+			c.AutoIncremental = false
+		} else {
+			return &InvalidAutoIncrementalError{Column: c}
 		}
 	}
+
+	if !IsValidColType(c.Type) {
+		return &InvalidColumnTypeError{Column: c}
+	}
+
 	return nil
 }

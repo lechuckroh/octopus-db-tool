@@ -145,7 +145,7 @@ func (g *Generator) GenerateStruct(
 			gormTags = append(gormTags, fmt.Sprintf("column:%s", column.Name))
 		}
 
-		if column.Type == "string" && column.Size > 0 {
+		if column.Type == octopus.ColTypeVarchar && column.Size > 0 {
 			gormTags = append(gormTags, fmt.Sprintf("type:varchar(%d)", column.Size))
 		} else if (column.Type == octopus.ColTypeDouble ||
 			column.Type == octopus.ColTypeFloat ||
