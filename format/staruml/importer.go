@@ -71,7 +71,7 @@ func (c *Importer) toSchema() (*octopus.Schema, error) {
 				Type:            colType,
 				Size:            size,
 				Scale:           colScale,
-				Nullable:        erdColumn.Nullable,
+				NotNull:         !erdColumn.Nullable,
 				PrimaryKey:      erdColumn.PrimaryKey,
 				UniqueKey:       erdColumn.Unique,
 				AutoIncremental: false,

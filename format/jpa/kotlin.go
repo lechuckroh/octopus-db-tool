@@ -70,7 +70,7 @@ func NewKotlinClass(
 func NewKotlinField(column *octopus.Column) *KotlinField {
 	var fieldType string
 	var defaultValue string
-	nullable := column.Nullable
+	notNull := column.NotNull
 
 	importSet := util.NewStringSet()
 
@@ -88,12 +88,12 @@ func NewKotlinField(column *octopus.Column) *KotlinField {
 		fallthrough
 	case octopus.ColTypeText32:
 		fieldType = "String"
-		if !nullable {
+		if notNull {
 			defaultValue = "\"\""
 		}
 	case octopus.ColTypeBoolean:
 		fieldType = "Boolean"
-		if !nullable {
+		if notNull {
 			defaultValue = "false"
 		}
 	case octopus.ColTypeInt8:
@@ -104,46 +104,46 @@ func NewKotlinField(column *octopus.Column) *KotlinField {
 		fallthrough
 	case octopus.ColTypeInt32:
 		fieldType = "Int"
-		if !nullable {
+		if notNull {
 			defaultValue = "0"
 		}
 	case octopus.ColTypeInt64:
 		fieldType = "Long"
-		if !nullable {
+		if notNull {
 			defaultValue = "0L"
 		}
 	case octopus.ColTypeDecimal:
 		fieldType = "BigDecimal"
 		importSet.Add("java.math.BigDecimal")
-		if !nullable {
+		if notNull {
 			defaultValue = "BigDecimal.ZERO"
 		}
 	case octopus.ColTypeFloat:
 		fieldType = "Float"
-		if !nullable {
+		if notNull {
 			defaultValue = "0.0F"
 		}
 	case octopus.ColTypeDouble:
 		fieldType = "Double"
-		if !nullable {
+		if notNull {
 			defaultValue = "0.0"
 		}
 	case octopus.ColTypeDateTime:
 		fieldType = "Timestamp"
 		importSet.Add("java.sql.Timestamp")
-		if !nullable {
+		if notNull {
 			defaultValue = "Timestamp(System.currentTimeMillis())"
 		}
 	case octopus.ColTypeDate:
 		fieldType = "LocalDate"
 		importSet.Add("java.time.LocalDate")
-		if !nullable {
+		if notNull {
 			defaultValue = "LocalDate.now()"
 		}
 	case octopus.ColTypeTime:
 		fieldType = "LocalTime"
 		importSet.Add("java.time.LocalTime")
-		if !nullable {
+		if notNull {
 			defaultValue = "LocalTime.now()"
 		}
 	case octopus.ColTypeBlob8:
@@ -158,7 +158,7 @@ func NewKotlinField(column *octopus.Column) *KotlinField {
 	default:
 		fieldType = "Any"
 	}
-	if nullable {
+	if !notNull {
 		fieldType = fieldType + "?"
 	}
 

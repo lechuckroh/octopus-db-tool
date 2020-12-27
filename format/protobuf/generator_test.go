@@ -36,9 +36,8 @@ var protobufTplTestSchema = &octopus.Schema{
 					Type: octopus.ColTypeDateTime,
 				},
 				{
-					Name:     "updated_at",
-					Type:     octopus.ColTypeDateTime,
-					Nullable: true,
+					Name: "updated_at",
+					Type: octopus.ColTypeDateTime,
 				},
 			},
 			Description: "",

@@ -87,7 +87,7 @@ func (c *KtGenerator) getFieldAnnotations(class *KotlinClass, field *KotlinField
 	if field.OverrideName {
 		colAttrs = append(colAttrs, fmt.Sprintf("name = \"%s\"", column.Name))
 	}
-	if !column.Nullable {
+	if column.NotNull {
 		colAttrs = append(colAttrs, "nullable = false")
 	}
 	if octopus.IsColTypeString(column.Type) && column.Size > 0 {
@@ -174,14 +174,14 @@ data class {{.Class.Name}}(
     {{- range $annotations}}
         {{. -}}
     {{end}}
-    {{- if .Column.Nullable}}
-        var {{.Name}}: {{.Type}}{{if hasNext . $.Class.Fields}},{{end}}
-    {{- else}}
+    {{- if .Column.NotNull}}
 		{{- if eq . $.IdEntityField}}
         override var {{.Name}}: {{.Type}} = {{.DefaultValue}},
 		{{- else}}
         var {{.Name}}: {{.Type}} = {{.DefaultValue}}{{if hasNext . $.Class.Fields}},{{end}}
 		{{- end}}
+    {{- else}}
+        var {{.Name}}: {{.Type}}{{if hasNext . $.Class.Fields}},{{end}}
     {{- end}}
 {{end}}
 {{- if eq .SuperClass ""}}

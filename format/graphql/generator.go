@@ -79,7 +79,7 @@ func NewClass(
 
 func NewField(column *octopus.Column) *Field {
 	var fieldType string
-	nullable := column.Nullable
+	notNull := column.NotNull
 	columnType := strings.ToLower(column.Type)
 	switch columnType {
 	case octopus.ColTypeDateTime:
@@ -114,7 +114,7 @@ func NewField(column *octopus.Column) *Field {
 		log.Printf("unknown column type: '%s', column: %s", column.Type, column.Name)
 		fieldType = "String"
 	}
-	if !nullable {
+	if notNull {
 		fieldType = fieldType + "!"
 	}
 

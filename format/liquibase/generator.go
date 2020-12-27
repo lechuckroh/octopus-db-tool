@@ -469,7 +469,7 @@ func newLqColumn(column *octopus.Column, createSeparatePK bool, createSeparateUq
 	if column.PrimaryKey && !createSeparatePK {
 		constraints.PrimaryKey = NewBool(true)
 		hasConstraints = true
-	} else if !column.Nullable {
+	} else if column.NotNull {
 		constraints.Nullable = NewBool(false)
 		hasConstraints = true
 	}
@@ -790,7 +790,7 @@ func (c *Generator) diffTable(
 		changeSets = append(changeSets, changeSet)
 
 		// not null constraint is removed after renameColumn. (fixed in liquibase v4.0)
-		if !oldColumn.Nullable {
+		if oldColumn.NotNull {
 			changeSet = newLqChangeSet(id.bumpMinor(), author)
 			changeSet.Append("addNotNullConstraint", newAddNotNullConstraint(table, newColumn))
 			changeSets = append(changeSets, changeSet)
@@ -874,12 +874,12 @@ func (c *Generator) diffColumn(
 		changeSets = append(changeSets, changeSet)
 	}
 
-	if column.Nullable != oldColumn.Nullable {
+	if column.NotNull != oldColumn.NotNull {
 		changeSet := newLqChangeSet(id.bumpMinor(), author)
-		if column.Nullable {
-			changeSet.Append("dropNotNullConstraint", newDropNotNullConstraint(table, column))
-		} else {
+		if column.NotNull {
 			changeSet.Append("addNotNullConstraint", newAddNotNullConstraint(table, column))
+		} else {
+			changeSet.Append("dropNotNullConstraint", newDropNotNullConstraint(table, column))
 		}
 		changeSets = append(changeSets, changeSet)
 	}

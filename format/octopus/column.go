@@ -1,6 +1,7 @@
 package octopus
 
 import (
+	"fmt"
 	"log"
 	"strings"
 )
@@ -10,17 +11,21 @@ type Reference struct {
 	Column string `json:"column,omitempty"`
 }
 
+const FnPrefix = "fn::"
+const FnPrefixLen = len(FnPrefix)
+
 type Column struct {
 	Name            string     `json:"name"`
 	Type            string     `json:"type"`
-	Description     string     `json:"desc,omitempty"`
+	Description     string     `json:"description,omitempty"`
 	Size            uint16     `json:"size,omitempty"`
 	Scale           uint16     `json:"scale,omitempty"`
-	Nullable        bool       `json:"nullable,omitempty"`
+	NotNull         bool       `json:"notnull,omitempty"`
 	PrimaryKey      bool       `json:"pk,omitempty"`
 	UniqueKey       bool       `json:"unique,omitempty"`
 	AutoIncremental bool       `json:"autoinc,omitempty"`
 	DefaultValue    string     `json:"default,omitempty"`
+	OnUpdate        string     `json:"onupdate,omitempty"`
 	Ref             *Reference `json:"ref,omitempty"`
 }
 
@@ -77,11 +82,12 @@ func (c *Column) IsRenamed(target *Column, excludeDescription bool) bool {
 		(excludeDescription || (c.Description == target.Description)) &&
 		c.Size == target.Size &&
 		c.Scale == target.Scale &&
-		c.Nullable == target.Nullable &&
+		c.NotNull == target.NotNull &&
 		c.PrimaryKey == target.PrimaryKey &&
 		c.UniqueKey == target.UniqueKey &&
 		c.AutoIncremental == target.AutoIncremental &&
-		c.DefaultValue == target.DefaultValue
+		c.DefaultValue == target.DefaultValue &&
+		c.OnUpdate == target.OnUpdate
 }
 
 func (c *Column) Validate(autoCorrect bool) error {
@@ -103,4 +109,47 @@ func (c *Column) Validate(autoCorrect bool) error {
 	}
 
 	return nil
+}
+
+func (c *Column) SetDefaultValue(value interface{}) {
+	if value == nil {
+		c.DefaultValue = ""
+	} else {
+		c.DefaultValue = fmt.Sprintf("%v", value)
+	}
+}
+
+func (c *Column) SetDefaultValueFn(fnName string) {
+	c.DefaultValue = FnPrefix + fnName
+}
+
+// GetDefaultValue returns defaultValue.
+// bool is true if defaultValue is function call.
+func (c *Column) GetDefaultValue() (string, bool) {
+	return c.getValue(c.DefaultValue)
+}
+
+func (c *Column) SetOnUpdate(value interface{}) {
+	if value == nil {
+		c.OnUpdate = ""
+	} else {
+		c.OnUpdate = fmt.Sprintf("%v", value)
+	}
+}
+
+func (c *Column) SetOnUpdateFn(fnName string) {
+	c.OnUpdate = FnPrefix + fnName
+}
+
+// GetOnUpdate returns onUpdate value.
+// bool is true if onUpdate is function call.
+func (c *Column) GetOnUpdate() (string, bool) {
+	return c.getValue(c.OnUpdate)
+}
+
+func (c *Column) getValue(value string) (string, bool) {
+	if strings.HasPrefix(value, FnPrefix) {
+		return value[FnPrefixLen:], true
+	}
+	return value, false
 }

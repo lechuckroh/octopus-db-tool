@@ -201,9 +201,9 @@ func (c *Exporter) fillGroupSheet(sheet *xlsx.Sheet, schema *octopus.Schema, gro
 			c.addCell(row, util.BoolToString(column.PrimaryKey, "P", util.BoolToString(column.UniqueKey, "U", "")), boolStyle)
 			// nullable
 			if c.option.UseNotNullColumn {
-				c.addCell(row, util.BoolToString(!column.Nullable, "O", ""), boolStyle)
+				c.addCell(row, util.BoolToString(column.NotNull, "O", ""), boolStyle)
 			} else {
-				c.addCell(row, util.BoolToString(column.Nullable, "O", ""), boolStyle)
+				c.addCell(row, util.BoolToString(!column.NotNull, "O", ""), boolStyle)
 			}
 			// attributes
 			c.addCell(row, strings.Join(c.getColumnAttributes(column), ", "), normalStyle)

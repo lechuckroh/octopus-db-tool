@@ -18,8 +18,17 @@ OPTIONS:
 To import mysql DDL file:
 
 ```bash 
-$ oct import mysql -i database.sql -o database.ojson 
+$ oct import mysql -i mysql-ddl.sql -o database.json 
 ```
+
+`mysql-ddl.sql` file can be generated with the following command:
+```bash
+$ mysqldump -u {user} -p{password} -h {host} --no-data {database} > mysql-ddl.sql
+
+# use this if you get error: Unknown table 'column_statistics' in information_schema (1109)
+$ mysqldump -u {user} -p{password} -h {host} --no-data --column-statistics=0 {database} > mysql-ddl.sql
+```
+
 
 ## Export
 

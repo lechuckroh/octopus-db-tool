@@ -47,7 +47,9 @@ func (c *Importer) ImportSql(sql string) (*octopus.Schema, error) {
 	}
 
 	tableX := TableX{}
-	stmtNodes[0].Accept(&tableX)
+	for _, stmtNode := range stmtNodes {
+		stmtNode.Accept(&tableX)
+	}
 
 	return &octopus.Schema{
 		Tables: tableX.tables,
@@ -105,6 +107,7 @@ func (x *TableX) Enter(in ast.Node) (ast.Node, bool) {
 			Columns: columns,
 		}
 		x.tables = append(x.tables, table)
+		return in, true
 	}
 	return in, false
 }
@@ -127,7 +130,7 @@ func (x *TableX) column(
 		Scale:      colScale,
 		PrimaryKey: pkSet.Contains(name),
 		UniqueKey:  uniqSet.Contains(name),
-		Nullable:   true,
+		NotNull:    false,
 	}
 
 	for _, colOption := range colDef.Options {
@@ -135,16 +138,29 @@ func (x *TableX) column(
 		case ast.ColumnOptionPrimaryKey:
 			column.PrimaryKey = true
 		case ast.ColumnOptionNotNull:
-			column.Nullable = false
+			column.NotNull = true
 		case ast.ColumnOptionAutoIncrement:
 			column.AutoIncremental = true
 		case ast.ColumnOptionDefaultValue:
-			valueExpr := colOption.Expr.(ast.ValueExpr)
-			column.DefaultValue = fmt.Sprintf("%v", valueExpr.GetValue())
+			switch colOption.Expr.(type) {
+			case ast.ValueExpr:
+				column.SetDefaultValue(colOption.Expr.(ast.ValueExpr).GetValue())
+			case *ast.FuncCallExpr:
+				column.SetDefaultValueFn(colOption.Expr.(*ast.FuncCallExpr).FnName.String())
+			default:
+				fmt.Printf("unhandled default value. column: %s, expr: %v", name, colOption.Expr)
+			}
 		case ast.ColumnOptionNull:
-			column.Nullable = true
+			column.NotNull= false
 		case ast.ColumnOptionOnUpdate:
-			break
+			switch colOption.Expr.(type) {
+			case ast.ValueExpr:
+				column.SetOnUpdate(colOption.Expr.(ast.ValueExpr).GetValue())
+			case *ast.FuncCallExpr:
+				column.SetOnUpdateFn(colOption.Expr.(*ast.FuncCallExpr).FnName.String())
+			default:
+				fmt.Printf("unhandled default value. column: %s, expr: %v", name, colOption.Expr)
+			}
 		case ast.ColumnOptionFulltext:
 			break
 		case ast.ColumnOptionComment:

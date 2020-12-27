@@ -14,10 +14,10 @@ type Reference struct {
 type Column struct {
 	Name            string     `json:"name"`
 	Type            string     `json:"type"`
-	Description     string     `json:"desc,omitempty"`
+	Description     string     `json:"description,omitempty"`
 	Size            uint16     `json:"size,omitempty"`
 	Scale           uint16     `json:"scale,omitempty"`
-	Nullable        bool       `json:"nullable,omitempty"`
+	NotNull         bool       `json:"notnull,omitempty"`
 	PrimaryKey      bool       `json:"pk,omitempty"`
 	UniqueKey       bool       `json:"unique,omitempty"`
 	AutoIncremental bool       `json:"autoinc,omitempty"`
@@ -30,7 +30,7 @@ func (c *Column) IsRenamed(target *Column, excludeDescription bool) bool {
 		(excludeDescription || (c.Description == target.Description)) &&
 		c.Size == target.Size &&
 		c.Scale == target.Scale &&
-		c.Nullable == target.Nullable &&
+		c.NotNull == target.NotNull &&
 		c.PrimaryKey == target.PrimaryKey &&
 		c.UniqueKey == target.UniqueKey &&
 		c.AutoIncremental == target.AutoIncremental &&

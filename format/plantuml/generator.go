@@ -54,7 +54,7 @@ func (c *Generator) getTableDef(table *octopus.Table) string {
 func (c *Generator) getColumnDef(col *octopus.Column) string {
 	line := ""
 
-	if !col.Nullable {
+	if col.NotNull {
 		line += "* "
 	}
 
