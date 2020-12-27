@@ -8,6 +8,7 @@ import (
 	"github.com/lechuckroh/octopus-db-tools/format/liquibase"
 	"github.com/lechuckroh/octopus-db-tools/format/mysql"
 	"github.com/lechuckroh/octopus-db-tools/format/octopus"
+	"github.com/lechuckroh/octopus-db-tools/format/ojson"
 	"github.com/lechuckroh/octopus-db-tools/format/plantuml"
 	"github.com/lechuckroh/octopus-db-tools/format/protobuf"
 	"github.com/lechuckroh/octopus-db-tools/format/quickdbd"
@@ -41,6 +42,11 @@ func importCommand() *cli.Command {
 				Name:   "mysql",
 				Action: mysql.ImportAction,
 				Flags:  mysql.ImportCliFlags,
+			},
+			{
+				Name:   "ojson",
+				Action: ojson.ImportAction,
+				Flags:  ojson.ImportCliFlags,
 			},
 			{
 				Name:   "staruml",

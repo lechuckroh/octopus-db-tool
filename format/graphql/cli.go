@@ -37,14 +37,14 @@ var CliFlags = []cli.Flag{
 	&cli.StringFlag{
 		Name:     FlagInput,
 		Aliases:  []string{"i"},
-		Usage:    "input octopus schema `FILE`",
+		Usage:    "read octopus schema from `FILE`",
 		EnvVars:  []string{"OCTOPUS_INPUT"},
 		Required: true,
 	},
 	&cli.StringFlag{
 		Name:     FlagOutput,
 		Aliases:  []string{"o"},
-		Usage:    "generate graphql to `DIR`",
+		Usage:    "generate graphql filess to `DIR`",
 		EnvVars:  []string{"OCTOPUS_OUTPUT"},
 		Required: true,
 	},

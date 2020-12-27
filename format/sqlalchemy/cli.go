@@ -40,14 +40,14 @@ var CliFlags = []cli.Flag{
 	&cli.StringFlag{
 		Name:     FlagInput,
 		Aliases:  []string{"i"},
-		Usage:    "load input octopus schema from `FILE`",
+		Usage:    "read octopus schema from `FILE`",
 		EnvVars:  []string{"OCTOPUS_INPUT"},
 		Required: true,
 	},
 	&cli.StringFlag{
 		Name:     FlagOutput,
 		Aliases:  []string{"o"},
-		Usage:    "generate python files to `PATH`",
+		Usage:    "generate SQLAlchemy python files to `DIR`",
 		EnvVars:  []string{"OCTOPUS_OUTPUT"},
 		Required: true,
 	},

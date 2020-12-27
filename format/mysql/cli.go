@@ -38,7 +38,7 @@ var ImportCliFlags = []cli.Flag{
 	&cli.StringFlag{
 		Name:     FlagOutput,
 		Aliases:  []string{"o"},
-		Usage:    "export octopus schema to `FILE`",
+		Usage:    "write octopus schema to `FILE`",
 		EnvVars:  []string{"OCTOPUS_OUTPUT"},
 		Required: true,
 	},
@@ -70,7 +70,7 @@ var ExportCliFlags = []cli.Flag{
 	&cli.StringFlag{
 		Name:     FlagInput,
 		Aliases:  []string{"i"},
-		Usage:    "load input octopus schema from `FILE`",
+		Usage:    "read octopus schema from `FILE`",
 		EnvVars:  []string{"OCTOPUS_INPUT"},
 		Required: true,
 	},

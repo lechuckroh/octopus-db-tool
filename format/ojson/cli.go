@@ -1,7 +1,6 @@
-package staruml
+package ojson
 
 import (
-	"github.com/lechuckroh/octopus-db-tools/util"
 	"github.com/urfave/cli/v2"
 )
 
@@ -11,25 +10,23 @@ const (
 )
 
 func ImportAction(c *cli.Context) error {
-	importer := Importer{}
+	importer := Importer{
+		option: &ImportOption{},
+	}
 	schema, err := importer.ImportFile(c.String(FlagInput))
 	if err != nil {
 		return err
 	}
 
 	// write to file
-	if bytes, err := schema.ToJson(); err != nil {
-		return err
-	} else {
-		return util.WriteBytesToFile(c.String(FlagOutput), bytes)
-	}
+	return schema.ToFile(c.String(FlagOutput))
 }
 
 var ImportCliFlags = []cli.Flag{
 	&cli.StringFlag{
 		Name:     FlagInput,
 		Aliases:  []string{"i"},
-		Usage:    "import input starUML from `FILE`",
+		Usage:    "import octopus v1 schema from `FILE`",
 		EnvVars:  []string{"OCTOPUS_INPUT"},
 		Required: true,
 	},
