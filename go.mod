@@ -12,6 +12,7 @@ require (
 	github.com/pingcap/log v0.0.0-20200511115504-543df19646ad // indirect
 	github.com/pingcap/parser v0.0.0-20200623164729-3a18f1e5dceb
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/stretchr/testify v1.5.1 // indirect
 	github.com/tealeg/xlsx v1.0.3

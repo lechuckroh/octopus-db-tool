@@ -37,6 +37,9 @@ CREATE TABLE IF NOT EXISTS {{.Name}} (
 	}
 
 	for _, table := range c.schema.Tables {
+		if c.option.TableFilter != nil && !c.option.TableFilter(table) {
+			continue
+		}
 		if err := c.exportTable(wr, tpl, table); err != nil {
 			return err
 		}
@@ -96,52 +99,23 @@ func (c *Exporter) quote(name string) string {
 	return fmt.Sprintf("`%s`", name)
 }
 
+func (c *Exporter) formatColumnType(colType string, col *octopus.Column) string {
+	if col.Size > 0 {
+		if col.Scale > 0 {
+			return fmt.Sprintf("%s(%d,%d)", colType, col.Size, col.Scale)
+		} else {
+			return fmt.Sprintf("%s(%d)", colType, col.Size)
+		}
+	}
+	return colType
+}
+
 func (c *Exporter) toMysqlColumnType(col *octopus.Column) string {
 	switch col.Type {
-	case octopus.ColTypeChar:
-		return fmt.Sprintf("char(%d)", col.Size)
-	case octopus.ColTypeVarchar:
-		return fmt.Sprintf("varchar(%d)", col.Size)
-	case octopus.ColTypeText8:
-		return "tinytext"
-	case octopus.ColTypeText16:
-		return "text"
-	case octopus.ColTypeText24:
-		return "mediumtext"
-	case octopus.ColTypeText32:
-		return "longtext"
-	case octopus.ColTypeBoolean:
-		return "bit(1)"
-	case octopus.ColTypeInt8:
-		return "tinyint"
-	case octopus.ColTypeInt16:
-		return "smallint"
-	case octopus.ColTypeInt24:
-		return "mediumint"
-	case octopus.ColTypeInt32:
-		return "tinyint"
-	case octopus.ColTypeInt64:
-		return "bigint"
-	case octopus.ColTypeDecimal:
-		if col.Size > 0 {
-			if col.Scale > 0 {
-				return fmt.Sprintf("decimal(%d, %d)", col.Size, col.Scale)
-			} else {
-				return fmt.Sprintf("decimal(%d)", col.Size)
-			}
-		} else {
-			return col.Type
-		}
-	case octopus.ColTypeFloat:
-		return "float"
-	case octopus.ColTypeDouble:
-		return "double"
-	case octopus.ColTypeDateTime:
-		return "datetime"
-	case octopus.ColTypeDate:
-		return "date"
-	case octopus.ColTypeTime:
-		return "time"
+	case octopus.ColTypeBinary:
+		return "binary"
+	case octopus.ColTypeBit:
+		return c.formatColumnType("bit", col)
 	case octopus.ColTypeBlob8:
 		return "tinyblob"
 	case octopus.ColTypeBlob16:
@@ -150,6 +124,56 @@ func (c *Exporter) toMysqlColumnType(col *octopus.Column) string {
 		return "mediumblob"
 	case octopus.ColTypeBlob32:
 		return "longblob"
+	case octopus.ColTypeBoolean:
+		return "bit(1)"
+	case octopus.ColTypeChar:
+		return c.formatColumnType("char", col)
+	case octopus.ColTypeDate:
+		return "date"
+	case octopus.ColTypeDateTime:
+		return "datetime"
+	case octopus.ColTypeDecimal:
+		return c.formatColumnType("decimal", col)
+	case octopus.ColTypeDouble:
+		return c.formatColumnType("double", col)
+	case octopus.ColTypeEnum:
+		return "enum"
+	case octopus.ColTypeFloat:
+		return c.formatColumnType("float", col)
+	case octopus.ColTypeGeometry:
+		return "geometry"
+	case octopus.ColTypeInt8:
+		return c.formatColumnType("tinyint", col)
+	case octopus.ColTypeInt16:
+		return c.formatColumnType("smallint", col)
+	case octopus.ColTypeInt24:
+		return c.formatColumnType("mediumint", col)
+	case octopus.ColTypeInt32:
+		return c.formatColumnType("int", col)
+	case octopus.ColTypeInt64:
+		return c.formatColumnType("bigint", col)
+	case octopus.ColTypeJSON:
+		return "json"
+	case octopus.ColTypePoint:
+		return "point"
+	case octopus.ColTypeSet:
+		return "set"
+	case octopus.ColTypeText8:
+		return "tinytext"
+	case octopus.ColTypeText16:
+		return "text"
+	case octopus.ColTypeText24:
+		return "mediumtext"
+	case octopus.ColTypeText32:
+		return "longtext"
+	case octopus.ColTypeTime:
+		return "time"
+	case octopus.ColTypeVarbinary:
+		return "varbinary"
+	case octopus.ColTypeVarchar:
+		return c.formatColumnType("varchar", col)
+	case octopus.ColTypeYear:
+		return "year"
 	default:
 		return col.Type
 	}
@@ -167,11 +191,27 @@ func (c *Exporter) columnConstraints(column *octopus.Column) string {
 	}
 
 	if column.DefaultValue != "" {
-		defaultValue := column.DefaultValue
-		if util.IsStringType(column.Type) {
-			defaultValue = fmt.Sprintf("'%s'", defaultValue)
+		defaultValue, fn := column.GetDefaultValue()
+		if fn {
+			defaultValue = defaultValue + "()"
+		} else {
+			if util.IsStringType(column.Type) {
+				defaultValue = fmt.Sprintf("'%s'", defaultValue)
+			}
 		}
 		constraints = append(constraints, "DEFAULT "+defaultValue)
+	}
+
+	if column.OnUpdate != "" {
+		onUpdate, fn := column.GetOnUpdate()
+		if fn {
+			onUpdate = onUpdate + "()"
+		} else {
+			if util.IsStringType(column.Type) {
+				onUpdate = fmt.Sprintf("'%s'", onUpdate)
+			}
+		}
+		constraints = append(constraints, "ON UPDATE "+onUpdate)
 	}
 
 	if column.Description != "" {
