@@ -2,24 +2,41 @@
 
 ## Import
 
-Import xlsx format into octopus format:
+```bash
+$ oct import xlsx --help
+```
+
+```
+OPTIONS:
+   --input FILE, -i FILE   import xlsx from FILE [$OCTOPUS_INPUT]
+   --output FILE, -o FILE  write octopus schema to FILE [$OCTOPUS_OUTPUT]
+```
+
+Import `*.xlsx` file:
 
 ```bash
-# user.xlsx -> user.ojson
-$ oct import xlsx -i user.xlsx -o user.ojson
-
-# show help
-$ oct import xlsx --help
+$ oct import xlsx \
+    -i user.xlsx \
+    -o user.json
 ```
 
 ## Export
 
-Export octopus format to xlsx format:
+```bash
+$ oct export xlsx --help
+```
+
+```
+OPTIONS:
+   --input FILE, -i FILE               read octopus schema from FILE [$OCTOPUS_INPUT]
+   --output FILE, -o FILE              export xlsx to FILE [$OCTOPUS_OUTPUT]
+   --useNotNullColumn value, -n value  use not null column [$OCTOPUS_USE_NOT_NULL_COLUMN]
+```
+
+Export `*.xlsx` file:
 
 ```bash
-# user.ojson -> user.xlsx
-$ oct export xlsx -i user.ojson -o user.xlsx
-
-# show help
-$ oct export xlsx --help
+$ oct export xlsx \
+    -i user.json \
+    -o user.xlsx
 ```

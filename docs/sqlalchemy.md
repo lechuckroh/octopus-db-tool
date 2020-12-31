@@ -5,7 +5,6 @@ SQLAlchemy is the Python SQL toolkit and Object Relational Mapper that gives app
 
 ## Generate
 
-### Help
 ```bash
 $ oct generate sqlalchemy --help
 ```
@@ -21,8 +20,6 @@ OPTIONS:
    --useUTC value, -t value            use UTC for audit column default value [$OCTOPUS_USE_UTC]
 ```
 
-### Generate single source file
-
 To generate all entity classes to a single file, set output path to `*.py`:
 
 ```bash 
@@ -33,8 +30,6 @@ $ oct generate sqlalchemy \
     --groups=common \
     --useUTC=true
 ```
-
-### Generate multiple source files
 
 To generate entity classes to separate files, set output path to directory:
 

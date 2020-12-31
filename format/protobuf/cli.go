@@ -73,19 +73,19 @@ var CliFlags = []cli.Flag{
 	},
 	&cli.StringFlag{
 		Name:    FlagPackage,
-		Aliases: []string{"k"},
+		Aliases: []string{"p"},
 		Usage:   "set package name",
 		EnvVars: []string{"OCTOPUS_PACKAGE"},
 	},
 	&cli.StringFlag{
 		Name:    FlagPrefix,
-		Aliases: []string{"p"},
+		Aliases: []string{"f"},
 		Usage:   "set proto message name prefix",
 		EnvVars: []string{"OCTOPUS_PREFIX"},
 	},
 	&cli.StringFlag{
 		Name:    FlagRemovePrefix,
-		Aliases: []string{"r"},
+		Aliases: []string{"d"},
 		Usage:   "set prefixes to remove from message name. set multiple values with comma separated.",
 		EnvVars: []string{"OCTOPUS_REMOVE_PREFIX"},
 	},

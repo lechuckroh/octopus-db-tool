@@ -53,7 +53,7 @@ To export to mysql DDL file with the following options:
 
 ```bash 
 $ oct export mysql \
-    -i database.ojson \
+    -i database.json \
     -o database.sql \
     -g common,admin \
     -u _uq 
