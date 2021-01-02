@@ -35,6 +35,14 @@ func Quote(text string, quotationMark string) string {
 	return quotationMark + text + quotationMark
 }
 
+func QuoteAndJoin(texts []string, quotationMark string, separator string) string {
+	var elements []string
+	for _, text := range texts {
+		elements = append(elements, Quote(text, quotationMark))
+	}
+	return strings.Join(elements, separator)
+}
+
 func SQLValToInt(sqlVal *sqlparser.SQLVal, defaultValue int) int {
 	if sqlVal == nil {
 		return defaultValue

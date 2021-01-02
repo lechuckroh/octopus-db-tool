@@ -25,3 +25,12 @@ type InvalidColumnTypeError struct {
 func (e *InvalidColumnTypeError) Error() string {
 	return fmt.Sprintf("column '%s' type '%s' is invalid", e.Column.Name, e.Column.Type)
 }
+
+type InvalidColumnValuesError struct {
+	Column *Column
+	Msg    string
+}
+
+func (e *InvalidColumnValuesError) Error() string {
+	return fmt.Sprintf("column '%s' has invalid values: %s", e.Column.Name, e.Msg)
+}

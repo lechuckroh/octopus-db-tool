@@ -137,7 +137,7 @@ func (c *Exporter) toMysqlColumnType(col *octopus.Column) string {
 	case octopus.ColTypeDouble:
 		return c.formatColumnType("double", col)
 	case octopus.ColTypeEnum:
-		return "enum"
+		return "enum(" + util.QuoteAndJoin(col.Values, "'", ", ") + ")"
 	case octopus.ColTypeFloat:
 		return c.formatColumnType("float", col)
 	case octopus.ColTypeGeometry:
@@ -157,7 +157,7 @@ func (c *Exporter) toMysqlColumnType(col *octopus.Column) string {
 	case octopus.ColTypePoint:
 		return "point"
 	case octopus.ColTypeSet:
-		return "set"
+		return "set(" + util.QuoteAndJoin(col.Values, "'", ", ") + ")"
 	case octopus.ColTypeText8:
 		return "tinytext"
 	case octopus.ColTypeText16:

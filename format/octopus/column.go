@@ -26,6 +26,7 @@ type Column struct {
 	AutoIncremental bool       `json:"autoinc,omitempty"`
 	DefaultValue    string     `json:"default,omitempty"`
 	OnUpdate        string     `json:"onupdate,omitempty"`
+	Values          []string   `json:"values,omitempty"`
 	Ref             *Reference `json:"ref,omitempty"`
 }
 
@@ -101,6 +102,21 @@ func (c *Column) Validate(autoCorrect bool) error {
 			c.AutoIncremental = false
 		} else {
 			return &InvalidAutoIncrementalError{Column: c}
+		}
+	}
+
+	memberCount := len(c.Values)
+	if c.Type == ColTypeSet {
+		if memberCount <= 0 || memberCount > 64 {
+			return &InvalidColumnValuesError{
+				Column: c,
+				Msg:    fmt.Sprintf("invalud set member count: %d (0 < count < 64)", memberCount),
+			}
+		}
+	}
+	if c.Type == ColTypeEnum {
+		if memberCount <= 0 {
+			return &InvalidColumnValuesError{Column: c, Msg: "empty enum values"}
 		}
 	}
 
