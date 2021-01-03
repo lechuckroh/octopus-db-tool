@@ -31,7 +31,9 @@ func TestMysqlImporter_ImportSql(t *testing.T) {
 			"created_at datetime not null default current_timestamp(),",
 			"updated_at datetime not null default current_timestamp() on update current_timestamp(),",
 			"PRIMARY KEY (`id`),",
-			"UNIQUE KEY `Table_UNIQUE` (`name`, `postal_code`)",
+			"UNIQUE KEY `Table_UNIQUE` (`name`, `postal_code`),",
+			"INDEX `idx_name` (`name`),",
+			"INDEX `idx_age` (`name`, `age`)",
 			") ENGINE=InnoDB DEFAULT CHARSET=utf8;",
 		}, "\n")
 
@@ -47,6 +49,16 @@ func TestMysqlImporter_ImportSql(t *testing.T) {
 			Tables: []*octopus.Table{
 				{
 					Name: "Table",
+					Indices: []*octopus.Index{
+						{
+							Name:    "idx_name",
+							Columns: []string{"name"},
+						},
+						{
+							Name:    "idx_age",
+							Columns: []string{"name", "age"},
+						},
+					},
 					Columns: []*octopus.Column{
 						{
 							Name:            "id",

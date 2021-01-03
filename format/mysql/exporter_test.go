@@ -16,6 +16,10 @@ func TestMysqlExport_Export(t *testing.T) {
 			{
 				Name:  "Table",
 				Group: "group1",
+				Indices: []*octopus.Index{
+					{Name: "idx_name", Columns: []string{"name"}},
+					{Name: "idx_ints", Columns: []string{"age", "int2", "int3"}},
+				},
 				Columns: []*octopus.Column{
 					{
 						Name:            "id",
@@ -277,7 +281,9 @@ func TestMysqlExport_Export(t *testing.T) {
 			"  updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),",
 			"  unknown invalidtype,",
 			"  PRIMARY KEY (`id`),",
-			"  UNIQUE KEY `Table_uq` (`name`, `postal_code`)",
+			"  UNIQUE KEY `Table_uq` (`name`, `postal_code`),",
+			"  INDEX `idx_name` (`name`),",
+			"  INDEX `idx_ints` (`age`, `int2`, `int3`)",
 			");",
 			"",
 		}, "\n")

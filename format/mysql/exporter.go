@@ -19,16 +19,16 @@ type Exporter struct {
 	option *ExportOption
 }
 
+type exportTplData struct {
+	Name        string
+	Definitions []string
+}
+
 func (c *Exporter) Export(wr io.Writer) error {
 	tplText := `{{"" -}}
 CREATE TABLE IF NOT EXISTS {{.Name}} (
-{{range .Columns}}  {{.}},
-{{end}}
-{{- if ne .PK ""}}  {{.PK}}{{if ne .UniqueKey ""}},{{end}}
-{{- end}}
-{{if ne .UniqueKey ""}}  {{.UniqueKey}}
-{{- end}}
-);
+{{range .Definitions}}  {{.}}
+{{end}});
 `
 	funcMap := template.FuncMap{}
 	tpl, err := util.NewTemplate("mysqlDDL", tplText, funcMap)
@@ -54,7 +54,7 @@ func (c *Exporter) exportTable(
 	tpl *template.Template,
 	table *octopus.Table,
 ) error {
-	columns := make([]string, 0)
+	definitions := make([]string, 0)
 	pkColumns := make([]string, 0)
 	uniqueColumns := make([]string, 0)
 	for _, column := range table.Columns {
@@ -65,7 +65,7 @@ func (c *Exporter) exportTable(
 		if constraints != "" {
 			params = append(params, constraints)
 		}
-		columns = append(columns, strings.Join(params, " "))
+		definitions = append(definitions, strings.Join(params, " "))
 
 		if column.PrimaryKey {
 			pkColumns = append(pkColumns, c.quote(column.Name))
@@ -75,21 +75,29 @@ func (c *Exporter) exportTable(
 		}
 	}
 
-	data := struct {
-		Name      string
-		Columns   []string
-		PK        string
-		UniqueKey string
-	}{
-		Name:    table.Name,
-		Columns: columns,
-	}
 	if len(pkColumns) > 0 {
-		data.PK = fmt.Sprintf("PRIMARY KEY (%s)", strings.Join(pkColumns, ", "))
+		definitions = append(definitions, fmt.Sprintf("PRIMARY KEY (%s)", strings.Join(pkColumns, ", ")))
 	}
 	if len(uniqueColumns) > 0 {
-		data.UniqueKey = fmt.Sprintf("UNIQUE KEY %s (%s)",
-			c.quote(table.Name+c.option.UniqueNameSuffix), strings.Join(uniqueColumns, ", "))
+		definitions = append(definitions, fmt.Sprintf("UNIQUE KEY %s (%s)",
+			c.quote(table.Name+c.option.UniqueNameSuffix), strings.Join(uniqueColumns, ", ")))
+	}
+
+	for _, index := range table.Indices {
+		definitions = append(definitions, fmt.Sprintf("INDEX %s (%s)",
+			c.quote(index.Name), util.QuoteAndJoin(index.Columns, "`", ", ")))
+	}
+
+	// append ',' except last
+	for i, definition := range definitions {
+		if i < len(definitions) -1 {
+			definitions[i] = definition + ","
+		}
+	}
+
+	data := exportTplData{
+		Name:        table.Name,
+		Definitions: definitions,
 	}
 
 	return tpl.Execute(wr, data)

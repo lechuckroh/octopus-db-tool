@@ -68,6 +68,7 @@ func (x *TableX) Enter(in ast.Node) (ast.Node, bool) {
 		// constraints
 		pkSet := util.NewStringSet()
 		uniqSet := util.NewStringSet()
+		var indices []*octopus.Index
 		for _, cst := range createTableStmt.Constraints {
 			switch cst.Tp {
 			case ast.ConstraintPrimaryKey:
@@ -77,6 +78,11 @@ func (x *TableX) Enter(in ast.Node) (ast.Node, bool) {
 			case ast.ConstraintKey:
 				break
 			case ast.ConstraintIndex:
+				var idxCols []string
+				for _, key := range cst.Keys {
+					idxCols = append(idxCols, key.Column.Name.String())
+				}
+				indices = append(indices, &octopus.Index{Name: cst.Name, Columns: idxCols})
 				break
 			case ast.ConstraintUniq:
 				for _, key := range cst.Keys {
@@ -105,6 +111,7 @@ func (x *TableX) Enter(in ast.Node) (ast.Node, bool) {
 		table := &octopus.Table{
 			Name:    tableName,
 			Columns: columns,
+			Indices: indices,
 		}
 		x.tables = append(x.tables, table)
 		return in, true
@@ -151,7 +158,7 @@ func (x *TableX) column(
 				fmt.Printf("unhandled default value. column: %s, expr: %v", name, colOption.Expr)
 			}
 		case ast.ColumnOptionNull:
-			column.NotNull= false
+			column.NotNull = false
 		case ast.ColumnOptionOnUpdate:
 			switch colOption.Expr.(type) {
 			case ast.ValueExpr:

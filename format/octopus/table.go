@@ -8,12 +8,18 @@ import (
 	"sort"
 )
 
+type Index struct {
+	Name    string   `json:"name"`
+	Columns []string `json:"columns"`
+}
+
 type Table struct {
 	Name        string    `json:"name,omitempty"`
 	Columns     []*Column `json:"columns,omitempty"`
 	Description string    `json:"desc,omitempty"`
 	Group       string    `json:"group,omitempty"`
 	ClassName   string    `json:"className,omitempty"`
+	Indices     []*Index  `json:"indices,omitempty"`
 }
 
 func (t *Table) AddColumn(column *Column) {
