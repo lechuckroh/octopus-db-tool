@@ -169,7 +169,7 @@ func (c *Importer) readGroupSheet(groupName string, sheet *xlsx.Sheet) ([]*octop
 			Description:     description,
 			Size:            colSize,
 			Scale:           colScale,
-			NotNull:         util.TernaryBool(useNotNullColumn, nullableValue != "", nullableValue == ""),
+			NotNull:         util.IfThenElseBool(useNotNullColumn, nullableValue != "", nullableValue == ""),
 			PrimaryKey:      keyValue == "P",
 			UniqueKey:       keyValue == "U",
 			AutoIncremental: attrSet.ContainsAny([]string{"ai", "autoinc", "auto_inc", "auto_incremental"}),
@@ -187,7 +187,7 @@ func (c *Importer) readGroupSheet(groupName string, sheet *xlsx.Sheet) ([]*octop
 
 func (c *Importer) fixDefaultValue(colType string, defaultValue string) string {
 	if util.IsBooleanType(colType) {
-		return util.TernaryString(defaultValue == "true" || defaultValue == "1", "true", "false")
+		return util.IfThenElseString(defaultValue == "true" || defaultValue == "1", "true", "false")
 	}
 	return defaultValue
 }

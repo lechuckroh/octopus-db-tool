@@ -293,7 +293,7 @@ func TestMysqlExport_Export(t *testing.T) {
 		err := exporter.Export(buf)
 
 		So(err, ShouldBeNil)
-		if diff := cmp.Diff(buf.String(), expected); diff != "" {
+		if diff := cmp.Diff(expected, buf.String()); diff != "" {
 			log.Println(diff)
 		}
 		So(buf.String(), ShouldEqual, expected)

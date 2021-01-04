@@ -57,7 +57,7 @@ func NewGoStruct(
 	return &GoStruct{
 		table:        table,
 		Name:         className,
-		EmbedModel:   gormModelColumnCount < len(gormModelColumns),
+		EmbedModel:   gormModelColumnCount == len(gormModelColumns),
 		Fields:       fields,
 		PKFields:     pkFields,
 		UniqueFields: uniqueFields,
@@ -138,14 +138,17 @@ func NewGoField(column *octopus.Column) *GoField {
 			fieldType = "decimal.Decimal"
 		}
 	case octopus.ColTypeFloat:
-		fallthrough
+		if nullable {
+			fieldType = "null.Float"
+		} else {
+			fieldType = "float32"
+		}
 	case octopus.ColTypeDouble:
 		if nullable {
 			fieldType = "null.Float"
 		} else {
 			fieldType = "float64"
 		}
-
 	case octopus.ColTypeDateTime:
 		fallthrough
 	case octopus.ColTypeDate:
@@ -165,18 +168,14 @@ func NewGoField(column *octopus.Column) *GoField {
 		fallthrough
 	case octopus.ColTypeBlob32:
 		fieldType = "[]byte"
-	default:
-		if columnType == "bit" {
-			if column.Size == 1 {
-				if nullable {
-					fieldType = "null.Bool"
-				} else {
-					fieldType = "bool"
-				}
-				break
-			}
+	case octopus.ColTypeBit:
+		if nullable {
+			fieldType = "*byte"
+		} else {
+			fieldType = "byte"
 		}
-		fieldType = ""
+	default:
+		fieldType = "interface{}"
 	}
 
 	fieldName, ok := util.ToUpperCamel(column.Name)
@@ -188,7 +187,7 @@ func NewGoField(column *octopus.Column) *GoField {
 		fieldName = string(re.ReplaceAll([]byte(fieldName), []byte("ID")))
 	}
 	// number prefix
-	if matched, _ := regexp.MatchString(`\d+.*`, fieldName); matched {
+	if matched, _ := regexp.MatchString(`^\d+.*$`, fieldName); matched {
 		fieldName = "_" + fieldName
 		overrideName = true
 	}

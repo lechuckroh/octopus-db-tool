@@ -60,21 +60,21 @@ func SQLValToString(sqlVal *sqlparser.SQLVal, defaultValue string) string {
 	return string(sqlVal.Val)
 }
 
-func TernaryString(condition bool, trueValue, falseValue string) string {
+func IfThenElseString(condition bool, trueValue, falseValue string) string {
 	if condition {
 		return trueValue
 	} else {
 		return falseValue
 	}
 }
-func TernaryBool(condition bool, trueValue, falseValue bool) bool {
+func IfThenElseBool(condition bool, trueValue, falseValue bool) bool {
 	if condition {
 		return trueValue
 	} else {
 		return falseValue
 	}
 }
-func TernaryFloat64(condition bool, trueValue, falseValue float64) float64 {
+func IfThenElseFloat64(condition bool, trueValue, falseValue float64) float64 {
 	if condition {
 		return trueValue
 	} else {
