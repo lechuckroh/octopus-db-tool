@@ -131,7 +131,7 @@ func (c *Exporter) fillGroupSheet(sheet *xlsx.Sheet, schema *octopus.Schema, gro
 	_ = sheet.SetColWidth(1, 1, 13.5)
 	_ = sheet.SetColWidth(2, 2, 9.5)
 	_ = sheet.SetColWidth(3, 3, 4.0)
-	_ = sheet.SetColWidth(4, 4, util.TernaryFloat64(c.option.UseNotNullColumn, 6.0, 4.0))
+	_ = sheet.SetColWidth(4, 4, util.IfThenElseFloat64(c.option.UseNotNullColumn, 6.0, 4.0))
 	_ = sheet.SetColWidth(5, 5, 9.5)
 	_ = sheet.SetColWidth(6, 6, 50)
 
@@ -159,7 +159,7 @@ func (c *Exporter) fillGroupSheet(sheet *xlsx.Sheet, schema *octopus.Schema, gro
 
 	// Header
 	row := sheet.AddRow()
-	nullHeaderText := util.TernaryString(c.option.UseNotNullColumn, headerNotNull, headerNullable)
+	nullHeaderText := util.IfThenElseString(c.option.UseNotNullColumn, headerNotNull, headerNullable)
 
 	c.addCells(row, []string{
 		"Table/Reference",

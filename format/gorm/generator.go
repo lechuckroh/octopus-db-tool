@@ -67,6 +67,7 @@ import (
 	"{{.}}"
 {{- end}}
 )
+
 `
 	tmpl, err := util.NewTemplate("gormHeader", tplText, funcMap)
 	if err != nil {
@@ -110,12 +111,23 @@ type TplFieldData struct {
 	Tag  string
 }
 
+func (f *TplFieldData) ToString() string {
+	if f.Tag == "" {
+		return f.Name + " " + f.Type
+	} else {
+		return f.Name + " " + f.Type + " " + f.Tag
+	}
+}
+
 func (g *Generator) GenerateStruct(
 	wr io.Writer,
 	gormStruct *GoStruct,
 ) error {
 	funcMap := template.FuncMap{
 		"join": strings.Join,
+		"fieldToString": func (field *TplFieldData) string {
+			return field.ToString()
+		},
 	}
 
 	// unique constraint name
@@ -145,14 +157,10 @@ func (g *Generator) GenerateStruct(
 			gormTags = append(gormTags, fmt.Sprintf("column:%s", column.Name))
 		}
 
-		if column.Type == octopus.ColTypeVarchar && column.Size > 0 {
-			gormTags = append(gormTags, fmt.Sprintf("type:varchar(%d)", column.Size))
-		} else if (column.Type == octopus.ColTypeDouble ||
-			column.Type == octopus.ColTypeFloat ||
-			column.Type == octopus.ColTypeDecimal) &&
-			(column.Size > 0 && column.Scale > 0) {
-			gormTags = append(gormTags, fmt.Sprintf("type:%s(%d,%d)", column.Type, column.Size, column.Scale))
+		if tag := g.getGormTagByType(column); tag != "" {
+			gormTags = append(gormTags, tag)
 		}
+
 		// PK
 		if column.PrimaryKey {
 			gormTags = append(gormTags, "primary_key")
@@ -202,7 +210,7 @@ type {{.Struct.Name}} struct {
 	gorm.Model
 {{- end}}
 {{- range .Fields}}
-	{{.Name}} {{.Type}} {{.Tag}}
+	{{fieldToString .}}
 {{- end}}
 }
 
@@ -215,4 +223,29 @@ func (c *{{.Struct.Name}}) TableName() string { return "{{.Table.Name}}" }
 	}
 
 	return tmpl.Execute(wr, &data)
+}
+
+func (g *Generator) getGormTagByType(column *octopus.Column) string {
+	size := column.Size
+	switch column.Type {
+	case octopus.ColTypeBit:
+		if size > 0 {
+			return fmt.Sprintf("type:%s(%d)", column.Type, column.Size)
+		}
+	case octopus.ColTypeChar:
+		fallthrough
+	case octopus.ColTypeVarchar:
+		if size > 0 {
+			return fmt.Sprintf("type:%s(%d)", column.Type, column.Size)
+		}
+	case octopus.ColTypeDouble:
+		fallthrough
+	case octopus.ColTypeFloat:
+		fallthrough
+	case octopus.ColTypeDecimal:
+		if size > 0 && column.Scale > 0 {
+			return fmt.Sprintf("type:%s(%d,%d)", column.Type, column.Size, column.Scale)
+		}
+	}
+	return ""
 }
