@@ -119,13 +119,41 @@ func (f *TplFieldData) ToString() string {
 	}
 }
 
+type IndexTag struct {
+	IndexName   string
+	Priority    int
+	SingleIndex bool
+}
+
+func (g *Generator) getGormIndexTag(indices *[]*octopus.Index, field *GoField) []*IndexTag {
+	fieldColumnName := field.Column.Name
+
+	var gormIndexTags []*IndexTag
+
+	for _, index := range *indices {
+		singleIndexColumn := len(index.Columns) == 1
+
+		for i, col := range index.Columns {
+			if fieldColumnName == col {
+				gormIndexTags = append(gormIndexTags, &IndexTag{
+					IndexName:   index.Name,
+					Priority:    i + 1,
+					SingleIndex: singleIndexColumn,
+				})
+				break
+			}
+		}
+	}
+	return gormIndexTags
+}
+
 func (g *Generator) GenerateStruct(
 	wr io.Writer,
 	gormStruct *GoStruct,
 ) error {
 	funcMap := template.FuncMap{
 		"join": strings.Join,
-		"fieldToString": func (field *TplFieldData) string {
+		"fieldToString": func(field *TplFieldData) string {
 			return field.ToString()
 		},
 	}
@@ -173,6 +201,15 @@ func (g *Generator) GenerateStruct(
 				gormTags = append(gormTags, fmt.Sprintf("unique_index:%s", uniqueCstName))
 			}
 		}
+		// Index
+		for _, indexTag := range g.getGormIndexTag(&gormStruct.table.Indices, field) {
+			if indexTag.SingleIndex {
+				gormTags = append(gormTags, fmt.Sprintf("index:%s", indexTag.IndexName))
+			} else {
+				gormTags = append(gormTags, fmt.Sprintf("index:%s,priority:%d", indexTag.IndexName, indexTag.Priority))
+			}
+		}
+
 		// auto_increment
 		if column.AutoIncremental {
 			gormTags = append(gormTags, "auto_increment")

@@ -235,6 +235,16 @@ var table2 = &octopus.Table{
 	},
 	Description: "",
 	Group:       "common",
+	Indices: []*octopus.Index{
+		{
+			Name:    "dec_idx",
+			Columns: []string{"dec"},
+		},
+		{
+			Name:    "idx2",
+			Columns: []string{"dec", "name"},
+		},
+	},
 }
 
 var testSchema = &octopus.Schema{
@@ -299,10 +309,10 @@ func TestGorm_Generate(t *testing.T) {
 				"",
 				"type CUser2 struct {",
 				"	ID int64 `gorm:\"primary_key;auto_increment\"`",
-				"	Name string `gorm:\"type:varchar(100);unique_index:user2_uq;not null\"`",
+				"	Name string `gorm:\"type:varchar(100);unique_index:user2_uq;index:idx2,priority:2;not null\"`",
 				"	PassportNo string `gorm:\"type:varchar(20);unique_index:user2_uq;not null\"`",
 				"	Ch null.String `gorm:\"type:char(10)\"`",
-				"	Dec decimal.Decimal `gorm:\"type:decimal(20,5);not null\"`",
+				"	Dec decimal.Decimal `gorm:\"type:decimal(20,5);index:dec_idx;index:idx2,priority:1;not null\"`",
 				"	TimeNotnull time.Time `gorm:\"not null\"`",
 				"	CreatedAt time.Time `gorm:\"not null\"`",
 				"	UpdatedAt time.Time `gorm:\"not null\"`",
