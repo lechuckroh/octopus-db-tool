@@ -2,6 +2,7 @@ package gorm
 
 import (
 	"fmt"
+	"github.com/iancoleman/strcase"
 	"github.com/lechuckroh/octopus-db-tools/format/common"
 	"github.com/lechuckroh/octopus-db-tools/format/octopus"
 	"github.com/lechuckroh/octopus-db-tools/util"
@@ -10,14 +11,46 @@ import (
 	"text/template"
 )
 
+// -------------------------------
+
 type Option struct {
-	PrefixMapper     *common.PrefixMapper
-	TableFilter      octopus.TableFilterFn
-	GormModel        string
-	Package          string
-	RemovePrefixes   []string
-	UniqueNameSuffix string
+	PrefixMapper       *common.PrefixMapper
+	TableFilter        octopus.TableFilterFn
+	GormModel          string
+	Package            string
+	PointerAssociation bool
+	RemovePrefixes     []string
+	UniqueNameSuffix   string
 }
+
+// -------------------------------
+
+type GoStructProcessor struct {
+	schema *octopus.Schema
+	option *Option
+}
+
+func (c *GoStructProcessor) StructName(table *octopus.Table) string {
+	structName := table.ClassName
+	if structName == "" {
+		tableName := table.Name
+		for _, prefix := range c.option.RemovePrefixes {
+			tableName = strings.TrimPrefix(tableName, prefix)
+		}
+		structName = strcase.ToCamel(tableName)
+
+		if prefix := c.option.PrefixMapper.GetPrefix(table.Group); prefix != "" {
+			structName = prefix + structName
+		}
+	}
+	return structName
+}
+
+func (c *GoStructProcessor) Reference(ref octopus.Reference) (*octopus.Table, *octopus.Column) {
+	return c.schema.FindReference(ref)
+}
+
+// -------------------------------
 
 type Generator struct {
 	schema *octopus.Schema
@@ -37,9 +70,11 @@ func (g *Generator) Generate(wr io.Writer) error {
 
 	gormStructs := make([]*GoStruct, 0)
 	tableFilter := option.TableFilter
+	p := GoStructProcessor{schema: g.schema, option: option}
 	for _, table := range g.schema.Tables {
 		if tableFilter == nil || tableFilter(table) {
-			gormStructs = append(gormStructs, NewGoStruct(table, option))
+			goStruct := NewGoStruct(table, &p)
+			gormStructs = append(gormStructs, goStruct)
 		}
 	}
 
@@ -125,7 +160,7 @@ type IndexTag struct {
 	SingleIndex bool
 }
 
-func (g *Generator) getGormIndexTag(indices *[]*octopus.Index, field *GoField) []*IndexTag {
+func getGormIndexTag(indices *[]*octopus.Index, field *GoField) []*IndexTag {
 	fieldColumnName := field.Column.Name
 
 	var gormIndexTags []*IndexTag
@@ -160,7 +195,7 @@ func (g *Generator) GenerateStruct(
 
 	// unique constraint name
 	uniqueCstName := ""
-	uniqueFieldNames := make([]string, 0)
+	var uniqueFieldNames []string
 	for _, field := range gormStruct.UniqueFields {
 		uniqueFieldNames = append(uniqueFieldNames, util.Quote(field.Name, "'"))
 	}
@@ -169,7 +204,7 @@ func (g *Generator) GenerateStruct(
 	}
 
 	// fields
-	tplFields := make([]*TplFieldData, 0)
+	var tplFields []*TplFieldData
 	for _, field := range gormStruct.Fields {
 		column := field.Column
 
@@ -179,13 +214,13 @@ func (g *Generator) GenerateStruct(
 		}
 
 		// Column gormTags
-		gormTags := make([]string, 0)
+		var gormTags []string
 
 		if field.OverrideName {
 			gormTags = append(gormTags, fmt.Sprintf("column:%s", column.Name))
 		}
 
-		if tag := g.getGormTagByType(column); tag != "" {
+		if tag := getGormTagByType(column); tag != "" {
 			gormTags = append(gormTags, tag)
 		}
 
@@ -202,7 +237,7 @@ func (g *Generator) GenerateStruct(
 			}
 		}
 		// Index
-		for _, indexTag := range g.getGormIndexTag(&gormStruct.table.Indices, field) {
+		for _, indexTag := range getGormIndexTag(&gormStruct.table.Indices, field) {
 			if indexTag.SingleIndex {
 				gormTags = append(gormTags, fmt.Sprintf("index:%s", indexTag.IndexName))
 			} else {
@@ -219,16 +254,31 @@ func (g *Generator) GenerateStruct(
 			gormTags = append(gormTags, "not null")
 		}
 
-		// GORM tag
-		var tag string
-		if len(gormTags) > 0 {
-			tag = fmt.Sprintf("`gorm:\"%s\"`", strings.Join(gormTags, ";"))
-		}
-
 		tplFields = append(tplFields, &TplFieldData{
 			Name: field.Name,
 			Type: field.Type,
-			Tag:  tag,
+			Tag:  gormTag(gormTags),
+		})
+	}
+
+	// association fields
+	for _, associationField := range gormStruct.AssociationFields {
+		fieldType := associationField.Type
+		if associationField.Array {
+			fieldType = "[]" + associationField.Type
+		}
+		if g.option.PointerAssociation {
+			fieldType = "*" + fieldType
+		}
+
+		var tags []string
+		tags = append(tags, fmt.Sprintf("foreignKey:%s", associationField.ForeignKey))
+		tags = append(tags, fmt.Sprintf("references:%s", associationField.Reference))
+
+		tplFields = append(tplFields, &TplFieldData{
+			Name: associationField.Name,
+			Type: fieldType,
+			Tag:  gormTag(tags),
 		})
 	}
 
@@ -262,7 +312,14 @@ func (c *{{.Struct.Name}}) TableName() string { return "{{.Table.Name}}" }
 	return tmpl.Execute(wr, &data)
 }
 
-func (g *Generator) getGormTagByType(column *octopus.Column) string {
+func gormTag(tags []string) string {
+	if len(tags) > 0 {
+		return fmt.Sprintf("`gorm:\"%s\"`", strings.Join(tags, ";"))
+	}
+	return ""
+}
+
+func getGormTagByType(column *octopus.Column) string {
 	size := column.Size
 	switch column.Type {
 	case octopus.ColTypeBit:

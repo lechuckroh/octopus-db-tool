@@ -1,42 +1,43 @@
 package gorm
 
 import (
-	"github.com/iancoleman/strcase"
 	"github.com/lechuckroh/octopus-db-tools/format/octopus"
 	"github.com/lechuckroh/octopus-db-tools/util"
 	"regexp"
 	"strings"
 )
 
+type GoAssocationField struct {
+	Name       string
+	Type       string
+	Array      bool
+	ForeignKey string
+	Reference  string
+}
+
 type GoStruct struct {
-	table        *octopus.Table
-	Name         string
-	EmbedModel   bool
-	Fields       []*GoField
-	PKFields     []*GoField
-	UniqueFields []*GoField
+	table             *octopus.Table
+	Name              string
+	EmbedModel        bool
+	Fields            []*GoField
+	PKFields          []*GoField
+	UniqueFields      []*GoField
+	AssociationFields []*GoAssocationField
+}
+
+type IProcessor interface {
+	StructName(table *octopus.Table) string
+	Reference(ref octopus.Reference) (*octopus.Table, *octopus.Column)
 }
 
 func NewGoStruct(
 	table *octopus.Table,
-	option *Option,
+	p IProcessor,
 ) *GoStruct {
-	className := table.ClassName
-	if className == "" {
-		tableName := table.Name
-		for _, prefix := range option.RemovePrefixes {
-			tableName = strings.TrimPrefix(tableName, prefix)
-		}
-		className = strcase.ToCamel(tableName)
-
-		if prefix := option.PrefixMapper.GetPrefix(table.Group); prefix != "" {
-			className = prefix + className
-		}
-	}
-
-	fields := make([]*GoField, 0)
-	pkFields := make([]*GoField, 0)
-	uniqueFields := make([]*GoField, 0)
+	var fields []*GoField
+	var pkFields []*GoField
+	var uniqueFields []*GoField
+	var associationFields []*GoAssocationField
 	gormModelColumnCount := 0
 	for _, column := range table.Columns {
 		field := NewGoField(column)
@@ -52,15 +53,31 @@ func NewGoStruct(
 		if isGormModelColumn(column.Name) {
 			gormModelColumnCount++
 		}
+
+		// reference
+		if ref := column.Ref; ref != nil {
+			refTable, refColumn := p.Reference(*ref)
+			if refTable != nil && refColumn != nil {
+				refType := p.StructName(refTable)
+				associationFields = append(associationFields, &GoAssocationField{
+					Name:       refType,
+					Type:       refType,
+					Array:      ref.Relationship == octopus.RefOneToMany,
+					ForeignKey: field.Name,
+					Reference:  NewGoField(refColumn).Name,
+				})
+			}
+		}
 	}
 
 	return &GoStruct{
-		table:        table,
-		Name:         className,
-		EmbedModel:   gormModelColumnCount == len(gormModelColumns),
-		Fields:       fields,
-		PKFields:     pkFields,
-		UniqueFields: uniqueFields,
+		table:             table,
+		Name:              p.StructName(table),
+		EmbedModel:        gormModelColumnCount == len(gormModelColumns),
+		Fields:            fields,
+		PKFields:          pkFields,
+		UniqueFields:      uniqueFields,
+		AssociationFields: associationFields,
 	}
 }
 

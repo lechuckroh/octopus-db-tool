@@ -33,8 +33,9 @@ func InitAction(c *cli.Context) error {
 						Type:        "bigint",
 						Description: "group ID",
 						Ref: &Reference{
-							Table:  "group",
-							Column: "id",
+							Table:        "group",
+							Column:       "id",
+							Relationship: RefManyToOne,
 						},
 					},
 				},

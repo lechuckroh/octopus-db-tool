@@ -192,6 +192,16 @@ var table2 = &octopus.Table{
 			NotNull:         true,
 		},
 		{
+			Name:    "user_id",
+			Type:    octopus.ColTypeInt64,
+			NotNull: true,
+			Ref: &octopus.Reference{
+				Table:        table1.Name,
+				Column:       "id",
+				Relationship: octopus.RefManyToOne,
+			},
+		},
+		{
 			Name:      "name",
 			Type:      octopus.ColTypeVarchar,
 			Size:      100,
@@ -257,10 +267,11 @@ func TestGorm_Generate(t *testing.T) {
 
 		for _, pkg := range packages {
 			option := &Option{
-				PrefixMapper:     common.NewPrefixMapper("common:C"),
-				RemovePrefixes:   []string{"tbl_"},
-				Package:          pkg,
-				UniqueNameSuffix: "_uq",
+				PrefixMapper:       common.NewPrefixMapper("common:C"),
+				RemovePrefixes:     []string{"tbl_"},
+				Package:            pkg,
+				PointerAssociation: true,
+				UniqueNameSuffix:   "_uq",
 			}
 
 			expectedStrings := []string{
@@ -309,6 +320,7 @@ func TestGorm_Generate(t *testing.T) {
 				"",
 				"type CUser2 struct {",
 				"	ID int64 `gorm:\"primary_key;auto_increment\"`",
+				"	UserID int64 `gorm:\"not null\"`",
 				"	Name string `gorm:\"type:varchar(100);unique_index:user2_uq;index:idx2,priority:2;not null\"`",
 				"	PassportNo string `gorm:\"type:varchar(20);unique_index:user2_uq;not null\"`",
 				"	Ch null.String `gorm:\"type:char(10)\"`",
@@ -316,6 +328,7 @@ func TestGorm_Generate(t *testing.T) {
 				"	TimeNotnull time.Time `gorm:\"not null\"`",
 				"	CreatedAt time.Time `gorm:\"not null\"`",
 				"	UpdatedAt time.Time `gorm:\"not null\"`",
+				"	CUser1 *CUser1 `gorm:\"foreignKey:UserID;references:ID\"`",
 				"}",
 				"",
 				"func (c *CUser2) TableName() string { return \"user2\" }",

@@ -722,7 +722,7 @@ func (c *Generator) diffTable(
 		changeSets = append(changeSets, changeSet)
 	}
 
-	oldColumnByName := oldTable.ColumnByName()
+	oldColumnByName := oldTable.ColumnNameMap()
 
 	addedColumns := make([]*octopus.Column, 0)
 	renamedColumnMap := make(map[*octopus.Column]*octopus.Column)

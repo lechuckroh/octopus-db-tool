@@ -11,14 +11,15 @@ import (
 )
 
 const (
-	FlagGormModel        = "gormModel"
-	FlagGroups           = "groups"
-	FlagInput            = "input"
-	FlagOutput           = "output"
-	FlagPackage          = "package"
-	FlagPrefix           = "prefix"
-	FlagRemovePrefix     = "removePrefix"
-	FlagUniqueNameSuffix = "uniqueNameSuffix"
+	FlagGormModel          = "gormModel"
+	FlagGroups             = "groups"
+	FlagInput              = "input"
+	FlagOutput             = "output"
+	FlagPackage            = "package"
+	FlagPointerAssociation = "pointerAssociation"
+	FlagPrefix             = "prefix"
+	FlagRemovePrefix       = "removePrefix"
+	FlagUniqueNameSuffix   = "uniqueNameSuffix"
 )
 
 func Action(c *cli.Context) error {
@@ -30,12 +31,13 @@ func Action(c *cli.Context) error {
 	gen := Generator{
 		schema: schema,
 		option: &Option{
-			PrefixMapper:     common.NewPrefixMapper(c.String(FlagPrefix)),
-			TableFilter:      octopus.GetTableFilterFn(c.String(FlagGroups)),
-			GormModel:        c.String(FlagGormModel),
-			Package:          c.String(FlagPackage),
-			RemovePrefixes:   strings.Split(c.String(FlagRemovePrefix), ","),
-			UniqueNameSuffix: c.String(FlagUniqueNameSuffix),
+			GormModel:          c.String(FlagGormModel),
+			Package:            c.String(FlagPackage),
+			PointerAssociation: c.Bool(FlagPointerAssociation),
+			PrefixMapper:       common.NewPrefixMapper(c.String(FlagPrefix)),
+			RemovePrefixes:     strings.Split(c.String(FlagRemovePrefix), ","),
+			TableFilter:        octopus.GetTableFilterFn(c.String(FlagGroups)),
+			UniqueNameSuffix:   c.String(FlagUniqueNameSuffix),
 		},
 	}
 
@@ -74,6 +76,12 @@ var CliFlags = []cli.Flag{
 		Usage:    "generate GORM source file(s) to `FILE`/`DIR`",
 		EnvVars:  []string{"OCTOPUS_OUTPUT"},
 		Required: true,
+	},
+	&cli.BoolFlag{
+		Name:    FlagPointerAssociation,
+		Aliases: []string{"a"},
+		Usage:   "set pointer association type",
+		EnvVars: []string{"OCTOPUS_POINTER_ASSOCIATION"},
 	},
 	&cli.StringFlag{
 		Name:    FlagGormModel,

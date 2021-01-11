@@ -28,7 +28,7 @@ func (t *Table) AddColumn(column *Column) {
 	}
 }
 
-func (t *Table) ColumnByName() map[string]*Column {
+func (t *Table) ColumnNameMap() map[string]*Column {
 	result := make(map[string]*Column)
 
 	for _, column := range t.Columns {
@@ -36,6 +36,15 @@ func (t *Table) ColumnByName() map[string]*Column {
 	}
 
 	return result
+}
+
+func (t *Table) ColumnByName(name string) *Column {
+	for _, column := range t.Columns {
+		if column.Name == name {
+			return column
+		}
+	}
+	return nil
 }
 
 func (t *Table) PrimaryKeyNameSet() *util.StringSet {
@@ -99,6 +108,15 @@ func (s *Schema) TableByName(name string) *Table {
 		}
 	}
 	return nil
+}
+
+func (s *Schema) FindReference(ref Reference) (*Table, *Column) {
+	if table := s.TableByName(ref.Table); table != nil {
+		if column := table.ColumnByName(ref.Column); column != nil {
+			return table, column
+		}
+	}
+	return nil, nil
 }
 
 func (s *Schema) Groups() []string {

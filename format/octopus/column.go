@@ -6,13 +6,19 @@ import (
 	"strings"
 )
 
-type Reference struct {
-	Table  string `json:"table,omitempty"`
-	Column string `json:"column,omitempty"`
-}
+const (
+	FnPrefix     = "fn::"
+	FnPrefixLen  = len(FnPrefix)
+	RefManyToOne = "n:1"
+	RefOneToOne  = "1:1"
+	RefOneToMany = "1:n"
+)
 
-const FnPrefix = "fn::"
-const FnPrefixLen = len(FnPrefix)
+type Reference struct {
+	Table        string `json:"table,omitempty"`
+	Column       string `json:"column,omitempty"`
+	Relationship string `json:"relationship,omitempty"`
+}
 
 type Column struct {
 	Name            string     `json:"name"`
@@ -127,6 +133,7 @@ func (c *Column) Validate(autoCorrect bool) error {
 	return nil
 }
 
+// SetDefaultValue set defaultValue.
 func (c *Column) SetDefaultValue(value interface{}) {
 	if value == nil {
 		c.DefaultValue = ""
@@ -135,6 +142,7 @@ func (c *Column) SetDefaultValue(value interface{}) {
 	}
 }
 
+// SetDefaultValueFn set defaultValue as function.
 func (c *Column) SetDefaultValueFn(fnName string) {
 	c.DefaultValue = FnPrefix + fnName
 }
@@ -145,6 +153,7 @@ func (c *Column) GetDefaultValue() (string, bool) {
 	return c.getValue(c.DefaultValue)
 }
 
+// SetOnUpdate set onUpdate.
 func (c *Column) SetOnUpdate(value interface{}) {
 	if value == nil {
 		c.OnUpdate = ""
@@ -153,6 +162,7 @@ func (c *Column) SetOnUpdate(value interface{}) {
 	}
 }
 
+// SetOnUpdateFn set onUpdate as function.
 func (c *Column) SetOnUpdateFn(fnName string) {
 	c.OnUpdate = FnPrefix + fnName
 }
