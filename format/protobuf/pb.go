@@ -47,6 +47,8 @@ func NewPbMessage(table *octopus.Table, option *Option) *PbMessage {
 		}
 	}
 
+	// TODO: add references
+
 	return &PbMessage{
 		Name:    messageName,
 		Fields:  fields,
@@ -94,12 +96,6 @@ func NewPbField(number int, column *octopus.Column) *PbField {
 		fieldType = "google.protobuf.Timestamp"
 		imp = "google/protobuf/timestamp.proto"
 	default:
-		if columnType == "bit" {
-			if column.Size == 1 {
-				fieldType = "bool"
-				break
-			}
-		}
 		fieldType = column.Type
 		log.Printf("unsupported columnType: %s", columnType)
 	}
