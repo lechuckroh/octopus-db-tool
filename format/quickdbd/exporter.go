@@ -18,11 +18,11 @@ type Exporter struct {
 func (c *Exporter) Export(wr io.Writer) error {
 	result := make([]string, 0)
 	for _, table := range c.schema.Tables {
-		result = append(result, c.getTableDef(table))
+		result = append(result, getTableDef(table))
 		result = append(result, strings.Repeat("-", len(table.Name)))
 
 		for _, column := range table.Columns {
-			result = append(result, c.getColumnDef(column))
+			result = append(result, getColumnDef(column))
 		}
 		result = append(result, "")
 	}
@@ -31,7 +31,7 @@ func (c *Exporter) Export(wr io.Writer) error {
 	return err
 }
 
-func (c *Exporter) getTableDef(table *octopus.Table) string {
+func getTableDef(table *octopus.Table) string {
 	if table.Description != "" {
 		return fmt.Sprintf("%s # %s", table.Name, table.Description)
 	} else {
@@ -39,7 +39,7 @@ func (c *Exporter) getTableDef(table *octopus.Table) string {
 	}
 }
 
-func (c *Exporter) getColumnDef(col *octopus.Column) string {
+func getColumnDef(col *octopus.Column) string {
 	params := make([]string, 0)
 	params = append(params, col.Type)
 
@@ -58,13 +58,26 @@ func (c *Exporter) getColumnDef(col *octopus.Column) string {
 	if col.DefaultValue != "" {
 		params = append(params, fmt.Sprintf("default=%s", col.DefaultValue))
 	}
-	if col.Ref != nil {
-		ref := col.Ref
-		params = append(params, fmt.Sprintf("FK >- %s.%s", ref.Table, ref.Column))
+	if ref := col.Ref; ref != nil {
+		rel := getRelationshipType(ref)
+		params = append(params, fmt.Sprintf("FK %s %s.%s", rel, ref.Table, ref.Column))
 	}
 	if col.Description != "" {
 		params = append(params, fmt.Sprintf("# %s", col.Description))
 	}
 
 	return fmt.Sprintf("%s %s", col.Name, strings.Join(params, " "))
+}
+
+func getRelationshipType(ref *octopus.Reference) string {
+	switch ref.Relationship {
+	case octopus.RefManyToOne:
+		return ">-"
+	case octopus.RefOneToMany:
+		return "-<"
+	case octopus.RefOneToOne:
+		return "-"
+	default:
+		return ">-"
+	}
 }

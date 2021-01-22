@@ -49,7 +49,7 @@ func (c *Importer) toSchema() (*octopus.Schema, error) {
 	}
 
 	for groupName, sheet := range c.sheetsByGroup {
-		groupTables, err := c.readGroupSheet(groupName, sheet)
+		groupTables, err := readGroupSheet(groupName, sheet)
 		if err != nil {
 			return nil, err
 		}
@@ -68,9 +68,9 @@ func (c *Importer) readMetaSheet() map[string]string {
 	result := map[string]string{}
 
 	for _, row := range c.metaSheet.Rows {
-		if keyCell := c.getCell(row, 0); keyCell != nil {
+		if keyCell := getCell(row, 0); keyCell != nil {
 			key := keyCell.Value
-			valueCell := c.getCell(row, 1)
+			valueCell := getCell(row, 1)
 			if valueCell == nil {
 				result[key] = ""
 			} else {
@@ -81,7 +81,7 @@ func (c *Importer) readMetaSheet() map[string]string {
 	return result
 }
 
-func (c *Importer) readGroupSheet(groupName string, sheet *xlsx.Sheet) ([]*octopus.Table, error) {
+func readGroupSheet(groupName string, sheet *xlsx.Sheet) ([]*octopus.Table, error) {
 	tables := make([]*octopus.Table, 0)
 
 	var lastTable *octopus.Table
@@ -90,14 +90,14 @@ func (c *Importer) readGroupSheet(groupName string, sheet *xlsx.Sheet) ([]*octop
 	for i, row := range sheet.Rows {
 		// skip header row
 		if i == 0 {
-			if strings.TrimSpace(c.getCellValue(row, 4)) == headerNotNull {
+			if strings.TrimSpace(getCellValue(row, 4)) == headerNotNull {
 				useNotNullColumn = true
 			}
 			continue
 		}
 
-		tableName := strings.TrimSpace(c.getCellValue(row, 0))
-		columnName := strings.TrimSpace(c.getCellValue(row, 1))
+		tableName := strings.TrimSpace(getCellValue(row, 0))
+		columnName := strings.TrimSpace(getCellValue(row, 1))
 
 		// finish table if
 		// - column is empty
@@ -107,11 +107,11 @@ func (c *Importer) readGroupSheet(groupName string, sheet *xlsx.Sheet) ([]*octop
 			continue
 		}
 
-		typeValue := strings.TrimSpace(c.getCellValue(row, 2))
-		keyValue := strings.TrimSpace(c.getCellValue(row, 3))
-		nullableValue := strings.TrimSpace(c.getCellValue(row, 4))
-		attrValue := strings.TrimSpace(c.getCellValue(row, 5))
-		description := strings.TrimSpace(c.getCellValue(row, 6))
+		typeValue := strings.TrimSpace(getCellValue(row, 2))
+		keyValue := strings.TrimSpace(getCellValue(row, 3))
+		nullableValue := strings.TrimSpace(getCellValue(row, 4))
+		attrValue := strings.TrimSpace(getCellValue(row, 5))
+		description := strings.TrimSpace(getCellValue(row, 6))
 
 		// create new table
 		if tableFinished {
@@ -143,7 +143,7 @@ func (c *Importer) readGroupSheet(groupName string, sheet *xlsx.Sheet) ([]*octop
 			if strings.HasPrefix(attr, "default") {
 				tokens := strings.SplitN(attr, ":", 2)
 				if len(tokens) == 2 {
-					defaultValue = c.fixDefaultValue(colType, tokens[1])
+					defaultValue = fixDefaultValue(colType, tokens[1])
 					continue
 				}
 			}
@@ -185,14 +185,14 @@ func (c *Importer) readGroupSheet(groupName string, sheet *xlsx.Sheet) ([]*octop
 	return tables, nil
 }
 
-func (c *Importer) fixDefaultValue(colType string, defaultValue string) string {
+func fixDefaultValue(colType string, defaultValue string) string {
 	if util.IsBooleanType(colType) {
 		return util.IfThenElseString(defaultValue == "true" || defaultValue == "1", "true", "false")
 	}
 	return defaultValue
 }
 
-func (c *Importer) getCell(row *xlsx.Row, colIdx int) *xlsx.Cell {
+func getCell(row *xlsx.Row, colIdx int) *xlsx.Cell {
 	colCount := len(row.Cells)
 	if colIdx < colCount {
 		return row.Cells[colIdx]
@@ -200,8 +200,8 @@ func (c *Importer) getCell(row *xlsx.Row, colIdx int) *xlsx.Cell {
 	return nil
 }
 
-func (c *Importer) getCellValue(row *xlsx.Row, colIdx int) string {
-	cell := c.getCell(row, colIdx)
+func getCellValue(row *xlsx.Row, colIdx int) string {
+	cell := getCell(row, colIdx)
 	if cell == nil {
 		return ""
 	} else {

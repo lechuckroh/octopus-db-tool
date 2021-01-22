@@ -27,11 +27,12 @@ func (c *Generator) Generate(wr io.Writer) error {
 				separatorAdded = true
 				result = append(result, "    --")
 			}
-			result = append(result, fmt.Sprintf("    %s", c.getColumnDef(column)))
+			result = append(result, fmt.Sprintf("    %s", getColumnDef(column)))
 
 			// Reference
-			if column.Ref != nil {
-				refs = append(refs, fmt.Sprintf("%s }o-|| %s", table.Name, column.Ref.Table))
+			if ref := column.Ref; ref != nil {
+				relationship := getRelationshipType(ref)
+				refs = append(refs, fmt.Sprintf("%s %s %s", table.Name, relationship, ref.Table))
 			}
 		}
 		result = append(result, "}")
@@ -43,7 +44,7 @@ func (c *Generator) Generate(wr io.Writer) error {
 	return err
 }
 
-func (c *Generator) getTableDef(table *octopus.Table) string {
+func getTableDef(table *octopus.Table) string {
 	if table.Description != "" {
 		return fmt.Sprintf("%s # %s", table.Name, table.Description)
 	} else {
@@ -51,7 +52,7 @@ func (c *Generator) getTableDef(table *octopus.Table) string {
 	}
 }
 
-func (c *Generator) getColumnDef(col *octopus.Column) string {
+func getColumnDef(col *octopus.Column) string {
 	line := ""
 
 	if col.NotNull {
@@ -70,4 +71,17 @@ func (c *Generator) getColumnDef(col *octopus.Column) string {
 		line += " <<FK>>"
 	}
 	return line
+}
+
+func getRelationshipType(ref *octopus.Reference) string {
+	switch ref.Relationship {
+	case octopus.RefManyToOne:
+		return "}o-||"
+	case octopus.RefOneToMany:
+		return "||-o{"
+	case octopus.RefOneToOne:
+		return "||-||"
+	default:
+		return "}o-||"
+	}
 }

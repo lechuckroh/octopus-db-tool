@@ -57,15 +57,16 @@ func (c *Exporter) exportToString() ([]byte, error) {
 				}
 				params = append(params, fmt.Sprintf("default: %s", defaultValue))
 			}
-			if column.Ref != nil {
-				ref := column.Ref
+			if ref := column.Ref; ref != nil {
+				rel := getRelationshipType(ref)
+
 				if definedTables[ref.Table] {
 					params = append(params,
-						fmt.Sprintf("ref: > %s.%s", ref.Table, ref.Column))
+						fmt.Sprintf("ref: %s %s.%s", rel, ref.Table, ref.Column))
 				} else {
 					deferredRefs = append(deferredRefs,
-						fmt.Sprintf("Ref: %s.%s > %s.%s",
-							table.Name, column.Name, ref.Table, ref.Column),
+						fmt.Sprintf("Ref: %s.%s %s %s.%s",
+							table.Name, column.Name, rel, ref.Table, ref.Column),
 					)
 				}
 			}
@@ -97,4 +98,17 @@ func (c *Exporter) exportToString() ([]byte, error) {
 	result = append(result, strings.Join(deferredRefs, "\n"))
 
 	return []byte(strings.Join(result, "\n")), nil
+}
+
+func getRelationshipType(ref *octopus.Reference) string {
+	switch ref.Relationship {
+	case octopus.RefManyToOne:
+		return ">"
+	case octopus.RefOneToMany:
+		return "<"
+	case octopus.RefOneToOne:
+		return "-"
+	default:
+		return ">"
+	}
 }
