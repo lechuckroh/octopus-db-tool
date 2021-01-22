@@ -37,6 +37,16 @@ func TestMysqlExport_Export(t *testing.T) {
 						DefaultValue: "noname",
 					},
 					{
+						Name:    "company_id",
+						Type:    octopus.ColTypeInt64,
+						NotNull: true,
+						Ref: &octopus.Reference{
+							Table:        "company",
+							Column:       "id",
+							Relationship: octopus.RefManyToOne,
+						},
+					},
+					{
 						Name:      "postal_code",
 						Type:      octopus.ColTypeChar,
 						Size:      6,
@@ -244,6 +254,7 @@ func TestMysqlExport_Export(t *testing.T) {
 			"CREATE TABLE IF NOT EXISTS Table (",
 			"  id bigint NOT NULL AUTO_INCREMENT,",
 			"  name varchar(20) NOT NULL DEFAULT 'noname',",
+			"  company_id bigint NOT NULL,",
 			"  postal_code char(6),",
 			"  age tinyint NOT NULL DEFAULT 0,",
 			"  int2 smallint,",

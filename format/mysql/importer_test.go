@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestMysqlImporter_ImportSql(t *testing.T) {
+func TestMysqlImporter_Import(t *testing.T) {
 	Convey("import", t, func() {
 		sql := strings.Join([]string{
 			"CREATE TABLE IF NOT EXISTS `Table` (",
@@ -15,11 +15,18 @@ func TestMysqlImporter_ImportSql(t *testing.T) {
 			"`name` varchar(20) NOT NULL DEFAULT 'noname',",
 			"postal_code char(6),",
 			"age tinyint NOT NULL DEFAULT 0,",
+			"`int2` smallint,",
+			"`int3` mediumint,",
+			"`int4` bigint,",
+			"decimal1 decimal(10,3),",
 			"float32 float(10,3) NOT NULL DEFAULT 0,",
 			"float64 double(20,5) NOT NULL DEFAULT 0,",
 			"int_value int comment 'int value',",
 			"bool1 bit(1) NOT NULL DEFAULT 1,",
 			"bool2 tinyint(1) NOT NULL DEFAULT 1,",
+			"bit1 bit(3),",
+			"bin1 binary(10),",
+			//"bin2 varbinary,",
 			"text1 tinytext default null,",
 			"text2 text DEFAULT NULL,",
 			"text3 mediumtext,",
@@ -28,6 +35,17 @@ func TestMysqlImporter_ImportSql(t *testing.T) {
 			"blob2 blob,",
 			"blob3 mediumblob,",
 			"blob4 longblob,",
+			//"geo geometry,",
+			"enum1 enum('1', '2', '3'),",
+			//"point1 point,",
+			"set1 set('1', '2', '3'),",
+			"json1 json,",
+			"date1 date,",
+			"datetime1 datetime,",
+			"time1 time,",
+			"year1 year,",
+			//"on_update_text varchar(30) ON UPDATE 'updated',",
+			//"on_update_int smallint ON UPDATE 1,",
 			"created_at datetime not null default current_timestamp(),",
 			"updated_at datetime not null default current_timestamp() on update current_timestamp(),",
 			"PRIMARY KEY (`id`),",
@@ -40,7 +58,7 @@ func TestMysqlImporter_ImportSql(t *testing.T) {
 		mysql := Importer{}
 
 		// read sql
-		schema, err := mysql.ImportSql(sql)
+		schema, err := mysql.Import(strings.NewReader(sql))
 		if err != nil {
 			t.Error(err)
 		}
@@ -89,6 +107,24 @@ func TestMysqlImporter_ImportSql(t *testing.T) {
 							DefaultValue: "0",
 						},
 						{
+							Name: "int2",
+							Type: octopus.ColTypeInt16,
+						},
+						{
+							Name: "int3",
+							Type: octopus.ColTypeInt24,
+						},
+						{
+							Name: "int4",
+							Type: octopus.ColTypeInt64,
+						},
+						{
+							Name:  "decimal1",
+							Type:  octopus.ColTypeDecimal,
+							Size:  10,
+							Scale: 3,
+						},
+						{
 							Name:         "float32",
 							Type:         octopus.ColTypeFloat,
 							Size:         10,
@@ -123,6 +159,16 @@ func TestMysqlImporter_ImportSql(t *testing.T) {
 							DefaultValue: "1",
 						},
 						{
+							Name: "bit1",
+							Type: octopus.ColTypeBit,
+							Size: 3,
+						},
+						{
+							Name: "bin1",
+							Type: octopus.ColTypeBinary,
+							Size: 10,
+						},
+						{
 							Name: "text1",
 							Type: octopus.ColTypeText8,
 						},
@@ -153,6 +199,36 @@ func TestMysqlImporter_ImportSql(t *testing.T) {
 						{
 							Name: "blob4",
 							Type: octopus.ColTypeBlob32,
+						},
+						{
+							Name:   "enum1",
+							Type:   octopus.ColTypeEnum,
+							Values: []string{"1", "2", "3"},
+						},
+						{
+							Name:   "set1",
+							Type:   octopus.ColTypeSet,
+							Values: []string{"1", "2", "3"},
+						},
+						{
+							Name: "json1",
+							Type: octopus.ColTypeJSON,
+						},
+						{
+							Name: "date1",
+							Type: octopus.ColTypeDate,
+						},
+						{
+							Name: "datetime1",
+							Type: octopus.ColTypeDateTime,
+						},
+						{
+							Name: "time1",
+							Type: octopus.ColTypeTime,
+						},
+						{
+							Name: "year1",
+							Type: octopus.ColTypeYear,
 						},
 						{
 							Name:         "created_at",

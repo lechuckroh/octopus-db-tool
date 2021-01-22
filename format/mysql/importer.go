@@ -138,6 +138,7 @@ func (x *TableX) column(
 		PrimaryKey: pkSet.Contains(name),
 		UniqueKey:  uniqSet.Contains(name),
 		NotNull:    false,
+		Values:     x.columnValues(colType, colDef),
 	}
 
 	for _, colOption := range colDef.Options {
@@ -190,6 +191,16 @@ func (x *TableX) column(
 		}
 	}
 	return &column
+}
+
+func (x *TableX) columnValues(colType string, colDef *ast.ColumnDef) []string {
+	switch colType {
+	case octopus.ColTypeEnum:
+		return colDef.Tp.Elems
+	case octopus.ColTypeSet:
+		return colDef.Tp.Elems
+	}
+	return nil
 }
 
 func (x *TableX) columnType(colDef *ast.ColumnDef) (string, uint16, uint16) {
@@ -277,6 +288,9 @@ func (x *TableX) columnType(colDef *ast.ColumnDef) (string, uint16, uint16) {
 			return octopus.ColTypeBlob16, 0, 0
 		}
 	case mysql.TypeString:
+		if colDef.Tp.Flag == mysql.BinaryFlag {
+			return octopus.ColTypeBinary, size, 0
+		}
 		return octopus.ColTypeChar, size, 0
 	case mysql.TypeGeometry:
 		return octopus.ColTypeGeometry, 0, 0
