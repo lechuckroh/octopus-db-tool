@@ -28,15 +28,15 @@ func (c *Exporter) Export(wr io.Writer) error {
 }
 
 func (c *Exporter) exportToString() ([]byte, error) {
-	result := make([]string, 0)
+	var result []string
+	var deferredRefs []string
 	definedTables := make(map[string]bool)
-	deferredRefs := make([]string, 0)
 
 	for _, table := range c.schema.Tables {
 		result = append(result, fmt.Sprintf("Table %s {", table.Name))
 
 		for _, column := range table.Columns {
-			params := make([]string, 0)
+			var params []string
 
 			if column.PrimaryKey {
 				params = append(params, "pk")

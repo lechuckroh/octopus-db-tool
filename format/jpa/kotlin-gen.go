@@ -38,7 +38,7 @@ func NewKtGenerator(
 	option *KtOption,
 ) *KtGenerator {
 	// populate KotlinClass
-	classes := make([]*KotlinClass, 0)
+	var classes []*KotlinClass
 	for _, table := range schema.Tables {
 		// TODO: move to Generate() function
 		if option.TableFilter != nil && !option.TableFilter(table) {
@@ -55,10 +55,10 @@ func NewKtGenerator(
 }
 
 func (c *KtGenerator) getFieldAnnotations(class *KotlinClass, field *KotlinField) []string {
-	annotations := make([]string, 0)
+	var annotations []string
 
 	column := field.Column
-	colAttrs := make([]string, 0)
+	var colAttrs []string
 	if column.PrimaryKey {
 		annotations = append(annotations, "@Id")
 	}
@@ -229,7 +229,7 @@ data class {{.IdClassName}}(
 	}
 
 	// unique constraint
-	uniqueFieldNames := make([]string, 0)
+	var uniqueFieldNames []string
 	for _, field := range class.UniqueFields {
 		uniqueFieldNames = append(uniqueFieldNames, util.Quote(field.Name, "\""))
 	}

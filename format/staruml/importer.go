@@ -55,10 +55,10 @@ func (c *Importer) toSchema() (*octopus.Schema, error) {
 	}
 
 	erdEntities := c.findByType(erdDataModels[0].OwnedElements, "ERDEntity")
-	tables := make([]*octopus.Table, 0)
+	var tables []*octopus.Table
 	for _, erdEntity := range erdEntities {
 		// Create Columns
-		columns := make([]*octopus.Column, 0)
+		var columns []*octopus.Column
 		for _, erdColumn := range c.findByType(erdEntity.Columns, "ERDColumn") {
 			colType, colSize, colScale := util.ParseType(erdColumn.Type)
 			size := uint16(util.ToInt(erdColumn.Length, 0))
@@ -106,7 +106,7 @@ func (c *Importer) toSchema() (*octopus.Schema, error) {
 }
 
 func (c *Importer) findByType(elems []*Element, typ string) []*Element {
-	result := make([]*Element, 0)
+	var result []*Element
 
 	for _, elem := range elems {
 		if elem.ElemType == typ {

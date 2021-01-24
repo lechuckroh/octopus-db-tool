@@ -240,7 +240,7 @@ func addCells(row *xlsx.Row, values []string, style *xlsx.Style) {
 }
 
 func getColumnAttributes(column *octopus.Column) []string {
-	attrs := make([]string, 0)
+	var attrs []string
 
 	if column.AutoIncremental {
 		attrs = append(attrs, "autoInc")

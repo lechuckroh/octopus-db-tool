@@ -55,7 +55,7 @@ func (c *Generator) Generate(outputPath string) error {
 
 	indent := strings.Repeat(" ", 4)
 
-	classes := make([]*SaClass, 0)
+	var classes []*SaClass
 	for _, table := range c.schema.Tables {
 		// filter table
 		if option.TableFilter != nil && !option.TableFilter(table) {
@@ -71,20 +71,20 @@ func (c *Generator) Generate(outputPath string) error {
 	importSet := util.NewStringSet()
 
 	// contents to write
-	contents := make([]string, 0)
+	var contents []string
 	useTZDateTime := false
 
 	for _, class := range classes {
 		table := class.table
 
-		classLines := make([]string, 0)
+		var classLines []string
 		appendLine := func(lines ...string) {
 			classLines = append(classLines, lines...)
 		}
 
 		// unique
 		uniqueCstName := table.Name + uniqueNameSuffix
-		uniqueFieldNames := make([]string, 0)
+		var uniqueFieldNames []string
 		for _, field := range class.UniqueFields {
 			uniqueFieldNames = append(uniqueFieldNames, util.Quote(field.Name, "'"))
 		}
@@ -107,7 +107,7 @@ func (c *Generator) Generate(outputPath string) error {
 			lcColumnType := strings.ToLower(column.Type)
 
 			// Column attributes
-			attributes := make([]string, 0)
+			var attributes []string
 
 			if field.OverrideName {
 				attributes = append(attributes, util.Quote(column.Name, "'"))
@@ -116,7 +116,7 @@ func (c *Generator) Generate(outputPath string) error {
 			if (lcColumnType == octopus.ColTypeVarchar || lcColumnType == octopus.ColTypeChar) && column.Size > 0 {
 				attributes = append(attributes, fmt.Sprintf("%s(%d)", field.Type, column.Size))
 			} else if lcColumnType == octopus.ColTypeDouble || lcColumnType == octopus.ColTypeFloat || lcColumnType == octopus.ColTypeDecimal {
-				colAttrs := make([]string, 0)
+				var colAttrs []string
 				if column.Size > 0 {
 					colAttrs = append(colAttrs, fmt.Sprintf("precision=%d", column.Size))
 				}
@@ -240,7 +240,7 @@ func (c *Generator) getTZDateTimeLines() []string {
 }
 
 func (c *Generator) getHeaderLines(imports []string, saImports []string) []string {
-	lines := make([]string, 0)
+	var lines []string
 
 	if len(imports) > 0 {
 		lines = append(lines, imports...)

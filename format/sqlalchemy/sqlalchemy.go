@@ -40,9 +40,9 @@ func NewSaClass(
 		}
 	}
 
-	fields := make([]*SaField, 0)
-	pkFields := make([]*SaField, 0)
-	uniqueFields := make([]*SaField, 0)
+	var fields []*SaField
+	var pkFields []*SaField
+	var uniqueFields []*SaField
 	for _, column := range table.Columns {
 		field := NewSaField(column)
 		fields = append(fields, field)

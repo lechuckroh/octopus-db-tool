@@ -42,9 +42,9 @@ func NewKotlinClass(
 		}
 	}
 
-	fields := make([]*KotlinField, 0)
-	pkFields := make([]*KotlinField, 0)
-	uniqueFields := make([]*KotlinField, 0)
+	var fields []*KotlinField
+	var pkFields []*KotlinField
+	var uniqueFields []*KotlinField
 	for _, column := range table.Columns {
 		field := NewKotlinField(column)
 		fields = append(fields, field)

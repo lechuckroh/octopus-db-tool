@@ -54,11 +54,11 @@ func (c *Exporter) exportTable(
 	tpl *template.Template,
 	table *octopus.Table,
 ) error {
-	definitions := make([]string, 0)
-	pkColumns := make([]string, 0)
-	uniqueColumns := make([]string, 0)
+	var definitions []string
+	var pkColumns []string
+	var uniqueColumns []string
 	for _, column := range table.Columns {
-		params := make([]string, 0)
+		var params []string
 		params = append(params, column.Name)
 		params = append(params, c.toMysqlColumnType(column))
 		constraints := c.columnConstraints(column)
@@ -188,7 +188,7 @@ func (c *Exporter) toMysqlColumnType(col *octopus.Column) string {
 }
 
 func (c *Exporter) columnConstraints(column *octopus.Column) string {
-	constraints := make([]string, 0)
+	var constraints []string
 
 	if column.NotNull {
 		constraints = append(constraints, "NOT NULL")

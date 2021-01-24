@@ -39,7 +39,7 @@ func (c *Importer) toSchema() (*octopus.Schema, error) {
 	author := ""
 	name := ""
 	version := ""
-	tables := make([]*octopus.Table, 0)
+	var tables []*octopus.Table
 
 	if c.metaSheet != nil {
 		keyValues := c.readMetaSheet()
@@ -82,7 +82,7 @@ func (c *Importer) readMetaSheet() map[string]string {
 }
 
 func readGroupSheet(groupName string, sheet *xlsx.Sheet) ([]*octopus.Table, error) {
-	tables := make([]*octopus.Table, 0)
+	var tables []*octopus.Table
 
 	var lastTable *octopus.Table
 	tableFinished := true

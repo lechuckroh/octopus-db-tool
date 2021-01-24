@@ -68,7 +68,7 @@ func (g *Generator) Generate(wr io.Writer) error {
 		pkg = "main"
 	}
 
-	gormStructs := make([]*GoStruct, 0)
+	var gormStructs []*GoStruct
 	tableFilter := option.TableFilter
 	p := GoStructProcessor{schema: g.schema, option: option}
 	for _, table := range g.schema.Tables {

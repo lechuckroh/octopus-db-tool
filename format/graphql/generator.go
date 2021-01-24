@@ -55,8 +55,8 @@ func NewClass(
 		}
 	}
 
-	fields := make([]*Field, 0)
-	pkFields := make([]*Field, 0)
+	var fields []*Field
+	var pkFields []*Field
 	for _, column := range table.Columns {
 		field := NewField(column)
 		fields = append(fields, field)
@@ -135,7 +135,7 @@ func (c *Generator) Generate(outputPath string) error {
 	log.Printf("[MKDIR] %s", outputPath)
 
 	indent := "  "
-	contents := make([]string, 0)
+	var contents []string
 	appendLine := func(indentLevel int, line string) {
 		contents = append(contents,
 			strings.Repeat(indent, indentLevel)+line,
@@ -147,7 +147,7 @@ func (c *Generator) Generate(outputPath string) error {
 }
 `)
 
-	classes := make([]*Class, 0)
+	var classes []*Class
 
 	client := pluralize.NewClient()
 

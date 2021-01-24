@@ -77,7 +77,7 @@ func newCreateTableChangeSet(
 	uniqueNameSuffix string,
 	useComments bool,
 ) ([]*LqChangeSet, error) {
-	result := make([]*LqChangeSet, 0)
+	var result []*LqChangeSet
 
 	uniqueNameSet := table.UniqueKeyNameSet()
 	primaryKeySet := table.PrimaryKeyNameSet()
@@ -182,7 +182,7 @@ type LqAddColumn struct {
 }
 
 func newAddColumn(table *octopus.Table, columns []*octopus.Column, useComments bool) (*LqAddColumn, error) {
-	lqColumns := make([]map[string]*LqColumn, 0)
+	var lqColumns []map[string]*LqColumn
 	for _, col := range columns {
 		if lc, err := newLqColumn(col, true, true); err != nil {
 			return nil, err
@@ -593,7 +593,7 @@ func (c *Generator) generateDiff(oldSchema *octopus.Schema) ([]byte, error) {
 
 	oldTableByName := oldSchema.TablesByName()
 
-	addedTables := make([]*octopus.Table, 0)
+	var addedTables []*octopus.Table
 	renamedTableMap := make(map[*octopus.Table]*octopus.Table)
 	removedTableNames := util.NewStringSet()
 	for name := range oldTableByName {
@@ -714,7 +714,7 @@ func (c *Generator) diffTable(
 	useComments bool,
 	uniqueNameSuffix string,
 ) ([]*LqChangeSet, error) {
-	changeSets := make([]*LqChangeSet, 0)
+	var changeSets []*LqChangeSet
 
 	if useComments && table.Description != oldTable.Description {
 		changeSet := newLqChangeSet(id.bumpMinor(), author)
@@ -724,7 +724,7 @@ func (c *Generator) diffTable(
 
 	oldColumnByName := oldTable.ColumnNameMap()
 
-	addedColumns := make([]*octopus.Column, 0)
+	var addedColumns []*octopus.Column
 	renamedColumnMap := make(map[*octopus.Column]*octopus.Column)
 	removedColumnNameSet := util.NewStringSet()
 	for _, column := range oldTable.Columns {
@@ -798,7 +798,7 @@ func (c *Generator) diffTable(
 	}
 
 	// added columns
-	filteredAddedColumns := make([]*octopus.Column, 0)
+	var filteredAddedColumns []*octopus.Column
 	for _, col := range addedColumns {
 		if _, ok := renamedColumnMap[col]; ok {
 			continue
@@ -854,7 +854,7 @@ func (c *Generator) diffColumn(
 	oldColumn *octopus.Column,
 	useComments bool,
 ) ([]*LqChangeSet, error) {
-	changeSets := make([]*LqChangeSet, 0)
+	var changeSets []*LqChangeSet
 
 	if column.Name != oldColumn.Name {
 		changeSet := newLqChangeSet(id.bumpMinor(), author)

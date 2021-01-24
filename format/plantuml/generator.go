@@ -16,8 +16,8 @@ type Generator struct {
 }
 
 func (c *Generator) Generate(wr io.Writer) error {
-	result := make([]string, 0)
-	refs := make([]string, 0)
+	var result []string
+	var refs []string
 	for _, table := range c.schema.Tables {
 		result = append(result, fmt.Sprintf("entity %s {", table.Name))
 

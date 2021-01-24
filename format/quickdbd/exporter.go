@@ -16,7 +16,7 @@ type Exporter struct {
 }
 
 func (c *Exporter) Export(wr io.Writer) error {
-	result := make([]string, 0)
+	var result []string
 	for _, table := range c.schema.Tables {
 		result = append(result, getTableDef(table))
 		result = append(result, strings.Repeat("-", len(table.Name)))
@@ -40,7 +40,7 @@ func getTableDef(table *octopus.Table) string {
 }
 
 func getColumnDef(col *octopus.Column) string {
-	params := make([]string, 0)
+	var params []string
 	params = append(params, col.Type)
 
 	if col.PrimaryKey {
