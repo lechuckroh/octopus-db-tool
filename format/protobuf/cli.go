@@ -25,15 +25,17 @@ func Action(c *cli.Context) error {
 		return err
 	}
 
-	gen := NewGenerator(
+	gen := newGenerator(
 		schema,
 		&Option{
-			PrefixMapper:   common.NewPrefixMapper(c.String(FlagPrefix)),
-			TableFilter:    octopus.GetTableFilterFn(c.String(FlagGroups)),
-			RemovePrefixes: strings.Split(c.String(FlagRemovePrefix), ","),
-			Package:        c.String(FlagPackage),
-			GoPackage:      c.String(FlagGoPackage),
-			FilePath:       c.String(FlagOutput),
+			PrefixMapper:           common.NewPrefixMapper(c.String(FlagPrefix)),
+			TableFilter:            octopus.GetTableFilterFn(c.String(FlagGroups)),
+			RemovePrefixes:         strings.Split(c.String(FlagRemovePrefix), ","),
+			Package:                c.String(FlagPackage),
+			GoPackage:              c.String(FlagGoPackage),
+			FilePath:               c.String(FlagOutput),
+			RelationTagStart:       -1,
+			RelationTagIncremental: true,
 		},
 	)
 	buf := new(bytes.Buffer)

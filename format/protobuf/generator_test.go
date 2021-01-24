@@ -179,12 +179,13 @@ func TestProtobufTpl_Generate(t *testing.T) {
 			Package:      "com.lechuck.foo",
 			GoPackage:    "lechuck/foo",
 			PrefixMapper: common.NewPrefixMapper("common:C"),
+			RelationTagStart: 100,
 		}
 		expected := `syntax = "proto3";
 
-package com.lechuck.hello;
+package com.lechuck.foo;
 
-option go_package = "proto/hello";
+option go_package = "lechuck/foo";
 
 import "google/protobuf/timestamp.proto";
 
@@ -212,7 +213,7 @@ message CUser {
   double doubleNull = 21;
   google.protobuf.Timestamp createdAt = 22;
   google.protobuf.Timestamp updatedAt = 23;
-  CGroup group = 24;
+  CGroup cGroup = 100;
 }
 
 message CGroup {
@@ -223,14 +224,9 @@ message CGroup {
 }
 `
 
-		protobuf := NewGenerator(protobufTplTestSchema, option)
-		var messages []*PbMessage
-		for _, table := range protobufTplTestSchema.Tables {
-			messages = append(messages, NewPbMessage(table, option))
-		}
-
 		buf := new(bytes.Buffer)
-		if err := protobuf.generateProto(buf, messages, "com.lechuck.hello", "proto/hello"); err != nil {
+		gen := newGenerator(protobufTplTestSchema, option)
+		if err := gen.Generate(buf); err != nil {
 			t.Error(err)
 		}
 		actual := buf.String()
