@@ -10,13 +10,15 @@ import (
 )
 
 const (
-	FlagGoPackage    = "goPackage"
-	FlagGroups       = "groups"
-	FlagInput        = "input"
-	FlagOutput       = "output"
-	FlagPackage      = "package"
-	FlagPrefix       = "prefix"
-	FlagRemovePrefix = "removePrefix"
+	FlagGoPackage        = "goPackage"
+	FlagGroups           = "groups"
+	FlagInput            = "input"
+	FlagOutput           = "output"
+	FlagPackage          = "package"
+	FlagPrefix           = "prefix"
+	FlagRemovePrefix     = "removePrefix"
+	FlogRelationTagDecr  = "relationTagDecr"
+	FlogRelationTagStart = "relationTagStart"
 )
 
 func Action(c *cli.Context) error {
@@ -28,14 +30,14 @@ func Action(c *cli.Context) error {
 	gen := newGenerator(
 		schema,
 		&Option{
-			PrefixMapper:           common.NewPrefixMapper(c.String(FlagPrefix)),
-			TableFilter:            octopus.GetTableFilterFn(c.String(FlagGroups)),
-			RemovePrefixes:         strings.Split(c.String(FlagRemovePrefix), ","),
-			Package:                c.String(FlagPackage),
-			GoPackage:              c.String(FlagGoPackage),
-			FilePath:               c.String(FlagOutput),
-			RelationTagStart:       -1,
-			RelationTagIncremental: true,
+			PrefixMapper:     common.NewPrefixMapper(c.String(FlagPrefix)),
+			TableFilter:      octopus.GetTableFilterFn(c.String(FlagGroups)),
+			RemovePrefixes:   strings.Split(c.String(FlagRemovePrefix), ","),
+			Package:          c.String(FlagPackage),
+			GoPackage:        c.String(FlagGoPackage),
+			FilePath:         c.String(FlagOutput),
+			RelationTagStart: -1,
+			RelationTagDecr:  false,
 		},
 	)
 	buf := new(bytes.Buffer)
@@ -90,5 +92,16 @@ var CliFlags = []cli.Flag{
 		Aliases: []string{"d"},
 		Usage:   "set prefixes to remove from message name. set multiple values with comma separated.",
 		EnvVars: []string{"OCTOPUS_REMOVE_PREFIX"},
+	},
+	&cli.BoolFlag{
+		Name:    FlogRelationTagDecr,
+		Usage:   "set relation tags decremental from `relationTagStart`",
+		EnvVars: []string{"OCTOPUS_RELATION_TAG_DECR"},
+	},
+	&cli.StringFlag{
+		Name:    FlogRelationTagStart,
+		Aliases: []string{"s"},
+		Usage:   "set relation tags start index. set -1 to start from last of fields.",
+		EnvVars: []string{"OCTOPUS_RELATION_TAG_START"},
 	},
 }

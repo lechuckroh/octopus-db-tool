@@ -45,14 +45,14 @@ type PbRelation struct {
 }
 
 type Option struct {
-	PrefixMapper           *common.PrefixMapper
-	TableFilter            octopus.TableFilterFn
-	RemovePrefixes         []string
-	Package                string
-	GoPackage              string
-	FilePath               string
-	RelationTagStart       int
-	RelationTagIncremental bool
+	PrefixMapper     *common.PrefixMapper
+	TableFilter      octopus.TableFilterFn
+	RemovePrefixes   []string
+	Package          string
+	GoPackage        string
+	FilePath         string
+	RelationTagStart int
+	RelationTagDecr  bool
 }
 
 type Generator struct {
@@ -204,15 +204,15 @@ func (t *Generator) newPbMessage(table *octopus.Table) *PbMessage {
 	// shift tag start if tag range is overlapped
 	relationCount := len(relations)
 	relTagStart := t.option.RelationTagStart
-	relTagIncr := t.option.RelationTagIncremental
-	if relTagIncr {
-		if relTagStart < 0 || relTagStart <= maxTag {
-			relTagStart = maxTag + 1
-		}
-	} else {
+	relTagDecr := t.option.RelationTagDecr
+	if relTagDecr {
 		minStartTag := relTagStart - relationCount + 1
 		if minStartTag <= maxTag {
 			relTagStart = maxTag + relationCount
+		}
+	} else {
+		if relTagStart < 0 || relTagStart <= maxTag {
+			relTagStart = maxTag + 1
 		}
 	}
 
