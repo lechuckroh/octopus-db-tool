@@ -1,6 +1,7 @@
 package xlsx
 
 import (
+	"fmt"
 	"github.com/lechuckroh/octopus-db-tools/format/octopus"
 	"github.com/lechuckroh/octopus-db-tools/util"
 	"github.com/tealeg/xlsx"
@@ -85,7 +86,6 @@ func readGroupSheet(groupName string, sheet *xlsx.Sheet) ([]*octopus.Table, erro
 	var tables []*octopus.Table
 
 	var lastTable *octopus.Table
-	tableFinished := true
 	useNotNullColumn := false
 	for i, row := range sheet.Rows {
 		// skip header row
@@ -98,98 +98,138 @@ func readGroupSheet(groupName string, sheet *xlsx.Sheet) ([]*octopus.Table, erro
 
 		tableName := strings.TrimSpace(getCellValue(row, 0))
 		columnName := strings.TrimSpace(getCellValue(row, 1))
-
-		// finish table if
-		// - column is empty
-		if columnName == "" && !tableFinished {
-			tables = append(tables, lastTable)
-			tableFinished = true
-			continue
-		}
-
 		typeValue := strings.TrimSpace(getCellValue(row, 2))
 		keyValue := strings.TrimSpace(getCellValue(row, 3))
 		nullableValue := strings.TrimSpace(getCellValue(row, 4))
 		attrValue := strings.TrimSpace(getCellValue(row, 5))
 		description := strings.TrimSpace(getCellValue(row, 6))
 
-		// create new table
-		if tableFinished {
-			if tableName != "" {
-				lastTable = &octopus.Table{
-					Name:        tableName,
-					Columns:     make([]*octopus.Column, 0),
-					Description: description,
-					Group:       groupName,
-					ClassName:   typeValue,
-				}
-				tableFinished = false
+		attrMap := parseAttributes(attrValue)
+
+		// table name row
+		if typeValue == typeTable {
+			// finalize lastTable
+			if lastTable != nil {
+				tables = append(tables, lastTable)
+			}
+
+			if tableName == "" {
+				return tables, fmt.Errorf("row[%d]: table name is empty", i)
+			}
+
+			// create new table
+			lastTable = &octopus.Table{
+				Name:        tableName,
+				Columns:     make([]*octopus.Column, 0),
+				Description: description,
+				Group:       groupName,
+				ClassName:   attrMap[attrClass],
 			}
 			continue
 		}
+
+		// skip if table is not started yet
 		if lastTable == nil {
+			continue
+		}
+
+		// skip if column name is empty
+		if columnName == "" {
 			continue
 		}
 
 		// column type
 		colType, colSize, colScale := util.ParseType(typeValue)
 
-		// add column
-		defaultValue := ""
-		attrSet := util.NewStringSet()
-		for _, attr := range strings.Split(attrValue, ",") {
-			attr = strings.TrimSpace(attr)
-
-			if strings.HasPrefix(attr, "default") {
-				tokens := strings.SplitN(attr, ":", 2)
-				if len(tokens) == 2 {
-					defaultValue = fixDefaultValue(colType, tokens[1])
-					continue
-				}
+		// index
+		if keyValue == keyIndex {
+			indexName := tableName
+			if index := lastTable.IndexByName(indexName); index != nil {
+				index.AddColumn(columnName)
+			} else {
+				lastTable.AddIndex(indexName, columnName)
 			}
+		} else {
+			// reference
+			ref := parseReference(tableName)
 
-			attrSet.Add(strings.ToLower(attr))
+			lastTable.AddColumn(&octopus.Column{
+				Name:            columnName,
+				Type:            colType,
+				Description:     description,
+				Size:            colSize,
+				Scale:           colScale,
+				NotNull:         util.IfThenElseBool(useNotNullColumn, nullableValue != "", nullableValue == ""),
+				PrimaryKey:      keyValue == keyPrimary,
+				UniqueKey:       keyValue == keyUnique,
+				AutoIncremental: attrMap[attrAutoInc] == "true",
+				DefaultValue:    attrMap[attrDefault],
+				OnUpdate:        attrMap[attrOnUpdate],
+				Ref:             ref,
+			})
 		}
-
-		// reference
-		var ref *octopus.Reference
-		if tableName != "" {
-			tokens := strings.Split(tableName, ".")
-			if len(tokens) == 2 {
-				ref = &octopus.Reference{
-					Table:  tokens[0],
-					Column: tokens[1],
-				}
-			}
-		}
-
-		lastTable.AddColumn(&octopus.Column{
-			Name:            columnName,
-			Type:            colType,
-			Description:     description,
-			Size:            colSize,
-			Scale:           colScale,
-			NotNull:         util.IfThenElseBool(useNotNullColumn, nullableValue != "", nullableValue == ""),
-			PrimaryKey:      keyValue == "P",
-			UniqueKey:       keyValue == "U",
-			AutoIncremental: attrSet.ContainsAny([]string{"ai", "autoinc", "auto_inc", "auto_incremental"}),
-			DefaultValue:    defaultValue,
-			Ref:             ref,
-		})
 	}
 
-	if !tableFinished && lastTable != nil {
+	if lastTable != nil {
 		tables = append(tables, lastTable)
 	}
 
 	return tables, nil
 }
 
-func fixDefaultValue(colType string, defaultValue string) string {
-	if util.IsBooleanType(colType) {
-		return util.IfThenElseString(defaultValue == "true" || defaultValue == "1", "true", "false")
+func parseAttributes(value string) map[string]string {
+	result := make(map[string]string)
+	for _, attr := range strings.Split(value, ",") {
+		attr = strings.TrimSpace(attr)
+
+		tokens := strings.SplitN(attr, "=", 2)
+		key := tokens[0]
+
+		if len(tokens) == 2 {
+			value := tokens[1]
+			result[key] = value
+		} else {
+			result[key] = "true"
+		}
 	}
-	return defaultValue
+	return result
+}
+
+func parseReference(s string) *octopus.Reference {
+	if s != "" {
+		tokens := strings.Split(s, ".")
+		if len(tokens) == 2 {
+			table := tokens[0]
+			column := tokens[1]
+
+			if table != "" && column != "" {
+				var relationship string
+				switch []rune(table)[0] {
+				case '>':
+					relationship = octopus.RefManyToOne
+				case '<':
+					relationship = octopus.RefOneToMany
+				case '-':
+					relationship = octopus.RefOneToOne
+				default:
+					relationship = octopus.RefManyToOne
+				}
+				return &octopus.Reference{
+					Table:        table,
+					Column:       column,
+					Relationship: relationship,
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func fixColumnValue(colType string, value string) string {
+	if util.IsBooleanType(colType) {
+		return util.IfThenElseString(value == "true" || value == "1", "true", "false")
+	}
+	return value
 }
 
 func getCell(row *xlsx.Row, colIdx int) *xlsx.Cell {

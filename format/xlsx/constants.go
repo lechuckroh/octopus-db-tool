@@ -10,4 +10,15 @@ const (
 
 	headerNullable = "nullable"
 	headerNotNull  = "not null"
+
+	typeTable = "table"
+
+	keyPrimary = "P"
+	keyUnique  = "U"
+	keyIndex   = "I"
+
+	attrAutoInc  = "autoInc"
+	attrClass    = "class"
+	attrDefault  = "default"
+	attrOnUpdate = "onUpdate"
 )

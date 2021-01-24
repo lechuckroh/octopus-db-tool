@@ -9,7 +9,7 @@ import (
 )
 
 type ExportOption struct {
-	UseNotNullColumn bool
+	UseNullColumn bool
 }
 
 type Exporter struct {
@@ -50,7 +50,7 @@ func (c *Exporter) Export(filename string) error {
 			},
 		}
 
-		if err = fillGroupSheet(sheet, c.schema, group, c.option.UseNotNullColumn); err != nil {
+		if err = fillGroupSheet(sheet, c.schema, group, c.option.UseNullColumn); err != nil {
 			return err
 		}
 	}
@@ -130,12 +130,12 @@ func fillGroupSheet(
 	sheet *xlsx.Sheet,
 	schema *octopus.Schema,
 	group string,
-	useNotNullColumn bool) error {
+	useNullColumn bool) error {
 	_ = sheet.SetColWidth(0, 0, 18)
 	_ = sheet.SetColWidth(1, 1, 13.5)
 	_ = sheet.SetColWidth(2, 2, 9.5)
 	_ = sheet.SetColWidth(3, 3, 4.0)
-	_ = sheet.SetColWidth(4, 4, util.IfThenElseFloat64(useNotNullColumn, 6.0, 4.0))
+	_ = sheet.SetColWidth(4, 4, util.IfThenElseFloat64(useNullColumn, 4.0, 6.0))
 	_ = sheet.SetColWidth(5, 5, 9.5)
 	_ = sheet.SetColWidth(6, 6, 50)
 
@@ -160,19 +160,20 @@ func fillGroupSheet(
 	normalStyle := newStyle(nil, lightBorder, leftAlignment, normalFont)
 	boolStyle := newStyle(nil, lightBorder, centerAlignment, normalFont)
 	referenceStyle := newStyle(nil, lightBorder, centerAlignment, refFont)
+	indexStyle := newStyle(nil, lightBorder, centerAlignment, boldFont)
 
 	// Header
 	row := sheet.AddRow()
-	nullHeaderText := util.IfThenElseString(useNotNullColumn, headerNotNull, headerNullable)
+	nullHeaderText := util.IfThenElseString(useNullColumn, headerNullable, headerNotNull)
 
 	addCells(row, []string{
-		"Table/Reference",
-		"Column",
-		"Type",
-		"Key",
+		"table/ref.",
+		"column",
+		"type",
+		"key",
 		nullHeaderText,
-		"Attributes",
-		"Description",
+		"attributes",
+		"description",
 	}, headerStyle)
 
 	tableCount := len(schema.Tables)
@@ -184,7 +185,8 @@ func fillGroupSheet(
 		// Table
 		row = sheet.AddRow()
 		addCell(row, table.Name, tableStyle)
-		addCells(row, []string{"", "", "", "", ""}, nil)
+		addCells(row, []string{"", typeTable, "", ""}, nil)
+		addCell(row, util.IfThenElseString(table.ClassName == "", "", attrClass+"="+table.ClassName), nil)
 		addCell(row, strings.TrimSpace(table.Description), tableDescStyle)
 
 		// Columns
@@ -202,17 +204,30 @@ func fillGroupSheet(
 			// type
 			addCell(row, formatType(column), normalStyle)
 			// key
-			addCell(row, util.BoolToString(column.PrimaryKey, "P", util.BoolToString(column.UniqueKey, "U", "")), boolStyle)
+			addCell(row, util.BoolToString(column.PrimaryKey, keyPrimary, util.BoolToString(column.UniqueKey, keyUnique, "")), boolStyle)
 			// nullable
-			if useNotNullColumn {
-				addCell(row, util.BoolToString(column.NotNull, "O", ""), boolStyle)
-			} else {
+			if useNullColumn {
 				addCell(row, util.BoolToString(!column.NotNull, "O", ""), boolStyle)
+			} else {
+				addCell(row, util.BoolToString(column.NotNull, "O", ""), boolStyle)
 			}
 			// attributes
 			addCell(row, strings.Join(getColumnAttributes(column), ", "), normalStyle)
 			// description
 			addCell(row, strings.TrimSpace(column.Description), normalStyle)
+		}
+
+		// Indices
+		for _, index := range table.Indices {
+			indexName := index.Name
+
+			for _, idxColumn := range index.Columns {
+				row = sheet.AddRow()
+				addCell(row, indexName, indexStyle)
+				addCell(row, idxColumn, normalStyle)
+				addCell(row, "", nil)
+				addCell(row, keyIndex, boolStyle)
+			}
 		}
 
 		// add empty row
@@ -243,10 +258,13 @@ func getColumnAttributes(column *octopus.Column) []string {
 	var attrs []string
 
 	if column.AutoIncremental {
-		attrs = append(attrs, "autoInc")
+		attrs = append(attrs, attrAutoInc)
 	}
 	if column.DefaultValue != "" {
-		attrs = append(attrs, "default:"+column.DefaultValue)
+		attrs = append(attrs, attrDefault+"="+column.DefaultValue)
+	}
+	if column.OnUpdate != "" {
+		attrs = append(attrs, attrOnUpdate+"="+column.DefaultValue)
 	}
 
 	return attrs

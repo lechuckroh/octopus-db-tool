@@ -7,9 +7,9 @@ import (
 )
 
 const (
-	FlagInput            = "input"
-	FlagOutput           = "output"
-	FlagUseNotNullColumn = "useNotNullColumn"
+	FlagInput         = "input"
+	FlagOutput        = "output"
+	FlagUseNullColumn = "useNullColumn"
 )
 
 func ImportAction(c *cli.Context) error {
@@ -53,7 +53,7 @@ func ExportAction(c *cli.Context) error {
 	exporter := Exporter{
 		schema: schema,
 		option: &ExportOption{
-			UseNotNullColumn: c.Bool(FlagUseNotNullColumn),
+			UseNullColumn: c.Bool(FlagUseNullColumn),
 		},
 	}
 	return exporter.Export(c.String(FlagOutput))
@@ -74,10 +74,9 @@ var ExportCliFlags = []cli.Flag{
 		EnvVars:  []string{"OCTOPUS_OUTPUT"},
 		Required: true,
 	},
-	&cli.StringFlag{
-		Name:    FlagUseNotNullColumn,
-		Aliases: []string{"n"},
-		Usage:   "use not null column",
-		EnvVars: []string{"OCTOPUS_USE_NOT_NULL_COLUMN"},
+	&cli.BoolFlag{
+		Name:    FlagUseNullColumn,
+		Usage:   "use nullable column",
+		EnvVars: []string{"OCTOPUS_USE_NULL_COLUMN"},
 	},
 }

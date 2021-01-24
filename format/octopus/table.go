@@ -13,6 +13,10 @@ type Index struct {
 	Columns []string `json:"columns"`
 }
 
+func (i *Index) AddColumn(column string) {
+	i.Columns = append(i.Columns, column)
+}
+
 type Table struct {
 	Name        string    `json:"name,omitempty"`
 	Columns     []*Column `json:"columns,omitempty"`
@@ -65,6 +69,19 @@ func (t *Table) UniqueKeyNameSet() *util.StringSet {
 		}
 	}
 	return result
+}
+
+func (t *Table) IndexByName(name string) *Index {
+	for _, index := range t.Indices {
+		if index.Name == name {
+			return index
+		}
+	}
+	return nil
+}
+
+func (t *Table) AddIndex(indexName string, column string) {
+	t.Indices = append(t.Indices, &Index{Name: indexName, Columns: []string{column}})
 }
 
 type TableSlice []*Table
