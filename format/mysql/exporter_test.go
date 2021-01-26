@@ -35,6 +35,7 @@ func TestMysqlExport_Export(t *testing.T) {
 						NotNull:      true,
 						UniqueKey:    true,
 						DefaultValue: "noname",
+						Description: "group name",
 					},
 					{
 						Name:    "company_id",
@@ -253,7 +254,7 @@ func TestMysqlExport_Export(t *testing.T) {
 		expected := strings.Join([]string{
 			"CREATE TABLE IF NOT EXISTS Table (",
 			"  id bigint NOT NULL AUTO_INCREMENT,",
-			"  name varchar(20) NOT NULL DEFAULT 'noname',",
+			"  name varchar(20) NOT NULL DEFAULT 'noname' COMMENT 'group name',",
 			"  company_id bigint NOT NULL,",
 			"  postal_code char(6),",
 			"  age tinyint NOT NULL DEFAULT 0,",
