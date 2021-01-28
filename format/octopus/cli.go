@@ -71,6 +71,6 @@ var InitCliFlags = []cli.Flag{
 		Aliases:     []string{"o"},
 		Usage:       "init octopus schema to `FILE`",
 		EnvVars:     []string{"OCTOPUS_OUTPUT"},
-		DefaultText: "db.ojson",
+		DefaultText: "db.json",
 	},
 }

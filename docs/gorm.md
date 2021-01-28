@@ -22,11 +22,11 @@ Generate `*.go` file:
 
 ```bash
 $ oct generate gorm \
-    -i database.json \
-    -o databse.go \
-    -p model \
-    -r tbl_,table_ \
-    -p foo:F,bar:B \
-    -u _uq \
-    -g foo,bar
+    --input database.json \
+    --output databse.go \
+    --gormModel model \
+    --removePrefix tbl_,table_ \
+    --prefix foo:F,bar:B \
+    --uniqueNameSuffix _uq \
+    -groups foo,bar
 ```

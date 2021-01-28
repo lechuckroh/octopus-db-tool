@@ -16,6 +16,6 @@ Export to quickdbd file:
 
 ```bash
 $ oct export quickdbd \
-    -i database.json \
-    -o quickdbd.txt
+    --input database.json \
+    --output quickdbd.txt
 ```

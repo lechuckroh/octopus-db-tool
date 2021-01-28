@@ -26,16 +26,16 @@ Generate `*.kt` files:
 
 ```bash
 $ oct generate kt \
-    -i database.json \
-    -o ./output \
-    -a foo:@Foo,foobar:@Foo,@Bar \
-    -g foo,bar \
-    -e IdEntity \
-    -p com.foo.entity \
-    -f foo:F,bar:B \
-    -l VRelation \
-    -d tbl_,table_ \
-    -r com.foo.repos \
-    -q _uq \
-    -u    
+    --input database.json \
+    --output ./output \
+    --annotation foo:@Foo,foobar:@Foo,@Bar \
+    --groups foo,bar \
+    --idEntity IdEntity \
+    --package com.foo.entity \
+    --prefix foo:F,bar:B \
+    --relation VRelation \
+    --removePrefix tbl_,table_ \
+    --reposPackage com.foo.repos \
+    --uniqueNameSuffix _uq \
+    --useUTC    
 ```

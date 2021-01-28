@@ -1,5 +1,7 @@
 # DBML
 
+**not implemented**
+
 ## Export
 
 ```bash
@@ -17,7 +19,7 @@ Export `*.dbml` file:
 
 ```bash
 $ oct export dbml \
-    -i database.json \
-    -o databse.dbml \
-    -g foo,bar
+    --input database.json \
+    --output databse.dbml \
+    --groups foo,bar
 ```

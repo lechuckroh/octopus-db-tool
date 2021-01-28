@@ -17,7 +17,7 @@ Generate `*.graphql` files:
 
 ```bash
 $ oct generate graphql \
-    -i database.json \
-    -o databse.graphql \
-    -p my.graphql
+    --input database.json \
+    --output databse.graphql \
+    --graphqlPackage my.graphql
 ```

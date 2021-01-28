@@ -23,10 +23,10 @@ Generate all:
 
 ```bash
 $ oct generate liquibase \
-    -i database.json \
-    -o ./output \
-    -u _uq \
-    -c
+    --input database.json \
+    --output ./output \
+    --uniqueNameSuffix _uq \
+    --comments
 ```
 
 Generate diff changelog:
@@ -38,9 +38,9 @@ Generate diff changelog:
 
 ```bash
 $ oct generate liquibase \
-    -i v2.json \
-    -o ./output \
-    -d v1.json \
-    -u _uq \
-    -c
+    --input v2.json \
+    --output ./output \
+    --diff v1.json \
+    --uniqueNameSuffix _uq \
+    --comments
 ```

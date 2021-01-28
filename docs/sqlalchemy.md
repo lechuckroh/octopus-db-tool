@@ -24,8 +24,8 @@ To generate all entity classes to a single file, set output path to `*.py`:
 
 ```bash 
 $ oct generate sqlalchemy \
-    -i user.ojson 
-    -o user.py \
+    --input user.json 
+    --output user.py \
     --uniqueNameSuffix=_uq \
     --groups=common \
     --useUTC=true
@@ -35,8 +35,8 @@ To generate entity classes to separate files, set output path to directory:
 
 ```bash 
 $ oct generate sqlalchemy \
-    -i user.ojson 
-    -o output/ \
+    --input user.json 
+    --output output/ \
     --uniqueNameSuffix=_uq \
     --groups=common \
     --useUTC=true

@@ -5,9 +5,17 @@
 ## Import
 
 ```bash
-# show help
 $ oct import staruml --help
+```
 
-# user.uml -> user.ojson
-$ oct import staruml -i user.uml -o user.ojson 
+```
+OPTIONS:
+   --input FILE, -i FILE   import input starUML from FILE [$OCTOPUS_INPUT]
+   --output FILE, -o FILE  write octopus schema to FILE [$OCTOPUS_OUTPUT]
+```
+
+Import `*uml` file:
+
+```bash
+$ oct import staruml --input user.uml --output user.json 
 ```

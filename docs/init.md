@@ -1,9 +1,16 @@
 # Initialize
 
 ```bash
-# show help
 $ oct init --help
+```
 
-# create a new file
-$ oct init -o user.json
+```
+OPTIONS:
+   --output FILE, -o FILE  init octopus schema to FILE (default: db.json) [$OCTOPUS_OUTPUT]
+```
+
+## Create a new file
+
+```bash
+$ oct init --output user.json
 ```
