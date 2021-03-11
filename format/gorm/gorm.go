@@ -191,6 +191,8 @@ func NewGoField(column *octopus.Column) *GoField {
 		} else {
 			fieldType = "byte"
 		}
+	case octopus.ColTypeEnum:
+		fieldType = "string"
 	default:
 		fieldType = "interface{}"
 	}
