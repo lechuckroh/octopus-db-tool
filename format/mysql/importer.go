@@ -149,6 +149,7 @@ func (x *TableX) column(
 			column.NotNull = true
 		case ast.ColumnOptionAutoIncrement:
 			column.AutoIncremental = true
+			column.NotNull = true
 		case ast.ColumnOptionDefaultValue:
 			switch colOption.Expr.(type) {
 			case ast.ValueExpr:
