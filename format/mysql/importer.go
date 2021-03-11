@@ -145,6 +145,7 @@ func (x *TableX) column(
 		switch colOption.Tp {
 		case ast.ColumnOptionPrimaryKey:
 			column.PrimaryKey = true
+			column.NotNull = true
 		case ast.ColumnOptionNotNull:
 			column.NotNull = true
 		case ast.ColumnOptionAutoIncrement:

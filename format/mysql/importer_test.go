@@ -11,7 +11,7 @@ func TestMysqlImporter_Import(t *testing.T) {
 	Convey("import", t, func() {
 		sql := strings.Join([]string{
 			"CREATE TABLE IF NOT EXISTS `Table` (",
-			"id bigint NOT NULL AUTO_INCREMENT,",
+			"id bigint AUTO_INCREMENT,",
 			"`name` varchar(20) NOT NULL DEFAULT 'noname',",
 			"postal_code char(6),",
 			"age tinyint NOT NULL DEFAULT 0,",
