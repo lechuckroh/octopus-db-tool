@@ -5,18 +5,22 @@ import (
 	"github.com/lechuckroh/octopus-db-tools/format/octopus"
 	"github.com/lechuckroh/octopus-db-tools/util"
 	"github.com/urfave/cli/v2"
+	"strings"
 )
 
 const (
 	FlagGroups           = "groups"
 	FlagInput            = "input"
 	FlagOutput           = "output"
+	FlagExcludes         = "excludes"
 	FlagUniqueNameSuffix = "uniqueNameSuffix"
 )
 
 func ImportAction(c *cli.Context) error {
 	importer := Importer{
-		option: &ImportOption{},
+		option: &ImportOption{
+			Excludes: strings.Split(c.String(FlagExcludes), ","),
+		},
 	}
 	schema, err := importer.ImportFile(c.String(FlagInput))
 	if err != nil {
@@ -41,6 +45,12 @@ var ImportCliFlags = []cli.Flag{
 		Usage:    "write octopus schema to `FILE`",
 		EnvVars:  []string{"OCTOPUS_OUTPUT"},
 		Required: true,
+	},
+	&cli.StringFlag{
+		Name:    FlagExcludes,
+		Aliases: []string{"x"},
+		Usage:   "tables to exclude. separated by comma",
+		EnvVars: []string{"OCTOPUS_EXCLUDES"},
 	},
 }
 

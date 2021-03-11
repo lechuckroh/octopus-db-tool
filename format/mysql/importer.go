@@ -14,6 +14,7 @@ import (
 )
 
 type ImportOption struct {
+	Excludes []string
 }
 
 type Importer struct {
@@ -46,7 +47,9 @@ func (c *Importer) ImportSql(sql string) (*octopus.Schema, error) {
 		return nil, err
 	}
 
-	tableX := TableX{}
+	tableX := TableX{
+		ExcludeSet: util.NewStringSet(c.option.Excludes...),
+	}
 	for _, stmtNode := range stmtNodes {
 		stmtNode.Accept(&tableX)
 	}
@@ -58,12 +61,16 @@ func (c *Importer) ImportSql(sql string) (*octopus.Schema, error) {
 
 // TableX is TableExtractor
 type TableX struct {
-	tables []*octopus.Table
+	tables     []*octopus.Table
+	ExcludeSet *util.StringSet
 }
 
 func (x *TableX) Enter(in ast.Node) (ast.Node, bool) {
 	if createTableStmt, ok := in.(*ast.CreateTableStmt); ok {
 		tableName := createTableStmt.Table.Name.String()
+		if x.ExcludeSet.Contains(tableName) {
+			return in, false
+		}
 
 		// constraints
 		pkSet := util.NewStringSet()
