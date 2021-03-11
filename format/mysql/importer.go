@@ -265,25 +265,25 @@ func (x *TableX) columnType(colDef *ast.ColumnDef) (string, uint16, uint16) {
 	case mysql.TypeSet:
 		return octopus.ColTypeSet, 0, 0
 	case mysql.TypeTinyBlob:
-		if strings.ToLower(colDef.Tp.String()) == "tinytext" {
+		if strings.Contains(strings.ToLower(colDef.Tp.String()), "tinytext") {
 			return octopus.ColTypeText8, 0, 0
 		} else {
 			return octopus.ColTypeBlob8, 0, 0
 		}
 	case mysql.TypeMediumBlob:
-		if strings.ToLower(colDef.Tp.String()) == "mediumtext" {
+		if strings.Contains(strings.ToLower(colDef.Tp.String()), "mediumtext") {
 			return octopus.ColTypeText24, 0, 0
 		} else {
 			return octopus.ColTypeBlob24, 0, 0
 		}
 	case mysql.TypeLongBlob:
-		if strings.ToLower(colDef.Tp.String()) == "longtext" {
+		if strings.Contains(strings.ToLower(colDef.Tp.String()), "longtext") {
 			return octopus.ColTypeText32, 0, 0
 		} else {
 			return octopus.ColTypeBlob32, 0, 0
 		}
 	case mysql.TypeBlob:
-		if strings.ToLower(colDef.Tp.String()) == "text" {
+		if strings.Contains(strings.ToLower(colDef.Tp.String()), "text") {
 			return octopus.ColTypeText16, 0, 0
 		} else {
 			return octopus.ColTypeBlob16, 0, 0

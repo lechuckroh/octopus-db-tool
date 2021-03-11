@@ -29,7 +29,7 @@ func TestMysqlImporter_Import(t *testing.T) {
 			//"bin2 varbinary,",
 			"text1 tinytext default null,",
 			"text2 text DEFAULT NULL,",
-			"text3 mediumtext,",
+			"text3 mediumtext CHARACTER SET utf8,",
 			"text4 longtext,",
 			"blob1 tinyblob,",
 			"blob2 blob,",
