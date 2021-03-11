@@ -11,7 +11,8 @@ const (
 	FormatGraphql         = "graphql"
 	FormatJpaKotlin       = "jpa-kotlin"
 	FormatLiquibase       = "liquibase"
-	FormatOctopus         = "octopus"
+	FormatOctopus1        = "octopus1"
+	FormatOctopus2        = "octopus2"
 	FormatOptiStudio      = "opti-studio"
 	FormatPlantuml        = "plantuml"
 	FormatProtobuf        = "protobuf"
@@ -35,10 +36,12 @@ func GetFileFormat(filename string) string {
 		fallthrough
 	case ".graphqls":
 		return FormatGraphql
+	case ".json":
+		return FormatOctopus2
 	case ".mdj":
 		return FormatStaruml2
 	case ".ojson":
-		return FormatOctopus
+		return FormatOctopus1
 	case ".plantuml":
 		return FormatPlantuml
 	case ".schema":

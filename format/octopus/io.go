@@ -7,7 +7,7 @@ import (
 
 func LoadSchema(filename string) (*Schema, error) {
 	inputFormat := common.GetFileFormat(filename)
-	if inputFormat != common.FormatOctopus {
+	if inputFormat != common.FormatOctopus1 && inputFormat != common.FormatOctopus2 {
 		return nil, fmt.Errorf("'%s' is not octopus file", filename)
 	}
 	reader := &Schema{}
