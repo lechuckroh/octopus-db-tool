@@ -6,7 +6,6 @@ import (
 )
 
 const (
-	FlagDiff             = "diff"
 	FlagGroups           = "groups"
 	FlagInput            = "input"
 	FlagOutput           = "output"
@@ -24,7 +23,6 @@ func Action(c *cli.Context) error {
 		schema: schema,
 		option: &Option{
 			TableFilter:      octopus.GetTableFilterFn(c.String(FlagGroups)),
-			DiffTarget:       c.String(FlagDiff),
 			UniqueNameSuffix: c.String(FlagUniqueNameSuffix),
 			UseComments:      c.Bool(FlagUseComments),
 		},
@@ -46,12 +44,6 @@ var CliFlags = []cli.Flag{
 		Usage:    "export liquibase changelogs to `FILE`",
 		EnvVars:  []string{"OCTOPUS_OUTPUT"},
 		Required: true,
-	},
-	&cli.StringFlag{
-		Name:    FlagDiff,
-		Aliases: []string{"d"},
-		Usage:   "",
-		EnvVars: []string{"OCTOPUS_DIFF"},
 	},
 	&cli.StringFlag{
 		Name:    FlagGroups,
