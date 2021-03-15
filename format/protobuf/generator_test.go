@@ -176,9 +176,9 @@ var protobufTplTestSchema = &octopus.Schema{
 func TestProtobufTpl_Generate(t *testing.T) {
 	Convey("Generate", t, func() {
 		option := &Option{
-			Package:      "com.lechuck.foo",
-			GoPackage:    "lechuck/foo",
-			PrefixMapper: common.NewPrefixMapper("common:C"),
+			Package:          "com.lechuck.foo",
+			GoPackage:        "lechuck/foo",
+			PrefixMapper:     common.NewPrefixMapper("common:C"),
 			RelationTagStart: 100,
 		}
 		expected := `syntax = "proto3";

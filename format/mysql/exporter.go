@@ -78,7 +78,7 @@ func (c *Exporter) exportTable(
 		var params []string
 		params = append(params, column.Name)
 		params = append(params, c.ToMysqlColumnType(column))
-		constraints := c.columnConstraints(column)
+		constraints := c.ColumnConstraints(column)
 		if constraints != "" {
 			params = append(params, constraints)
 		}
@@ -204,7 +204,7 @@ func (c *Exporter) ToMysqlColumnType(col *octopus.Column) string {
 	}
 }
 
-func (c *Exporter) columnConstraints(column *octopus.Column) string {
+func (c *Exporter) ColumnConstraints(column *octopus.Column) string {
 	var constraints []string
 
 	if column.NotNull {

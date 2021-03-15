@@ -30,6 +30,34 @@ func loadSchema(fromFilename, toFilename string) (*octopus.Schema, *octopus.Sche
 	return fromSchema, toSchema, nil
 }
 
+func FlywayAction(c *cli.Context) error {
+	fromSchema, toSchema, err := loadSchema(c.String(FlagFrom), c.String(FlagTo))
+	if err != nil {
+		return err
+	}
+
+	// diff
+	option := &Option{
+		TableFilter:      octopus.GetTableFilterFn(c.String(FlagGroups)),
+		DiffFrom:         fromSchema,
+		DiffTo:           toSchema,
+		Author:           c.String(FlagAuthor),
+		UniqueNameSuffix: c.String(FlagUniqueNameSuffix),
+		UseComments:      c.Bool(FlagUseComments),
+	}
+	result, err := getDiff(option)
+	if err != nil {
+		return err
+	}
+
+	buf := new(bytes.Buffer)
+	if err := NewFlywayChangeSetWirter(buf, option).Write(result); err != nil {
+		return err
+	}
+	// write to file
+	return util.WriteStringToFile(c.String(FlagOutput), buf.String())
+}
+
 func LiquibaseAction(c *cli.Context) error {
 	fromSchema, err := octopus.LoadSchema(c.String(FlagFrom))
 	if err != nil {

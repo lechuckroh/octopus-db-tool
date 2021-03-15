@@ -139,6 +139,11 @@ func diffCommand() *cli.Command {
 		Name: "diff",
 		Subcommands: []*cli.Command{
 			{
+				Name:   "flyway",
+				Action: diff.FlywayAction,
+				Flags:  diff.CliFlags,
+			},
+			{
 				Name:   "liquibase",
 				Action: diff.LiquibaseAction,
 				Flags:  diff.CliFlags,
