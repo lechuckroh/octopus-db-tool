@@ -143,6 +143,11 @@ func diffCommand() *cli.Command {
 				Action: diff.LiquibaseAction,
 				Flags:  diff.CliFlags,
 			},
+			{
+				Name:   "md",
+				Action: diff.MarkdownAction,
+				Flags:  diff.CliFlags,
+			},
 		},
 	}
 }

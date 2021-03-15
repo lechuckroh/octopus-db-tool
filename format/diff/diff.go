@@ -24,7 +24,7 @@ type Option struct {
 }
 
 func getDiff(option *Option) (*Result, error) {
-	result := Result{}
+	result := Result{From: option.DiffFrom, To: option.DiffTo}
 
 	uniqueNameSuffix := option.UniqueNameSuffix
 	useComments := option.UseComments

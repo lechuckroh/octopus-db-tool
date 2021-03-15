@@ -41,6 +41,8 @@ func (l *ChangeSetID) version() string {
 }
 
 type Result struct {
+	From       *octopus.Schema
+	To         *octopus.Schema
 	ChangeSets []*ChangeSet
 }
 
