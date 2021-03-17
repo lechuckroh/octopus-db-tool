@@ -15,6 +15,8 @@ import (
 
 type ImportOption struct {
 	Excludes []string
+	Author   string
+	Version  string
 }
 
 type Importer struct {
@@ -55,7 +57,9 @@ func (c *Importer) ImportSql(sql string) (*octopus.Schema, error) {
 	}
 
 	return &octopus.Schema{
-		Tables: tableX.tables,
+		Author:  c.option.Author,
+		Tables:  tableX.tables,
+		Version: c.option.Version,
 	}, nil
 }
 

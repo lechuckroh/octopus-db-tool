@@ -9,6 +9,14 @@ import (
 	"text/template"
 )
 
+const (
+	ExportTemplate = `{{"" -}}
+CREATE TABLE IF NOT EXISTS {{.Name}} (
+{{range .Definitions}}  {{.}}
+{{end}});
+`
+)
+
 type ExportOption struct {
 	TableFilter      octopus.TableFilterFn
 	UniqueNameSuffix string
@@ -24,14 +32,13 @@ type exportTplData struct {
 	Definitions []string
 }
 
+func NewExporter(schema *octopus.Schema, option *ExportOption) *Exporter {
+	return &Exporter{schema: schema, option: option}
+}
+
 func (c *Exporter) Export(wr io.Writer) error {
-	tplText := `{{"" -}}
-CREATE TABLE IF NOT EXISTS {{.Name}} (
-{{range .Definitions}}  {{.}}
-{{end}});
-`
 	funcMap := template.FuncMap{}
-	tpl, err := util.NewTemplate("mysqlDDL", tplText, funcMap)
+	tpl, err := util.NewTemplate("mysqlDDL", ExportTemplate, funcMap)
 	if err != nil {
 		return err
 	}
@@ -48,6 +55,16 @@ CREATE TABLE IF NOT EXISTS {{.Name}} (
 	return nil
 }
 
+func (c *Exporter) ExportTable(wr io.Writer, table *octopus.Table) error {
+	funcMap := template.FuncMap{}
+	tpl, err := util.NewTemplate("mysqlDDL", ExportTemplate, funcMap)
+	if err != nil {
+		return err
+	}
+
+	return c.exportTable(wr, tpl, table)
+}
+
 // exportTable exports octopus table to mysql DDL
 func (c *Exporter) exportTable(
 	wr io.Writer,
@@ -60,8 +77,8 @@ func (c *Exporter) exportTable(
 	for _, column := range table.Columns {
 		var params []string
 		params = append(params, column.Name)
-		params = append(params, c.toMysqlColumnType(column))
-		constraints := c.columnConstraints(column)
+		params = append(params, c.ToMysqlColumnType(column))
+		constraints := c.ColumnConstraints(column)
 		if constraints != "" {
 			params = append(params, constraints)
 		}
@@ -90,7 +107,7 @@ func (c *Exporter) exportTable(
 
 	// append ',' except last
 	for i, definition := range definitions {
-		if i < len(definitions) -1 {
+		if i < len(definitions)-1 {
 			definitions[i] = definition + ","
 		}
 	}
@@ -118,7 +135,7 @@ func (c *Exporter) formatColumnType(colType string, col *octopus.Column) string 
 	return colType
 }
 
-func (c *Exporter) toMysqlColumnType(col *octopus.Column) string {
+func (c *Exporter) ToMysqlColumnType(col *octopus.Column) string {
 	switch col.Type {
 	case octopus.ColTypeBinary:
 		return "binary"
@@ -187,7 +204,7 @@ func (c *Exporter) toMysqlColumnType(col *octopus.Column) string {
 	}
 }
 
-func (c *Exporter) columnConstraints(column *octopus.Column) string {
+func (c *Exporter) ColumnConstraints(column *octopus.Column) string {
 	var constraints []string
 
 	if column.NotNull {

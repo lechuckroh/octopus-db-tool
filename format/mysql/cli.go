@@ -9,17 +9,21 @@ import (
 )
 
 const (
+	FlagAuthor           = "author"
 	FlagGroups           = "groups"
 	FlagInput            = "input"
 	FlagOutput           = "output"
 	FlagExcludes         = "excludes"
 	FlagUniqueNameSuffix = "uniqueNameSuffix"
+	FlagVersion          = "version"
 )
 
 func ImportAction(c *cli.Context) error {
 	importer := Importer{
 		option: &ImportOption{
+			Author:   c.String(FlagAuthor),
 			Excludes: strings.Split(c.String(FlagExcludes), ","),
+			Version:  c.String(FlagVersion),
 		},
 	}
 	schema, err := importer.ImportFile(c.String(FlagInput))
@@ -32,6 +36,12 @@ func ImportAction(c *cli.Context) error {
 }
 
 var ImportCliFlags = []cli.Flag{
+	&cli.StringFlag{
+		Name:    FlagAuthor,
+		Aliases: []string{"a"},
+		Usage:   "import with author",
+		EnvVars: []string{"OCTOPUS_AUTHOR"},
+	},
 	&cli.StringFlag{
 		Name:     FlagInput,
 		Aliases:  []string{"i"},
@@ -51,6 +61,12 @@ var ImportCliFlags = []cli.Flag{
 		Aliases: []string{"x"},
 		Usage:   "tables to exclude. separated by comma",
 		EnvVars: []string{"OCTOPUS_EXCLUDES"},
+	},
+	&cli.StringFlag{
+		Name:    FlagVersion,
+		Aliases: []string{"v"},
+		Usage:   "import with version",
+		EnvVars: []string{"OCTOPUS_VERSION"},
 	},
 }
 

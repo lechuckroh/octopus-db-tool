@@ -35,7 +35,7 @@ func TestMysqlExport_Export(t *testing.T) {
 						NotNull:      true,
 						UniqueKey:    true,
 						DefaultValue: "noname",
-						Description: "group name",
+						Description:  "group name",
 					},
 					{
 						Name:    "company_id",

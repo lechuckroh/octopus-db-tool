@@ -179,3 +179,13 @@ func (c *Column) getValue(value string) (string, bool) {
 	}
 	return value, false
 }
+
+func (c *Column) Format() string {
+	if c.Size == 0 {
+		return c.Type
+	}
+	if c.Scale == 0 {
+		return fmt.Sprintf("%s(%d)", c.Type, c.Size)
+	}
+	return fmt.Sprintf("%s(%d,%d)", c.Type, c.Size, c.Scale)
+}

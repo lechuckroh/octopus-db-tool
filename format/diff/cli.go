@@ -1,8 +1,10 @@
 package diff
 
 import (
+	"bytes"
 	"github.com/lechuckroh/octopus-db-tools/format/liquibase"
 	"github.com/lechuckroh/octopus-db-tools/format/octopus"
+	"github.com/lechuckroh/octopus-db-tools/util"
 	"github.com/urfave/cli/v2"
 )
 
@@ -16,6 +18,46 @@ const (
 	FlagUseComments      = "comments"
 )
 
+func loadSchema(fromFilename, toFilename string) (*octopus.Schema, *octopus.Schema, error) {
+	fromSchema, err := octopus.LoadSchema(fromFilename)
+	if err != nil {
+		return nil, nil, err
+	}
+	toSchema, err := octopus.LoadSchema(toFilename)
+	if err != nil {
+		return nil, nil, err
+	}
+	return fromSchema, toSchema, nil
+}
+
+func FlywayAction(c *cli.Context) error {
+	fromSchema, toSchema, err := loadSchema(c.String(FlagFrom), c.String(FlagTo))
+	if err != nil {
+		return err
+	}
+
+	// diff
+	option := &Option{
+		TableFilter:      octopus.GetTableFilterFn(c.String(FlagGroups)),
+		DiffFrom:         fromSchema,
+		DiffTo:           toSchema,
+		Author:           c.String(FlagAuthor),
+		UniqueNameSuffix: c.String(FlagUniqueNameSuffix),
+		UseComments:      c.Bool(FlagUseComments),
+	}
+	result, err := getDiff(option)
+	if err != nil {
+		return err
+	}
+
+	buf := new(bytes.Buffer)
+	if err := NewFlywayChangeSetWirter(buf, option).Write(result); err != nil {
+		return err
+	}
+	// write to file
+	return util.WriteStringToFile(c.String(FlagOutput), buf.String())
+}
+
 func LiquibaseAction(c *cli.Context) error {
 	fromSchema, err := octopus.LoadSchema(c.String(FlagFrom))
 	if err != nil {
@@ -28,13 +70,41 @@ func LiquibaseAction(c *cli.Context) error {
 
 	return liquibase.NewDiff(
 		&liquibase.DiffOption{
-			Author:  c.String(FlagAuthor),
+			Author:      c.String(FlagAuthor),
 			DiffFrom:    fromSchema,
 			DiffTo:      toSchema,
 			TableFilter: octopus.GetTableFilterFn(c.String(FlagGroups)),
 			UseComments: c.Bool(FlagUseComments),
 		},
 	).Generate(c.String(FlagOutput))
+}
+
+func MarkdownAction(c *cli.Context) error {
+	fromSchema, toSchema, err := loadSchema(c.String(FlagFrom), c.String(FlagTo))
+	if err != nil {
+		return err
+	}
+
+	// diff
+	option := &Option{
+		TableFilter:      octopus.GetTableFilterFn(c.String(FlagGroups)),
+		DiffFrom:         fromSchema,
+		DiffTo:           toSchema,
+		Author:           c.String(FlagAuthor),
+		UniqueNameSuffix: c.String(FlagUniqueNameSuffix),
+		UseComments:      c.Bool(FlagUseComments),
+	}
+	result, err := getDiff(option)
+	if err != nil {
+		return err
+	}
+
+	buf := new(bytes.Buffer)
+	if err := NewMarkdownChangeSetWirter(buf, option).Write(result); err != nil {
+		return err
+	}
+	// write to file
+	return util.WriteStringToFile(c.String(FlagOutput), buf.String())
 }
 
 var CliFlags = []cli.Flag{

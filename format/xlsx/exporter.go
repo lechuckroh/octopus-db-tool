@@ -202,7 +202,7 @@ func fillGroupSheet(
 			// column
 			addCell(row, column.Name, normalStyle)
 			// type
-			addCell(row, formatType(column), normalStyle)
+			addCell(row, column.Format(), normalStyle)
 			// key
 			addCell(row, util.BoolToString(column.PrimaryKey, keyPrimary, util.BoolToString(column.UniqueKey, keyUnique, "")), boolStyle)
 			// nullable
@@ -275,14 +275,4 @@ func getColumnReference(column *octopus.Column) string {
 		return fmt.Sprintf("%s.%s", ref.Table, ref.Column)
 	}
 	return ""
-}
-
-func formatType(column *octopus.Column) string {
-	if column.Size == 0 {
-		return column.Type
-	}
-	if column.Scale == 0 {
-		return fmt.Sprintf("%s(%d)", column.Type, column.Size)
-	}
-	return fmt.Sprintf("%s(%d,%d)", column.Type, column.Size, column.Scale)
 }

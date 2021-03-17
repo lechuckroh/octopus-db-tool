@@ -9,9 +9,11 @@ $ oct import mysql --help
 
 ```
 OPTIONS:
-   --input FILE, -i FILE   import mysql DDL from FILE [$OCTOPUS_INPUT]
-   --output FILE, -o FILE  export octopus schema to FILE [$OCTOPUS_OUTPUT]
-   --excludes value, -x value  tables to exclude. separated by comma [$OCTOPUS_EXCLUDES]  
+   --author value, -a value    import with author [$OCTOPUS_AUTHOR]
+   --input FILE, -i FILE       import mysql DDL from FILE [$OCTOPUS_INPUT]
+   --output FILE, -o FILE      write octopus schema to FILE [$OCTOPUS_OUTPUT]
+   --excludes value, -x value  tables to exclude. separated by comma [$OCTOPUS_EXCLUDES]
+   --version value, -v value   import with version [$OCTOPUS_VERSION]
 ```
 
 ### Import mysql DDL
