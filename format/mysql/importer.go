@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"errors"
 	"fmt"
 	"github.com/lechuckroh/octopus-db-tools/format/octopus"
 	"github.com/lechuckroh/octopus-db-tools/util"
@@ -40,6 +41,10 @@ func (c *Importer) ImportFile(filename string) (*octopus.Schema, error) {
 }
 
 func (c *Importer) ImportSql(sql string) (*octopus.Schema, error) {
+	if c.option == nil {
+		return nil, errors.New("option is nil")
+	}
+
 	p := parser.New()
 
 	charset := ""

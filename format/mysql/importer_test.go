@@ -55,7 +55,7 @@ func TestMysqlImporter_Import(t *testing.T) {
 			") ENGINE=InnoDB DEFAULT CHARSET=utf8;",
 		}, "\n")
 
-		mysql := Importer{}
+		mysql := Importer{option: &ImportOption{}}
 
 		// read sql
 		schema, err := mysql.Import(strings.NewReader(sql))
