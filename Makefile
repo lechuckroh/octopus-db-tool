@@ -11,7 +11,7 @@ GOMOD=$(GOCMD) mod
 ENV_GOMOD_ON=GO111MODULE=on
 ENV_STATIC_BUILD=CGO_ENABLED=0
 GO_VENDOR_OPT=-mod=vendor
-GOBUILD_BUILD_DATE_OPT=-ldflags "-X main.buildDateVersion=`date -u +.b%y%m%d-%H%M%S`"
+GOBUILD_BUILD_DATE_OPT=-ldflags "-s -w -X main.buildDateVersion=`date -u +.b%y%m%d-%H%M%S`"
 GOBUILD_OPT=$(GO_VENDOR_OPT) -v $(GOBUILD_BUILD_DATE_OPT)
 GOTEST_OPT=$(GO_VENDOR_OPT) -v
 

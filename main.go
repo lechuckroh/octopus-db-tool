@@ -169,7 +169,7 @@ func main() {
 			Email: "lechuckroh@gmail.com",
 		},
 	}
-	cliApp.Copyright = "(c) 2019-2020 Lechuck Roh"
+	cliApp.Copyright = "(c) 2019-2021 Lechuck Roh"
 	cliApp.Usage = "octopus-db-tools"
 	cliApp.Commands = []*cli.Command{
 		diffCommand(),
