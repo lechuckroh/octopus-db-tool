@@ -4,7 +4,7 @@ name: default
 
 steps:
   - name: build
-    image: golang:1.14
+    image: golang:1.17
     commands:
       - make vendor
       - make compile
@@ -13,7 +13,7 @@ steps:
         exclude:
           - tag
   - name: package
-    image: golang:1.14
+    image: golang:1.17
     commands:
       - make vendor
       - make package

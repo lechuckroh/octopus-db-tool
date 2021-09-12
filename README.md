@@ -32,7 +32,7 @@ octopus-db-tools provides:
 ## Build
 ### Local Build
 Requirements:
-* Golang 1.12 or higher
+* Golang 1.17 +
 * make
 
 Run:
