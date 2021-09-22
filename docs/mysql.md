@@ -3,7 +3,7 @@
 ## Import
 
 ### Help
-```bash
+```shell
 $ oct import mysql --help
 ```
 
@@ -20,12 +20,12 @@ OPTIONS:
 
 To import mysql DDL file:
 
-```bash 
+```shell 
 $ oct import mysql -i mysql-ddl.sql -o database.json 
 ```
 
 `mysql-ddl.sql` file can be generated with the following command:
-```bash
+```shell
 $ mysqldump -u {user} -p{password} -h {host} --no-data {database} > mysql-ddl.sql
 
 # use this if you get error: Unknown table 'column_statistics' in information_schema (1109)
@@ -36,7 +36,7 @@ $ mysqldump -u {user} -p{password} -h {host} --no-data --column-statistics=0 {da
 ## Export
 
 ### Help
-```bash
+```shell
 $ oct export mysql --help
 ```
 
@@ -54,10 +54,36 @@ To export to mysql DDL file with the following options:
 * export tables in `common` and `admin` groups
 * set unique constraint name suffix: `_uq`
 
-```bash 
+```shell 
 $ oct export mysql \
     --input database.json \
     --output database.sql \
     --groups common,admin \
     --uniqueNameSuffix _uq 
+```
+
+### Example
+
+```shell 
+$ oct export mysql \
+    --input examples/user.json \
+    --output output/user.sql
+```
+
+Exported DDL file:
+
+```sql
+CREATE TABLE IF NOT EXISTS group (
+  id bigint AUTO_INCREMENT,
+  name varchar(40),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `group` (`name`)
+);
+CREATE TABLE IF NOT EXISTS user (
+  id bigint AUTO_INCREMENT,
+  name varchar(40),
+  group_id bigint,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `user` (`name`)
+);
 ```

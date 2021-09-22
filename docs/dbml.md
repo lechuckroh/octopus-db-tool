@@ -1,10 +1,8 @@
 # DBML
 
-**not implemented**
-
 ## Export
 
-```bash
+```shell
 $ oct export dbml --help
 ```
 
@@ -17,9 +15,33 @@ OPTIONS:
 
 Export `*.dbml` file:
 
-```bash
+```shell
+# example with all CLI options
 $ oct export dbml \
     --input database.json \
     --output databse.dbml \
     --groups foo,bar
+```
+
+### Example
+
+```shell
+$ oct export dbml \
+    --input examples/user.json \
+    --output output/user.dbml
+```
+
+Exported dbml file:
+
+```
+Table group {
+  id int64 [pk]
+  name varchar(40) [unique]
+}
+
+Table user {
+  id int64 [pk]
+  name varchar(40) [unique]
+  group_id int64 [ref: > group.id]
+}
 ```

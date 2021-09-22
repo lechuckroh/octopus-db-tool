@@ -7,6 +7,13 @@ octopus-db-tools provides:
 * Import/Export ERD definitions.
 * Generate various file formats.
 
+## Goals
+
+* All-in-one tool to support every possible DB schema formats.
+* DB schema is stored in text format for version control, diff and merge.
+* Octopus-db-tool file format can be used as a single source of truth.
+* Can be used as a part of CI(Continuous Integration), CD(Continuous Deployment) and IaC(Infrastructure as Code).
+
 ## Supported Formats
 
 ### Import
@@ -37,7 +44,7 @@ Requirements:
 * make
 
 Run:
-```bash
+```shell
 $ make vendor
 $ make compile
 
@@ -48,19 +55,25 @@ $ make compile-macos
 ```
 
 ### Docker Build
-```bash
+```shell
 $ make compile-docker; make compile-rmi
 ```
 
+### Downloads
+
+See [Releases](https://github.com/lechuckroh/octopus-db-tool/releases) page.
+
 ## Run
 
-```bash
+```shell
 # show help
 $ ./oct --help
 ```
 
+See the following pages for command line options.
+
 * [initialize](docs/init.md)
-* Formats  
+* Commands by format  
     * [DBML](docs/dbml.md)
     * [Excel](docs/xlsx.md)
     * [GORM](docs/gorm.md)
@@ -73,3 +86,8 @@ $ ./oct --help
     * [Quick DBD](docs/quickdbd.md)
     * [SQLAlchemy](docs/sqlalchemy.md)
     * [StarUML](docs/staruml.md)
+
+
+## Documents
+
+* [octopus file format](docs/octopus-format.md)

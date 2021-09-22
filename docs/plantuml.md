@@ -2,7 +2,7 @@
 
 ## Generate
 
-```bash
+```shell
 $ oct generate plantuml --help
 ```
 
@@ -19,8 +19,37 @@ Generate plantUML file:
 * `*.plantuml`
 * `*.iuml`
 
-```bash
+```shell
+# example with all CLI options
 $ oct generate plantuml \
     --input database.json \
     --output databse.puml
 ```
+
+### Example
+
+```shell
+$ oct generate plantuml \
+    --input examples/user.json \
+    --output output/user.puml
+```
+
+Generated file:
+
+```
+entity group {
+    id: int64 <<PK>>
+    --
+    name: varchar <<UQ>>
+}
+entity user {
+    id: int64 <<PK>>
+    --
+    name: varchar <<UQ>>
+    group_id: int64 <<FK>>
+}
+user }o-|| group
+```
+
+![](plantuml-user.png)
+

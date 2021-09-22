@@ -2,7 +2,7 @@
 
 ## Generate Kotlin
 
-```bash
+```shell
 $ oct generate kt --help
 ```
 
@@ -24,7 +24,8 @@ OPTIONS:
 
 Generate `*.kt` files:
 
-```bash
+```shell
+# example with all CLI options
 $ oct generate kt \
     --input database.json \
     --output ./output \
@@ -38,4 +39,87 @@ $ oct generate kt \
     --reposPackage com.foo.repos \
     --uniqueNameSuffix _uq \
     --useUTC    
+```
+
+### Example
+
+```shell
+$ oct generate kt \
+    --input examples/user.json \
+    --output output/ \
+    --package octopus.entity \
+    --reposPackage octopus.repos \
+    --useUTC
+```
+
+Generated source files:
+
+#### `Group.kt`
+
+```kotlin
+package octopus.entity
+
+import javax.persistence.*
+
+@Entity
+@Table(name="group", uniqueConstraints = [
+    UniqueConstraint(name = "group", columnNames = ["name"])
+])
+data class Group(
+        @Id
+        @GeneratedValue(strategy = GenerationType.AUTO)
+        var id: Long?,
+
+        @Column(length = 40)
+        var name: String?
+)
+```
+
+#### `User.kt`
+
+```kotlin
+package octopus.entity
+
+import javax.persistence.*
+
+@Entity
+@Table(name="user", uniqueConstraints = [
+    UniqueConstraint(name = "user", columnNames = ["name"])
+])
+data class User(
+        @Id
+        @GeneratedValue(strategy = GenerationType.AUTO)
+        var id: Long?,
+
+        @Column(length = 40)
+        var name: String?,
+
+        var groupId: Long?
+)
+```
+
+#### `GroupRepository.kt`
+
+```kotlin
+package octopus.repos
+
+import octopus.entity.*
+import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.stereotype.Repository
+
+@Repository
+interface GroupRepository : JpaRepository<Group, Long?>
+```
+
+#### `UserRepository.kt`
+
+```kotlin
+package octopus.repos
+
+import octopus.entity.*
+import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.stereotype.Repository
+
+@Repository
+interface UserRepository : JpaRepository<User, Long?>
 ```

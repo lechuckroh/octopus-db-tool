@@ -2,7 +2,7 @@
 
 ## Import
 
-```bash
+```shell
 $ oct import xlsx --help
 ```
 
@@ -14,7 +14,7 @@ OPTIONS:
 
 Import `*.xlsx` file:
 
-```bash
+```shell
 $ oct import xlsx \
     --input user.xlsx \
     --output user.json
@@ -22,7 +22,7 @@ $ oct import xlsx \
 
 ## Export
 
-```bash
+```shell
 $ oct export xlsx --help
 ```
 
@@ -35,7 +35,7 @@ OPTIONS:
 
 Export `*.xlsx` file:
 
-```bash
+```shell
 $ oct export xlsx \
     --input user.json \
     --output user.xlsx

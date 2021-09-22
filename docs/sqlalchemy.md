@@ -5,7 +5,7 @@ SQLAlchemy is the Python SQL toolkit and Object Relational Mapper that gives app
 
 ## Generate
 
-```bash
+```shell
 $ oct generate sqlalchemy --help
 ```
 
@@ -22,22 +22,59 @@ OPTIONS:
 
 To generate all entity classes to a single file, set output path to `*.py`:
 
-```bash 
+```shell 
+# example with all CLI options
 $ oct generate sqlalchemy \
-    --input user.json 
+    --input examples/user.json \
     --output user.py \
-    --uniqueNameSuffix=_uq \
-    --groups=common \
-    --useUTC=true
+    --groups common \
+    --removePrefix tbl_,table_ \
+    --uniqueNameSuffix _uq \
+    --useUTC true
 ```
 
 To generate entity classes to separate files, set output path to directory:
 
-```bash 
+```shell 
+# example with all CLI options
 $ oct generate sqlalchemy \
-    --input user.json 
+    --input examples/user.json \
     --output output/ \
-    --uniqueNameSuffix=_uq \
-    --groups=common \
-    --useUTC=true
+    --groups common \
+    --removePrefix tbl_,table_ \
+    --uniqueNameSuffix _uq \
+    --useUTC true
+```
+
+### Example
+
+```shell
+$ oct generate sqlalchemy \
+    --input examples/user.json \
+    --output output/user.py
+```
+
+Generated source file:
+
+```python
+from sqlalchemy import BigInteger, Column, String
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy_repr import RepresentableBase
+
+Base = declarative_base(cls=RepresentableBase)
+
+
+class Group(Base):
+    __tablename__ = 'group'
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    name = Column(String(40), unique=True)
+
+
+class User(Base):
+    __tablename__ = 'user'
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    name = Column(String(40), unique=True)
+    group_id = Column(BigInteger)
 ```

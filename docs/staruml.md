@@ -4,7 +4,7 @@
 
 ## Import
 
-```bash
+```shell
 $ oct import staruml --help
 ```
 
@@ -16,6 +16,6 @@ OPTIONS:
 
 Import `*uml` file:
 
-```bash
+```shell
 $ oct import staruml --input user.uml --output user.json 
 ```

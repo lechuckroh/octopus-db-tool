@@ -2,7 +2,7 @@
 
 ## Import
 
-```bash
+```shell
 $ oct import ojson --help
 ```
 
@@ -14,7 +14,7 @@ OPTIONS:
 
 Import `*.ojson` file:
 
-```bash
+```shell
 $ oct import ojson \
     --input database.ojson \
     --output databse.json

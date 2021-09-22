@@ -2,7 +2,7 @@
 
 ## Export
 
-```bash
+```shell
 $ oct export quickdbd --help
 ```
 
@@ -14,8 +14,32 @@ OPTIONS:
 
 Export to quickdbd file:
 
-```bash
+```shell
+# example with all CLI options
 $ oct export quickdbd \
     --input database.json \
     --output quickdbd.txt
+```
+
+### Example
+
+```shell
+$ oct export quickdbd \
+    --input examples/user.json \
+    --output output/user.txt
+```
+
+Exported file:
+
+```
+group # Group table
+-----
+id int64 PK AUTOINCREMENT NULLABLE
+name varchar UNIQUE NULLABLE
+
+user # User table
+----
+id int64 PK AUTOINCREMENT NULLABLE
+name varchar UNIQUE NULLABLE
+group_id int64 NULLABLE FK >- group.id
 ```

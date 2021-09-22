@@ -2,7 +2,7 @@
 
 ## Generate
 
-```bash
+```shell
 $ oct generate liquibase --help
 ```
 
@@ -20,17 +20,95 @@ Generate all:
 * unique constraint Name : tableName + `_uq`
 * generate comments
 
-```bash
+```shell
 $ oct generate liquibase \
     --input database.json \
-    --output ./output \
+    --output ./output/changelogs.yml \
     --uniqueNameSuffix _uq \
     --comments
 ```
 
+### Example
+
+```shell
+$ oct generate liquibase \
+    --input examples/user.json \
+    --output ./output/changelogs.yml
+```
+
+Generated yaml file:
+
+```yaml
+databaseChangeLog:
+- objectQuotingStrategy: QUOTE_ALL_OBJECTS
+- changeSet:
+    id: 1-1
+    changes:
+    - createTable:
+        tableName: group
+        remarks: Group table
+        columns:
+        - column:
+            name: id
+            type: bigint
+            autoIncrement: true
+            constraints:
+              primaryKey: true
+        - column:
+            name: name
+            type: varchar(40)
+            constraints:
+              unique: true
+- changeSet:
+    id: 1-2
+    preConditions:
+      dbms:
+        type: derby, h2, mssql, mariadb, mysql, postgresql, sqlite
+      onError: CONTINUE
+      onFail: CONTINUE
+    changes:
+    - addUniqueConstraint:
+        tableName: group
+        columnNames: name
+        constraintName: group
+- changeSet:
+    id: 2-1
+    changes:
+    - createTable:
+        tableName: user
+        remarks: User table
+        columns:
+        - column:
+            name: id
+            type: bigint
+            autoIncrement: true
+            constraints:
+              primaryKey: true
+        - column:
+            name: name
+            type: varchar(40)
+            constraints:
+              unique: true
+        - column:
+            name: group_id
+            type: bigint
+- changeSet:
+    id: 2-2
+    preConditions:
+      dbms:
+        type: derby, h2, mssql, mariadb, mysql, postgresql, sqlite
+      onError: CONTINUE
+      onFail: CONTINUE
+    changes:
+    - addUniqueConstraint:
+        tableName: user
+        columnNames: name
+        constraintName: user
+```
+
 ## Diff
 
-```bash
+```shell
 $ oct diff liquibase --help
 ```
 
@@ -54,7 +132,7 @@ Generate diff changelog:
 * diff author: `foo`  
 * generate comments diff
 
-```bash
+```shell
 $ oct diff liquibase \
     --from v1.json \
     --to v2.json \

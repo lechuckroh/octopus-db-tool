@@ -2,7 +2,7 @@
 
 ## Generate
 
-```bash
+```shell
 $ oct generate gorm --help
 ```
 
@@ -20,13 +20,50 @@ OPTIONS:
 
 Generate `*.go` file:
 
-```bash
+```shell
+# example with all CLI options
 $ oct generate gorm \
-    --input database.json \
-    --output databse.go \
+    --input examples/user.json \
+    --output output/databse.go \
     --gormModel model \
     --removePrefix tbl_,table_ \
     --prefix foo:F,bar:B \
     --uniqueNameSuffix _uq \
-    -groups foo,bar
+    --groups foo,bar \
+    --package model
+```
+
+### Example
+
+```shell
+$ oct generate gorm \
+    --input examples/user.json \
+    --output output/user.go \
+    --package model
+```
+
+Generated source file:
+
+```go
+package model
+
+import (
+	"gopkg.in/guregu/null.v4"
+)
+
+type Group struct {
+	ID null.Int `gorm:"primary_key;auto_increment"`
+	Name null.String `gorm:"type:varchar(40);unique"`
+}
+
+func (c *Group) TableName() string { return "group" }
+
+type User struct {
+	ID null.Int `gorm:"primary_key;auto_increment"`
+	Name null.String `gorm:"type:varchar(40);unique"`
+	GroupID null.Int
+	Group Group `gorm:"foreignKey:GroupID;references:ID"`
+}
+
+func (c *User) TableName() string { return "user" }
 ```

@@ -2,7 +2,7 @@
 
 ## Generate
 
-```bash
+```shell
 $ oct generate pb --help
 ```
 
@@ -21,14 +21,44 @@ OPTIONS:
 
 Generate `*.proto` file:
 
-```bash
+```shell
+# example with all CLI options
 $ oct generate pb \
     --input database.json \
-    --output ./output \
+    --output ./output/database.proto \
     --goPackage foo/proto \
     --groups foo,bar \
     --package com.foo \
     --prefix foo:F,bar:B \
     --removePrefix tbl_,table_ \
     --relationTagStart 30
+```
+
+### Example
+
+```shell
+$ oct generate pb \
+    --input examples/user.json \
+    --output output/user.proto \
+    --package octopus
+```
+
+Generated proto file:
+
+```protobuf
+syntax = "proto3";
+
+package octopus;
+
+message Group {
+  int64 id = 1;
+  string name = 2;
+}
+
+message User {
+  int64 id = 1;
+  string name = 2;
+  int64 groupId = 3;
+  Group group = 4;
+}
 ```
