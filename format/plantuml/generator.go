@@ -18,6 +18,8 @@ type Generator struct {
 func (c *Generator) Generate(wr io.Writer) error {
 	var result []string
 	var refs []string
+
+	result = append(result, "@startuml")
 	for _, table := range c.schema.Tables {
 		result = append(result, fmt.Sprintf("entity %s {", table.Name))
 
@@ -39,6 +41,7 @@ func (c *Generator) Generate(wr io.Writer) error {
 	}
 
 	result = append(result, refs...)
+	result = append(result, "@enduml")
 
 	_, err := wr.Write([]byte(strings.Join(result, "\n")))
 	return err

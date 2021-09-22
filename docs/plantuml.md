@@ -36,7 +36,8 @@ $ oct generate plantuml \
 
 Generated file:
 
-```
+```puml
+@startuml
 entity group {
     id: int64 <<PK>>
     --
@@ -49,6 +50,7 @@ entity user {
     group_id: int64 <<FK>>
 }
 user }o-|| group
+@enduml
 ```
 
 ![](plantuml-user.png)

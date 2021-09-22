@@ -26,7 +26,7 @@ func Action(c *cli.Context) error {
 	}
 
 	outputPath := c.String(FlagOutput)
-	extSet := util.NewStringSet("*.wsd", "*.pu", "*.puml", "*.plantuml", "*.iuml")
+	extSet := util.NewStringSet(".wsd", ".pu", ".puml", ".plantuml", ".iuml")
 	var filename string
 	if ext := strings.ToLower(filepath.Ext(outputPath)); extSet.Contains(ext) {
 		filename = outputPath
@@ -58,7 +58,7 @@ var CliFlags = []cli.Flag{
 	&cli.StringFlag{
 		Name:     FlagOutput,
 		Aliases:  []string{"o"},
-		Usage:    "geneate plantUML to `FILE`",
+		Usage:    "geneate plantUML to `FILE` or `DIRECTORY`",
 		EnvVars:  []string{"OCTOPUS_OUTPUT"},
 		Required: true,
 	},
