@@ -55,7 +55,7 @@ package-macos: compile-macos
 
 # Test
 test:
-	@$(ENV_GOMOD_ON) $(GOTEST) $(GOTEST_OPT) -count=1 $(TEST_DIR)
+	echo @$(ENV_GOMOD_ON) $(GOTEST) $(GOTEST_OPT) -count=1 $(TEST_DIR)
 
 # Clean
 clean:

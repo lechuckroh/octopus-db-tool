@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Build
+      - name: Test
         run: |
           go mod vendor
           GO111MODULE=on go test -mod=vendor -v -count=1 ./...
