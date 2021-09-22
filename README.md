@@ -1,7 +1,7 @@
 # octopus-db-tools
 
 ![Release](https://github.com/lechuckroh/octopus-db-tool/actions/workflows/release.yml/badge.svg)
-![Test](https://github.com/lechuckroh/octopus-db-tool/actions/workflows/test.yml/badge.svg?branch=develop)
+![Test](https://github.com/lechuckroh/octopus-db-tool/actions/workflows/test.yml/badge.svg)
 
 octopus-db-tools provides:
 * Import/Export ERD definitions.
