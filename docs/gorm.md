@@ -1,37 +1,24 @@
 # GORM
 
+[한국어](kr/gorm.md)
+
 ## Generate
 
 ```shell
 $ oct generate gorm --help
 ```
 
-```
-OPTIONS:
-   --input FILE, -i FILE               read octopus schema from FILE [$OCTOPUS_INPUT]
-   --output FILE, -o FILE              generate GORM source file(s) to FILE/`DIR` [$OCTOPUS_OUTPUT]
-   --gormModel value, -m value         set embedded base model for GORM model [$OCTOPUS_GORM_MODEL]
-   --groups value, -g value            filter table groups to generate. set multiple values with comma separated. [$OCTOPUS_GROUPS]
-   --package value, -k value           set package name [$OCTOPUS_PACKAGE]
-   --prefix value, -p value            set model struct name prefix [$OCTOPUS_PREFIX]
-   --removePrefix value, -r value      set prefixes to remove from model struct name. set multiple values with comma separated. [$OCTOPUS_REMOVE_PREFIX]
-   --uniqueNameSuffix value, -u value  set unique constraint name suffix [$OCTOPUS_UNIQUE_NAME_SUFFIX]
-```
-
-Generate `*.go` file:
-
-```shell
-# example with all CLI options
-$ oct generate gorm \
-    --input examples/user.json \
-    --output output/databse.go \
-    --gormModel model \
-    --removePrefix tbl_,table_ \
-    --prefix foo:F,bar:B \
-    --uniqueNameSuffix _uq \
-    --groups foo,bar \
-    --package model
-```
+|            Option            |         Env. Variable         | Description                                                                                                                       |
+| :--------------------------: | :---------------------------: | :-------------------------------------------------------------------------------------------------------------------------------- |
+|       `-i`, `--input`        |        `OCTOPUS_INPUT`        | Octopus schema file to read                                                                                                       |
+|       `-o`, `--output`       |       `OCTOPUS_OUTPUT`        | Target file or directory                                                                                                          |
+| `-a`, `--pointerAssociation` | `OCTOPUS_POINTER_ASSOCIATION` | Use pointer type on associated field if flag is set                                                                               |
+|     `-m`, `--gormModel`      |     `OCTOPUS_GORM_MODEL`      | Embedded base model for GORM model                                                                                                |
+|       `-g`, `--groups`       |       `OCTOPUS_GROUPS`        | Table groups to generate.<br />Set multiple groups with comma(`,`) separated.                                                     |
+|      `-k`, `--package`       |       `OCTOPUS_PACKAGE`       | Source package name                                                                                                               |
+|       `-p`, `--prefix`       |       `OCTOPUS_PREFIX`        | Model struct name prefix.<br />Format: `<group1>:<prefix1>[,<group2>:<prefix2>]...`<br />Example: `group1:prefix1,group2:prefix2` |
+|    `-r`, `--removePrefix`    |    `OCTOPUS_REMOVE_PREFIX`    | Prefixes to remove from model struct name.<br />Set multiple prefixes with comma(`,`) separated.                                  |
+|  `-u`, `--uniqueNameSuffix`  | `OCTOPUS_UNIQUE_NAME_SUFFIX`  | Unique constraint name suffix                                                                                                     |
 
 ### Example
 
@@ -42,7 +29,7 @@ $ oct generate gorm \
     --package model
 ```
 
-Generated source file:
+Generated `*.go` file:
 
 ```go
 package model
@@ -51,18 +38,18 @@ import (
 	"gopkg.in/guregu/null.v4"
 )
 
-type Group struct {
-	ID null.Int `gorm:"primary_key;auto_increment"`
-	Name null.String `gorm:"type:varchar(40);unique"`
+type UserGroup struct {
+	ID int64 `gorm:"primary_key;auto_increment"`
+	Name string `gorm:"type:varchar(40);unique;not null"`
 }
 
-func (c *Group) TableName() string { return "group" }
+func (c *UserGroup) TableName() string { return "group" }
 
 type User struct {
-	ID null.Int `gorm:"primary_key;auto_increment"`
-	Name null.String `gorm:"type:varchar(40);unique"`
+	ID int64 `gorm:"primary_key;auto_increment"`
+	Name string `gorm:"type:varchar(40);unique;not null"`
 	GroupID null.Int
-	Group Group `gorm:"foreignKey:GroupID;references:ID"`
+	UserGroup UserGroup `gorm:"foreignKey:GroupID;references:ID"`
 }
 
 func (c *User) TableName() string { return "user" }

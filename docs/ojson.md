@@ -1,16 +1,21 @@
 # ojson (octopus-db-tools v1)
 
+[한국어](kr/ojson.md)
+
 ## Import
+
+Import octopus v1 schema file.
 
 ```shell
 $ oct import ojson --help
 ```
 
-```
-OPTIONS:
-   --input FILE, -i FILE   import octopus v1 schema from FILE [$OCTOPUS_INPUT]
-   --output FILE, -o FILE  write octopus schema to FILE [$OCTOPUS_OUTPUT]
-```
+|      Option      |  Env. Variable   | Description                      |
+| :--------------: | :--------------: | :------------------------------- |
+| `-i`, `--input`  | `OCTOPUS_INPUT`  | Octopus v1 schema file to import |
+| `-o`, `--output` | `OCTOPUS_OUTPUT` | Target octopus schema file       |
+
+### Example
 
 Import `*.ojson` file:
 

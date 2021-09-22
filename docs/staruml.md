@@ -1,21 +1,26 @@
 # Star UML
 
+[한국어](kr/staruml.md)
+
 * StarUML [Homepage](https://staruml.io/)
 
 ## Import
 
 ```shell
-$ oct import staruml --help
+$ oct import ojson --help
 ```
 
-```
-OPTIONS:
-   --input FILE, -i FILE   import input starUML from FILE [$OCTOPUS_INPUT]
-   --output FILE, -o FILE  write octopus schema to FILE [$OCTOPUS_OUTPUT]
-```
+|      Option      |  Env. Variable   | Description                      |
+| :--------------: | :--------------: | :------------------------------- |
+| `-i`, `--input`  | `OCTOPUS_INPUT`  | StarUML file to import |
+| `-o`, `--output` | `OCTOPUS_OUTPUT` | Target octopus schema file       |
 
-Import `*uml` file:
+### Example
+
+Import starUML file:
 
 ```shell
-$ oct import staruml --input user.uml --output user.json 
+$ oct import staruml \
+    --input user.uml \
+    --output user.json 
 ```

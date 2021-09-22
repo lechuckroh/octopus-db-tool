@@ -1,7 +1,10 @@
 # SqlAlchemy
 
+[한국어](kr/sqlalchemy.md)
+
 SQLAlchemy is the Python SQL toolkit and Object Relational Mapper that gives application developers the full power and flexibility of SQL.
-* [Homepage](https://www.sqlalchemy.org/)
+
+- [Homepage](https://www.sqlalchemy.org/)
 
 ## Generate
 
@@ -9,42 +12,15 @@ SQLAlchemy is the Python SQL toolkit and Object Relational Mapper that gives app
 $ oct generate sqlalchemy --help
 ```
 
-```
-OPTIONS:
-   --input FILE, -i FILE               load input octopus schema from FILE [$OCTOPUS_INPUT]
-   --output PATH, -o PATH              generate python files to PATH [$OCTOPUS_OUTPUT]
-   --groups value, -g value            filter table groups to generate. set multiple values with comma separated. [$OCTOPUS_GROUPS]
-   --prefix value, -p value            set entity class name prefix [$OCTOPUS_PREFIX]
-   --removePrefix value, -r value      set prefixes to remove from entity class name. set multiple values with comma separated. [$OCTOPUS_REMOVE_PREFIX]
-   --uniqueNameSuffix value, -u value  set unique constraint name suffix [$OCTOPUS_UNIQUE_NAME_SUFFIX]
-   --useUTC value, -t value            use UTC for audit column default value [$OCTOPUS_USE_UTC]
-```
-
-To generate all entity classes to a single file, set output path to `*.py`:
-
-```shell 
-# example with all CLI options
-$ oct generate sqlalchemy \
-    --input examples/user.json \
-    --output user.py \
-    --groups common \
-    --removePrefix tbl_,table_ \
-    --uniqueNameSuffix _uq \
-    --useUTC true
-```
-
-To generate entity classes to separate files, set output path to directory:
-
-```shell 
-# example with all CLI options
-$ oct generate sqlalchemy \
-    --input examples/user.json \
-    --output output/ \
-    --groups common \
-    --removePrefix tbl_,table_ \
-    --uniqueNameSuffix _uq \
-    --useUTC true
-```
+|           Option           |        Env. Variable         | Description                                                                               |
+| :------------------------: | :--------------------------: | :---------------------------------------------------------------------------------------- |
+|      `-i`, `--input`       |       `OCTOPUS_INPUT`        | Octopus schema file to read                                                               |
+|      `-o`, `--output`      |       `OCTOPUS_OUTPUT`       | Output filename/directory. Set `*.py` to generate in a single file.                       |
+|      `-g`, `--groups`      |       `OCTOPUS_GROUPS`       | Table groups to generate.<br />Set multiple groups with comma(`,`) separated.             |
+|      `-p`, `--prefix`      |       `OCTOPUS_PREFIX`       | Entity class name prefix.<br />Format: `{group1}:{prefix1}[,{group2}:{prefix2}]...`       |
+|   `-r`, `--removePrefix`   |   `OCTOPUS_REMOVE_PREFIX`    | Prefixes to remove from class name.<br />Set multiple prefixes with comma(`,`) separated. |
+| `-u`, `--uniqueNameSuffix` | `OCTOPUS_UNIQUE_NAME_SUFFIX` | Unique constraint name suffix                                                             |
+|      `-t`, `--useUTC`      |      `OCTOPUS_USE_UTC`       | Set flag to use UTC for audit columns (`created_at`, `updated_at`).<br />Default: `false` |
 
 ### Example
 
@@ -54,7 +30,7 @@ $ oct generate sqlalchemy \
     --output output/user.py
 ```
 
-Generated source file:
+Generated `*.py` file:
 
 ```python
 from sqlalchemy import BigInteger, Column, String
@@ -64,17 +40,17 @@ from sqlalchemy_repr import RepresentableBase
 Base = declarative_base(cls=RepresentableBase)
 
 
-class Group(Base):
+class UserGroup(Base):
     __tablename__ = 'group'
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    name = Column(String(40), unique=True)
+    name = Column(String(40), unique=True, nullable=False)
 
 
 class User(Base):
     __tablename__ = 'user'
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    name = Column(String(40), unique=True)
+    name = Column(String(40), unique=True, nullable=False)
     group_id = Column(BigInteger)
 ```

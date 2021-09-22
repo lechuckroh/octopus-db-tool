@@ -1,56 +1,47 @@
 # GraphQL
 
+[한국어](kr/graphql.md)
+
 ## Generate
 
 ```shell
 $ oct generate graphql --help
 ```
 
-```
-OPTIONS:
-   --input FILE, -i FILE             read octopus schema from FILE [$OCTOPUS_INPUT]
-   --output DIR, -o DIR              generate graphql filess to DIR [$OCTOPUS_OUTPUT]
-   --graphqlPackage value, -p value  set target graphql package name [$OCTOPUS_GRAPHQL_PACKAGE]
-```
-
-Generate `*.graphql` files:
-
-```shell
-# example with all CLI options
-$ oct generate graphql \
-    --input database.json \
-    --output databse.graphql \
-    --graphqlPackage my.graphql
-```
+|          Option          |       Env. Variable       | Description                 |
+| :----------------------: | :-----------------------: | :-------------------------- |
+|     `-i`, `--input`      |      `OCTOPUS_INPUT`      | Octopus schema file to read |
+|     `-o`, `--output`     |     `OCTOPUS_OUTPUT`      | Target directory            |
+| `-p`, `--graphqlPackage` | `OCTOPUS_GRAPHQL_PACKAGE` | Target graphql package name |
 
 ### Example
 
 ```shell
 $ oct generate graphql \
     --input examples/user.json \
-    --output output/graphql/
+    --output output/graphql
 ```
 
-Generated graphql file:
+Generated `*.graphql` file:
 
 ```graphql
 schema {
-    query: Query
+  query: Query
 }
 
 type Query {
-  groups: [Group]
+  userGroups: [UserGroup]
   users: [User]
 }
 
-type Group {
+type UserGroup {
   id: ID!
-  name: String
+  name: String!
 }
 
 type User {
   id: ID!
-  name: String
+  name: String!
   groupId: Int
 }
 ```

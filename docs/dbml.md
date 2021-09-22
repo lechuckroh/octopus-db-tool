@@ -1,27 +1,18 @@
 # DBML
 
+[한국어](kr/dbml.md)
+
 ## Export
 
 ```shell
 $ oct export dbml --help
 ```
 
-```
-OPTIONS:
-   --input FILE, -i FILE     read octopus schema from FILE [$OCTOPUS_INPUT]
-   --output FILE, -o FILE    export DBML to FILE [$OCTOPUS_OUTPUT]
-   --groups value, -g value  filter table groups to generate. set multiple values with comma separated. [$OCTOPUS_GROUPS]
-```
-
-Export `*.dbml` file:
-
-```shell
-# example with all CLI options
-$ oct export dbml \
-    --input database.json \
-    --output databse.dbml \
-    --groups foo,bar
-```
+|      Option      |  Env. Variable   | Description                                                                 |
+| :--------------: | :--------------: | :-------------------------------------------------------------------------- |
+| `-i`, `--input`  | `OCTOPUS_INPUT`  | Octopus schema file to read                                                 |
+| `-o`, `--output` | `OCTOPUS_OUTPUT` | DBML file to write                                                          |
+| `-g`, `--groups` | `OCTOPUS_GROUPS` | Table groups to export.<br />Set multiple groups with comma(`,`) separated. |
 
 ### Example
 
@@ -35,13 +26,13 @@ Exported dbml file:
 
 ```
 Table group {
-  id int64 [pk]
-  name varchar(40) [unique]
+  id int64 [pk, not null, note: "unique id"]
+  name varchar(40) [unique, not null, note: "group name"]
 }
 
 Table user {
-  id int64 [pk]
-  name varchar(40) [unique]
-  group_id int64 [ref: > group.id]
+  id int64 [pk, not null, note: "unique id"]
+  name varchar(40) [unique, not null, note: "user login name"]
+  group_id int64 [ref: > group.id, note: "group ID"]
 }
 ```

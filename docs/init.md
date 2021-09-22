@@ -1,13 +1,14 @@
 # Initialize
 
+[한국어](kr/init.md)
+
 ```shell
 $ oct init --help
 ```
 
-```
-OPTIONS:
-   --output FILE, -o FILE  init octopus schema to FILE (default: db.json) [$OCTOPUS_OUTPUT]
-```
+|      Option      |  Env. Variable   | Description                                           |
+| :--------------: | :--------------: | :---------------------------------------------------- |
+| `-o`, `--output` | `OCTOPUS_OUTPUT` | Octopus schema file to create.<br/>Default: `db.json` |
 
 ## Create a new file
 
@@ -15,7 +16,7 @@ OPTIONS:
 $ oct init --output user.json
 ```
 
-Generated file:
+Generated `*.json` file:
 
 ```json
 {

@@ -1,13 +1,13 @@
 # Octopus file format
 
+[한국어](kr/octopus-format.md)
+
 |   Name    |        Type         | Description       |
 | :-------: | :-----------------: | ----------------- |
 | `author`  |      `string`       | DB schema author  |
 |  `name`   |      `string`       | DB schema name    |
 | `version` |      `string`       | DB schema version |
 | `tables`  | [Table](#table)`[]` | DB table list     |
-
-
 
 ## Table
 
@@ -22,29 +22,25 @@ Database Table definition.
 | `className` |       `string`        | Class name to generate. For ORM code generation |
 |  `indices`  |  [Index](#index)`[]`  | Index definition list                           |
 
-
-
 ## Column
 
 Database Column definition.
 
-|    Name    |            Type             | Description                                                  | Default |
-| :--------: | :-------------------------: | :----------------------------------------------------------- | :-----: |
-|   `name`   |          `string`           | column name                                                  |         |
-|   `type`   |          `string`           | column type. See [DataTypes](#datatypes).                    |         |
-|   `desc`   |          `string`           | column description                                           |         |
-|   `size`   |            `int`            | column size                                                  |         |
-|  `scale`   |            `int`            | column scale                                                 |         |
-| `notnull`  |          `boolean`          | not null column                                              | `false` |
-|    `pk`    |          `boolean`          | primary key column                                           | `false` |
-|  `unique`  |          `boolean`          | unique key column                                            | `false` |
-| `autoinc`  |          `boolean`          | Auto incremental                                             | `false` |
-| `default`  |    `string` / `function`    | default value or function                                    |         |
-| `onupdate` |    `string` / `function`    | function or value for `ON UPDATE` (mysql)                    |         |
-|  `values`  |         `string[]`          | Permitted values.<br />Equivalent to  `enum` and  `set` types in mysql |         |
-|   `ref`    | [Reference](#reference)`[]` | column reference (relation)                                  |         |
-
-
+|    Name    |            Type             | Description                                                          | Default |
+| :--------: | :-------------------------: | :------------------------------------------------------------------- | :-----: |
+|   `name`   |          `string`           | column name                                                          |         |
+|   `type`   |          `string`           | column type. See [DataTypes](#datatypes).                            |         |
+|   `desc`   |          `string`           | column description                                                   |         |
+|   `size`   |            `int`            | column size                                                          |         |
+|  `scale`   |            `int`            | column scale                                                         |         |
+| `notnull`  |          `boolean`          | not null column                                                      | `false` |
+|    `pk`    |          `boolean`          | primary key column                                                   | `false` |
+|  `unique`  |          `boolean`          | unique key column                                                    | `false` |
+| `autoinc`  |          `boolean`          | Auto incremental                                                     | `false` |
+| `default`  |    `string` / `function`    | default value or function                                            |         |
+| `onupdate` |    `string` / `function`    | function or value for `ON UPDATE` (mysql)                            |         |
+|  `values`  |         `string[]`          | Permitted values.<br />Equivalent to `enum` and `set` types in mysql |         |
+|   `ref`    | [Reference](#reference)`[]` | column reference (relation)                                          |         |
 
 ### `function` type
 
@@ -58,7 +54,7 @@ CREATE TABLE t1 (
 );
 ```
 
- `ts` column can be defined as:
+`ts` column can be defined as:
 
 ```json
 {
@@ -69,58 +65,50 @@ CREATE TABLE t1 (
 }
 ```
 
-
-
 ## Reference
 
 Related columns like foreign key:
 
-|      Name       |   Type   | Description                                                  |
-| :-------------: | :------: | :----------------------------------------------------------- |
-|     `table`     | `string` | target table name                                            |
-|    `column`     | `string` | target column name                                           |
+|      Name       |   Type   | Description                                                                               |
+| :-------------: | :------: | :---------------------------------------------------------------------------------------- |
+|     `table`     | `string` | target table name                                                                         |
+|    `column`     | `string` | target column name                                                                        |
 | -`relationship` | `string` | <ul><li>`1:1`: one to one</li><li>`1:n`: one to many</li><li>`n:1`: many to one</li></ul> |
-
-
 
 ## Index
 
 Database Index definition.
 
-|      Name      |   Type   | Description                                                  |
-| :------------: | :------: | :----------------------------------------------------------- |
-|    `name`    | `string` | Index name                                   |
-|    `columns`    | `string[]` | Index column name list                |
-
-
+|   Name    |    Type    | Description            |
+| :-------: | :--------: | :--------------------- |
+|  `name`   |  `string`  | Index name             |
+| `columns` | `string[]` | Index column name list |
 
 ## DataTypes
 
 Octopus data type:
 
-|     Name     | Description                                                  | MySQL mapping |
-| :----------: | ------------------------------------------------------------ | :-----------: |
-|   `string`   | String                                                       |   `varchar`   |
-|  `tinyint`   | 1 byte integer                                               |   `tinyint`   |
-|  `smallint`  | 2 bytes integer                                              |  `smallint`   |
-| `mediumint`  | 3 bytes integer                                              |  `mediumint`  |
-|    `int`     | 4 bytes integer                                              |     `int`     |
-|  `integer`   | 4 bytes integer                                              |     `int`     |
-|   `bigint`   | 8 bytes integer                                              |   `bigint`    |
-|    `long`    | 8 bytes integer                                              |   `bigint`    |
-|  `numeric`   | Decimal data type<br />`size`: maximum number of digits<br />`scale`: number of digits to the right of the decimal point. |   `decimal`   |
+|     Name     | Description                                                                                                                      | MySQL mapping |
+| :----------: | -------------------------------------------------------------------------------------------------------------------------------- | :-----------: |
+|   `string`   | String                                                                                                                           |   `varchar`   |
+|  `tinyint`   | 1 byte integer                                                                                                                   |   `tinyint`   |
+|  `smallint`  | 2 bytes integer                                                                                                                  |  `smallint`   |
+| `mediumint`  | 3 bytes integer                                                                                                                  |  `mediumint`  |
+|    `int`     | 4 bytes integer                                                                                                                  |     `int`     |
+|  `integer`   | 4 bytes integer                                                                                                                  |     `int`     |
+|   `bigint`   | 8 bytes integer                                                                                                                  |   `bigint`    |
+|    `long`    | 8 bytes integer                                                                                                                  |   `bigint`    |
+|  `numeric`   | Decimal data type<br />`size`: maximum number of digits<br />`scale`: number of digits to the right of the decimal point.        |   `decimal`   |
 |    `real`    | Floating point data type<br />`size`: maximum number of digits<br />`scale`: number of digits to the right of the decimal point. |   `double`    |
-| `timestamp`  | DateTime                                                     |  `datetime`   |
-|  `tinyblob`  | 1 byte binary large object                                   |  `tinyblob`   |
-|    `blob`    | 2 bytes binary large object                                  |    `blob`     |
-| `mediumblob` | 3 bytes binary large object                                  | `mediumblob`  |
-|  `longblob`  | 4 bytes binary large object                                  |  `longblob`   |
-|  `tinytext`  | 1 byte text                                                  |  `tinytext`   |
-|    `text`    | 2 bytes text                                                 |    `text`     |
-| `mediumtext` | 3 bytes text                                                 | `mediumtext`  |
-|  `longtext`  | 4 bytes text                                                 |  `longtext`   |
-
-
+| `timestamp`  | DateTime                                                                                                                         |  `datetime`   |
+|  `tinyblob`  | 2<sup>8</sup> bytes binary large object                                                                                          |  `tinyblob`   |
+|    `blob`    | 2<sup>16</sup> bytes binary large object                                                                                         |    `blob`     |
+| `mediumblob` | 2<sup>24</sup> bytes binary large object                                                                                         | `mediumblob`  |
+|  `longblob`  | 2<sup>32</sup> bytes binary large object                                                                                         |  `longblob`   |
+|  `tinytext`  | 2<sup>8</sup> bytes text                                                                                                         |  `tinytext`   |
+|    `text`    | 2<sup>16</sup> bytes text                                                                                                        |    `text`     |
+| `mediumtext` | 2<sup>24</sup> bytes text                                                                                                        | `mediumtext`  |
+|  `longtext`  | 2<sup>32</sup> bytes text                                                                                                        |  `longtext`   |
 
 ## Example
 
@@ -179,13 +167,10 @@ Octopus data type:
       "indices": [
         {
           "name": "group_id_index",
-          "columns": [
-            "group_id"
-          ]
+          "columns": ["group_id"]
         }
       ]
     }
   ]
 }
 ```
-

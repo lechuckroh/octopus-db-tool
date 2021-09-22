@@ -1,21 +1,19 @@
 # xlsx
 
-[한국어](kr/xlsx.md)
+[English](../xlsx.md)
 
-## Import
+## 임포트
 
 ```shell
 $ oct import xlsx --help
 ```
 
-|      Option      |  Env. Variable   | Description                |
+|       옵션       |     환경변수     | 설명                       |
 | :--------------: | :--------------: | :------------------------- |
-| `-i`, `--input`  | `OCTOPUS_INPUT`  | Excel file to import       |
-| `-o`, `--output` | `OCTOPUS_OUTPUT` | Target octopus schema file |
+| `-i`, `--input`  | `OCTOPUS_INPUT`  | 임포트할 엑셀 파일명       |
+| `-o`, `--output` | `OCTOPUS_OUTPUT` | 저장할 octopus 스키마 파일 |
 
-### Example
-
-Import `*.xlsx` file:
+### 예제
 
 ```shell
 $ oct import xlsx \
@@ -23,19 +21,19 @@ $ oct import xlsx \
     --output user.json
 ```
 
-## Export
+## 내보내기
 
 ```shell
 $ oct export xlsx --help
 ```
 
-|      Option       |       Env. Variable       | Description                                                              |
-| :---------------: | :-----------------------: | :----------------------------------------------------------------------- |
-|  `-i`, `--input`  |      `OCTOPUS_INPUT`      | Input octopus schema file                                                |
-| `-o`, `--output`  |     `OCTOPUS_OUTPUT`      | Output excel file                                                        |
-| `--useNullColumn` | `OCTOPUS_USE_NULL_COLUMN` | Flag to use nullable column. Use `not null` if `false`. Default: `false` |
+|       옵션        |         환경변수          | 설명                                                                            |
+| :---------------: | :-----------------------: | :------------------------------------------------------------------------------ |
+|  `-i`, `--input`  |      `OCTOPUS_INPUT`      | 입력으로 사용할 octopus 스키마 파일명                                           |
+| `-o`, `--output`  |     `OCTOPUS_OUTPUT`      | 출력할 엑셀 파일                                                                |
+| `--useNullColumn` | `OCTOPUS_USE_NULL_COLUMN` | nullable 컬럼 사용 플래그. `false`인 경우 `not null` 컬럼 사용. 기본값: `false` |
 
-### Example
+### 예제
 
 ```shell
 $ oct export xlsx \
@@ -43,7 +41,7 @@ $ oct export xlsx \
     --output output/user.xlsx
 ```
 
-Generated `*.xlsx` file:
+`*.xlsx` 파일은 다음과 같이 생성됩니다:
 
 | table/ref. |  column  |    type     | key | not null |   attributes    |   description   |
 | :--------: | :------: | :---------: | :-: | :------: | :-------------: | :-------------: |
@@ -56,45 +54,45 @@ Generated `*.xlsx` file:
 |            |   name   | varchar(40) |  U  |    O     |                 | user login name |
 | >group.id  | group_id |    int64    |     |          |                 |    group ID     |
 
-## Excel Sheets
+## 엑셀 시트
 
-### `Meta` Sheet
+### `Meta` 시트
 
-`Meta` sheet contains meta data of the schema.
+`Meta` 시트는 스키마 메타 데이터를 저장합니다.
 
-|    key    |        value         |
-| :-------: | :------------------: |
-| `author`  | Author of the schema |
-|  `name`   |     schema name      |
-| `version` |    schema version    |
+|    키     |      값       |
+| :-------: | :-----------: |
+| `author`  | 스키마 작성자 |
+|  `name`   |  스키마 이름  |
+| `version` |  스키마 버전  |
 
-### Group Sheet
+### 그룹 시트
 
-Each sheet name represents table group name. `Common` is used if not set.
+테이블 그룹 이름별로 시트가 생성됩니다. 그룹 미지정시 `Common` 시트가 생성됩니다.
 
-## Excel Table format
+## 엑셀 테이블 형식
 
-### `table/ref.` column
+### `table/ref.` 컬럼
 
-- 1st row: table name
-- after rows: set column reference(s) for columns.
-  - pattern: `{relationship}{table}.{column}`
-  - relationship
-    - `>`: many to one
-    - `<`: one to many
-    - `-`: one to one
-- specify index name if `key` column value is `I`.
-  - same index names will be combined into a single index.
+- 첫번째 행: 테이블 명
+- 이후 행: 컬럼 연관관계 설정.
+  - 패턴: `{연관관계}{테이블}.{컬럼}`
+  - 연관관계
+    - `>`: 다대일 관계 (N:1)
+    - `<`: 일대다 관계 (1:N)
+    - `-`: 일대일 관계 (1:1)
+- `key` 컬럼이 `I`인 경우 인덱스명으로 사용.
+  - 동일한 인덱스명이 설정된 컬럼이 여러개 있는 경우, 해당 컬럼들이 하나의 인덱스를 구성합니다.
 
-### `column` column
+### `column` 컬럼
 
-Set column name.
+컬럼명
 
-### `type` column
+### `type` 컬럼
 
-The 1st row of the table block should be `table` type.
+첫번째 행은 반드시 `table` 타입이어야 합니다.
 
-Possible types:
+사용 가능한 타입 목록:
 
 - `binary`
 - `bit`
@@ -128,46 +126,46 @@ Possible types:
 - `varchar`
 - `year`
 
-To specify column size:
+컬럼 크기는 다음과 같이 설정할 수 있습니다:
 
-- `varchar(40)` can hold up to `40` characters.
+- `varchar(40)`
 - `decimal(5,2)`
-  - `5`: precision
-  - `2`: scale
+  - `5`: 전체 자릿수
+  - `2`: 소수점 이하 자릿수
 
-### `key` column
+### `key` 컬럼
 
-The value can be either:
+키와 관련된 제약을 설정합니다:
 
-- `P`: primary key column
-- `U`: unique constraint column
-- `I`: part of index column
+- `P`: 기본 키 (Primary Key)
+- `U`: 유니크 키 (Unique Key)
+- `I`: 인덱스 (Index)
 
-### `not null` / `nullable` column
+### `not null` / `nullable` 컬럼
 
-- Use `O` to set true.
-- The column header should be either:
-  - `not null`: checked column cannot be null.
-  - `nullable`: checked column is nullable.
+- 사용여부는 `O` 를 입력합니다.
+- 컬럼 헤더는 다음 중 하나를 사용합니다.
+  - `not null`: 체크된 컬럼은 not null로 설정
+  - `nullable`: 체크된 컬럼은 nullable로 설정
 
-### `attributes` column
+### `attributes` 컬럼
 
-Enumerate attributes separated by comma(`,`).
+여러개의 속성은 `,`로 구분해 나열합니다.
 
-- `autoinc`: Auto Incremental column
-- `default={value}`: Set default value
-  - Use `fn::` prefix to use function.
-  - The function should have no parameter.
-  - Use function only without `()`.
-  - `default=fn::CURRENT_TIMESTAMP` will be converted to `DEFAULT CURRENT_TIMESTAMP()` (in case of mysql).
-- `class={value}`: set class name to generate.
-  - This attribute is valid only if `type`=`table`.
+- `autoinc`: Auto Incremental 컬럼
+- `default={value}`: 컬럼의 기본값 설정
+  - 함수를 사용하려면 함수명 앞에 `fn::` 접두사를 사용합니다.
+  - 함수는 파라미터를 가질 수 없습니다.
+  - 함수 지정시 `()` 없이 함수명만 설정합니다.
+  - `default=fn::CURRENT_TIMESTAMP` 는 mysql 의 경우 `DEFAULT CURRENT_TIMESTAMP()` 로 변환됩니다.
+- `class={value}`: 소스 생성시 사용할 클래스명을 지정합니다.
+  - 이 속성은 `type` 컬럼의 값이 `table`인 경우에만 유효합니다.
 
-### `description` column
+### `description` 컬럼
 
-Set column description.
+컬럼 설명
 
-## Example
+## 예제
 
 | table/ref. |   column   |    type     | key | not null |                          attributes                          | description |
 | :--------: | :--------: | :---------: | :-: | :------: | :----------------------------------------------------------: | :---------: |
@@ -184,7 +182,7 @@ Set column description.
 |  user_idx  |    name    |             |  I  |          |                                                              |             |
 |  user_idx  |  group_id  |             |  I  |          |                                                              |             |
 
-The above definition is equivalent to the following mysql DDL:
+위와 같이 엑셀 시트를 정의한 경우, mysql DDL 은 다음과 같이 생성됩니다:
 
 ```sql
 CREATE TABLE IF NOT EXISTS group (

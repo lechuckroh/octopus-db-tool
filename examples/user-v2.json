@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0",
+  "version": "2.0.0",
   "tables": [
     {
       "className": "UserGroup",
@@ -18,7 +18,7 @@
           "type": "string",
           "desc": "group name",
           "notnull": true,
-          "size": 40,
+          "size": 80,
           "unique": true
         }
       ],
@@ -42,6 +42,12 @@
           "notnull": true,
           "size": 40,
           "unique": true
+        },
+        {
+          "name": "email",
+          "type": "string",
+          "desc": "user email",
+          "size": 255
         },
         {
           "name": "group_id",

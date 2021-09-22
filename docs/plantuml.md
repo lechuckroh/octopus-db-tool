@@ -1,30 +1,26 @@
 # plantuml
 
+[한국어](kr/plantuml.md)
+
 ## Generate
 
 ```shell
 $ oct generate plantuml --help
 ```
 
-```
-OPTIONS:
-   --input FILE, -i FILE   read octopus schema from FILE [$OCTOPUS_INPUT]
-   --output FILE, -o FILE  geneate plantUML to FILE [$OCTOPUS_OUTPUT]
-```
+|      Option      |  Env. Variable   | Description                    |
+| :--------------: | :--------------: | :----------------------------- |
+| `-i`, `--input`  | `OCTOPUS_INPUT`  | Octopus schema file            |
+| `-o`, `--output` | `OCTOPUS_OUTPUT` | Output plantUML file/directory |
 
-Generate plantUML file:
-* `*.wsd`
-* `*.pu`
-* `*.puml`
-* `*.plantuml`
-* `*.iuml`
+The following filename extensions are supported.
+Other output filename will be treated as directory name and default filename is `output.plantuml`.
 
-```shell
-# example with all CLI options
-$ oct generate plantuml \
-    --input database.json \
-    --output databse.puml
-```
+- `*.wsd`
+- `*.pu`
+- `*.puml`
+- `*.plantuml`
+- `*.iuml`
 
 ### Example
 
@@ -34,9 +30,9 @@ $ oct generate plantuml \
     --output output/user.puml
 ```
 
-Generated file:
+Generated `*.puml` file:
 
-```puml
+```
 @startuml
 entity group {
     id: int64 <<PK>>
@@ -53,5 +49,4 @@ user }o-|| group
 @enduml
 ```
 
-![](plantuml-user.png)
-
+![](images/plantuml-user.png)

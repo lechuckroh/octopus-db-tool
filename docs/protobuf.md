@@ -1,38 +1,24 @@
 # ProtoBuf
 
+[한국어](kr/protobuf.md)
+
 ## Generate
 
 ```shell
 $ oct generate pb --help
 ```
 
-```
-OPTIONS:
-   --input FILE, -i FILE               read octopus schema from FILE [$OCTOPUS_INPUT]
-   --output FILE, -o FILE              generate protobuf definition to FILE [$OCTOPUS_OUTPUT]
-   --goPackage value                   set go package name [$OCTOPUS_GO_PACKAGE]
-   --groups value, -g value            filter table groups to generate. set multiple values with comma separated. [$OCTOPUS_GROUPS]
-   --package value, -p value           set package name [$OCTOPUS_PACKAGE]
-   --prefix value, -f value            set proto message name prefix [$OCTOPUS_PREFIX]
-   --removePrefix value, -d value      set prefixes to remove from message name. set multiple values with comma separated. [$OCTOPUS_REMOVE_PREFIX]
-   --relationTagDecr relationTagStart  set relation tags decremental from relationTagStart (default: false) [$OCTOPUS_RELATION_TAG_DECR]
-   --relationTagStart value, -s value  set relation tags start index. set -1 to start from last of fields. [$OCTOPUS_RELATION_TAG_START]
-```
-
-Generate `*.proto` file:
-
-```shell
-# example with all CLI options
-$ oct generate pb \
-    --input database.json \
-    --output ./output/database.proto \
-    --goPackage foo/proto \
-    --groups foo,bar \
-    --package com.foo \
-    --prefix foo:F,bar:B \
-    --removePrefix tbl_,table_ \
-    --relationTagStart 30
-```
+|         Option         |        Env. Variable         | Description                                                                                                                        |
+| :--------------------: | :--------------------------: | :--------------------------------------------------------------------------------------------------------------------------------- |
+|    `-i`, `--input`     |       `OCTOPUS_INPUT`        | Octopus schema file to read                                                                                                        |
+|    `-o`, `--output`    |       `OCTOPUS_OUTPUT`       | Target file                                                                                                                        |
+|     `--goPackage`      |     `OCTOPUS_GO_PACKAGE`     | Protobuf golang package name                                                                                                       |
+|    `-g`, `--groups`    |       `OCTOPUS_GROUPS`       | Table groups to generate.<br />Set multiple groups with comma(`,`) separated.                                                      |
+|   `-p`, `--package`    |      `OCTOPUS_PACKAGE`       | Protobuf package name                                                                                                              |
+|    `-f`, `--prefix`    |       `OCTOPUS_PREFIX`       | Proto message name prefix.<br />Format: `<group1>:<prefix1>[,<group2>:<prefix2>]...`<br />Example: `group1:prefix1,group2:prefix2` |
+| `-d`, `--removePrefix` |   `OCTOPUS_REMOVE_PREFIX`    | Prefixes to remove from proto message name.<br />Set multiple prefixes with comma(`,`) separated.                                  |
+|  `--relationTagDecr`   | `OCTOPUS_RELATION_TAG_DECR`  | Relation tags decremental from relationTagStart. Default: `false`                                                                  |
+|  `--relationTagStart`  | `OCTOPUS_RELATION_TAG_START` | Relation tags start index. Set `-1` to start from last of fields.                                                                  |
 
 ### Example
 
@@ -40,15 +26,18 @@ $ oct generate pb \
 $ oct generate pb \
     --input examples/user.json \
     --output output/user.proto \
+    --goPackage model \
     --package octopus
 ```
 
-Generated proto file:
+Generated `*.proto` file:
 
 ```protobuf
 syntax = "proto3";
 
 package octopus;
+
+option go_package = "model";
 
 message Group {
   int64 id = 1;

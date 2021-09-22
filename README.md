@@ -3,16 +3,18 @@
 ![Release](https://github.com/lechuckroh/octopus-db-tool/actions/workflows/release.yml/badge.svg)
 ![Test](https://github.com/lechuckroh/octopus-db-tool/actions/workflows/test.yml/badge.svg)
 
+[한국어](README_kr.md)
+
 octopus-db-tools provides:
-* Import/Export ERD definitions.
+* Import/Export various ERD definitions.
 * Generate various file formats.
 
 ## Goals
 
 * All-in-one tool to support every possible DB schema formats.
 * DB schema is stored in text format for version control, diff and merge.
-* Octopus-db-tool file format can be used as a single source of truth.
-* Can be used as a part of CI(Continuous Integration), CD(Continuous Deployment) and IaC(Infrastructure as Code).
+* Octopus-db-tool file format can be used as a SSOT(Single Source Of Truth).
+* Single binary executable CLI which can be used as a part of CI(Continuous Integration), CD(Continuous Deployment) and IaC(Infrastructure as Code).
 
 ## Supported Formats
 

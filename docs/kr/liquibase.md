@@ -1,22 +1,22 @@
 # Liquibase
 
-[한국어](kr/liquibase.md)
+[English](../liquibase.md)
 
-## Generate
+## ChangeLog 생성
 
 ```shell
 $ oct generate liquibase --help
 ```
 
-|           Option           |        Env. Variable         | Description                                                                   |
-| :------------------------: | :--------------------------: | :---------------------------------------------------------------------------- |
-|      `-i`, `--input`       |       `OCTOPUS_INPUT`        | Octopus schema file to read                                                   |
-|      `-o`, `--output`      |       `OCTOPUS_OUTPUT`       | Target file or directory                                                      |
-|      `-g`, `--groups`      |       `OCTOPUS_GROUPS`       | Table groups to generate.<br />Set multiple groups with comma(`,`) separated. |
-| `-u`, `--uniqueNameSuffix` | `OCTOPUS_UNIQUE_NAME_SUFFIX` | Unique constraint name suffix                                                 |
-|     `-c`, `--comments`     |      `OCTOPUS_COMMENTS`      | Set flag to generate column comments. Default: `false`                        |
+|            옵션            |           환경변수           | 설명                                                              |
+| :------------------------: | :--------------------------: | :---------------------------------------------------------------- |
+|      `-i`, `--input`       |       `OCTOPUS_INPUT`        | 입력으로 사용할 octopus 스키마 파일명                             |
+|      `-o`, `--output`      |       `OCTOPUS_OUTPUT`       | 생성할 파일명                                                     |
+|      `-g`, `--groups`      |       `OCTOPUS_GROUPS`       | 생성할 대상 테이블 그룹명.<br />여러개의 그룹을 지정시 `,`로 구분 |
+| `-u`, `--uniqueNameSuffix` | `OCTOPUS_UNIQUE_NAME_SUFFIX` | 유니크 제약 이름 접미사                                           |
+|     `-c`, `--comments`     |      `OCTOPUS_COMMENTS`      | 테이블/컬럼 설명을 같이 생성할지 여부. 기본값: `false`            |
 
-### Example
+### 예제
 
 ```shell
 $ oct generate liquibase \
@@ -25,7 +25,7 @@ $ oct generate liquibase \
     --comments
 ```
 
-Generated yaml file:
+`*.yaml` 파일은 다음과 같이 생성됩니다:
 
 ```yaml
 databaseChangeLog:
@@ -102,25 +102,25 @@ databaseChangeLog:
             constraintName: user
 ```
 
-## Diff
+## Diff ChangeLog 생성
 
-Generate diff changelogs comparing 2 schema files.
+2개의 스키마를 비교해서 변경된 diff changelog 파일을 생성합니다.
 
 ```shell
 $ oct diff liquibase --help
 ```
 
-|           Option           |        Env. Variable         | Description                                                                  |
-| :------------------------: | :--------------------------: | :--------------------------------------------------------------------------- |
-|      `-a`, `--author`      |       `OCTOPUS_AUTHOR`       | Diff author                                                                  |
-|       `-f`, `--from`       |        `OCTOPUS_FROM`        | Octopus schema to compare 'from'                                             |
-|      `-g`, `--groups`      |       `OCTOPUS_GROUPS`       | Table groups to compare.<br />Set multiple groups with comma(`,`) separated. |
-|      `-o`, `--output`      |       `OCTOPUS_OUTPUT`       | Diff output file                                                             |
-|        `-t`, `--to`        |         `OCTOPUS_TO`         | Octopus schema to compare 'to'                                               |
-| `-u`, `--uniqueNameSuffix` | `OCTOPUS_UNIQUE_NAME_SUFFIX` | Unique constraint name suffix                                                |
-|     `-c`, `--comments`     |      `OCTOPUS_COMMENTS`      | Set flag to generate column comments. Default: `false`                       |
+|            옵션            |           환경변수           | 설명                                                              |
+| :------------------------: | :--------------------------: | :---------------------------------------------------------------- |
+|      `-a`, `--author`      |       `OCTOPUS_AUTHOR`       | Diff 작성자                                                       |
+|       `-f`, `--from`       |        `OCTOPUS_FROM`        | 비교할 변경 전 스키마 파일명                                      |
+|      `-g`, `--groups`      |       `OCTOPUS_GROUPS`       | 생성할 대상 테이블 그룹명.<br />여러개의 그룹을 지정시 `,`로 구분 |
+|      `-o`, `--output`      |       `OCTOPUS_OUTPUT`       | 생성할 diff changelog 파일명                                      |
+|        `-t`, `--to`        |         `OCTOPUS_TO`         | 비교할 변경 후 스키마 파일명                                      |
+| `-u`, `--uniqueNameSuffix` | `OCTOPUS_UNIQUE_NAME_SUFFIX` | 유니크 제약 이름 접미사                                           |
+|     `-c`, `--comments`     |      `OCTOPUS_COMMENTS`      | 테이블/컬럼 설명을 같이 생성할지 여부. 기본값: `false`            |
 
-### Example
+### 예제
 
 ```shell
 $ oct diff liquibase \
@@ -132,7 +132,7 @@ $ oct diff liquibase \
     --comments
 ```
 
-Generated yaml file:
+`*.yaml` 파일은 다음과 같이 생성됩니다:
 
 ```yaml
 databaseChangeLog:

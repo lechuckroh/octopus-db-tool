@@ -1,70 +1,49 @@
 # MySQL
 
+[한국어](kr/mysql.md)
+
 ## Import
 
-### Help
 ```shell
 $ oct import mysql --help
 ```
 
-```
-OPTIONS:
-   --author value, -a value    import with author [$OCTOPUS_AUTHOR]
-   --input FILE, -i FILE       import mysql DDL from FILE [$OCTOPUS_INPUT]
-   --output FILE, -o FILE      write octopus schema to FILE [$OCTOPUS_OUTPUT]
-   --excludes value, -x value  tables to exclude. separated by comma [$OCTOPUS_EXCLUDES]
-   --version value, -v value   import with version [$OCTOPUS_VERSION]
-```
+|       Option       |   Env. Variable    | Description                                |
+| :----------------: | :----------------: | :----------------------------------------- |
+|  `-a`, `--author`  |  `OCTOPUS_AUTHOR`  | Import with author                         |
+|  `-i`, `--input`   |  `OCTOPUS_INPUT`   | Input mysql DDL file                       |
+|  `-o`, `--output`  |  `OCTOPUS_OUTPUT`  | Output octopus output file                 |
+| `-x`, `--excludes` | `OCTOPUS_EXCLUDES` | Tables to exclude. Separated by comma(`,`) |
+| `-v`, `--version`  | `OCTOPUS_VERSION`  | Import with version                        |
 
-### Import mysql DDL
+### Example
 
-To import mysql DDL file:
+Import existing mysql DB:
 
-```shell 
-$ oct import mysql -i mysql-ddl.sql -o database.json 
-```
-
-`mysql-ddl.sql` file can be generated with the following command:
 ```shell
 $ mysqldump -u {user} -p{password} -h {host} --no-data {database} > mysql-ddl.sql
+$ oct import mysql --input mysql-ddl.sql --output database.json
 
 # use this if you get error: Unknown table 'column_statistics' in information_schema (1109)
 $ mysqldump -u {user} -p{password} -h {host} --no-data --column-statistics=0 {database} > mysql-ddl.sql
 ```
 
-
 ## Export
 
-### Help
 ```shell
 $ oct export mysql --help
 ```
 
-```
-OPTIONS:
-   --input FILE, -i FILE               load input octopus schema from FILE [$OCTOPUS_INPUT]
-   --output FILE, -o FILE              export mysql DDL to FILE [$OCTOPUS_OUTPUT]
-   --groups value, -g value            filter table groups to generate. set multiple values with comma separated. [$OCTOPUS_GROUPS]
-   --uniqueNameSuffix value, -u value  set unique constraint name suffix [$OCTOPUS_UNIQUE_NAME_SUFFIX]
-```
-
-### Export mysql DDL
-
-To export to mysql DDL file with the following options:
-* export tables in `common` and `admin` groups
-* set unique constraint name suffix: `_uq`
-
-```shell 
-$ oct export mysql \
-    --input database.json \
-    --output database.sql \
-    --groups common,admin \
-    --uniqueNameSuffix _uq 
-```
+|           Option           |        Env. Variable         | Description                                                                   |
+| :------------------------: | :--------------------------: | :---------------------------------------------------------------------------- |
+|      `-i`, `--input`       |       `OCTOPUS_INPUT`        | Input octopus schema file                                                     |
+|      `-o`, `--output`      |       `OCTOPUS_OUTPUT`       | Output mysql DDL file                                                         |
+|      `-g`, `--groups`      |       `OCTOPUS_GROUPS`       | Table groups to generate.<br />Set multiple groups with comma(`,`) separated. |
+| `-u`, `--uniqueNameSuffix` | `OCTOPUS_UNIQUE_NAME_SUFFIX` | Unique constraint name suffix                                                 |
 
 ### Example
 
-```shell 
+```shell
 $ oct export mysql \
     --input examples/user.json \
     --output output/user.sql
@@ -74,15 +53,15 @@ Exported DDL file:
 
 ```sql
 CREATE TABLE IF NOT EXISTS group (
-  id bigint AUTO_INCREMENT,
-  name varchar(40),
+  id bigint NOT NULL AUTO_INCREMENT COMMENT 'unique id',
+  name varchar(40) NOT NULL COMMENT 'group name',
   PRIMARY KEY (`id`),
   UNIQUE KEY `group` (`name`)
 );
 CREATE TABLE IF NOT EXISTS user (
-  id bigint AUTO_INCREMENT,
-  name varchar(40),
-  group_id bigint,
+  id bigint NOT NULL AUTO_INCREMENT COMMENT 'unique id',
+  name varchar(40) NOT NULL COMMENT 'user login name',
+  group_id bigint COMMENT 'group ID',
   PRIMARY KEY (`id`),
   UNIQUE KEY `user` (`name`)
 );
