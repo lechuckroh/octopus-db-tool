@@ -1,0 +1,17 @@
+on:
+  push:
+    branches:
+      - "develop"
+    tags:
+      - "!*"
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build
+        run: |
+          go mod vendor
+          GO111MODULE=on go test -mod=vendor -v -count=1 ./...
