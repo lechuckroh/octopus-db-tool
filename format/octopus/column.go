@@ -23,7 +23,7 @@ type Reference struct {
 type Column struct {
 	Name            string     `json:"name"`
 	Type            string     `json:"type"`
-	Description     string     `json:"description,omitempty"`
+	Description     string     `json:"desc,omitempty"`
 	Size            uint16     `json:"size,omitempty"`
 	Scale           uint16     `json:"scale,omitempty"`
 	NotNull         bool       `json:"notnull,omitempty"`
