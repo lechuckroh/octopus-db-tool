@@ -75,20 +75,20 @@ $ ./oct --help
 
 각각의 파일 형식별 페이지에서 커맨드라인 옵션을 확인할 수 있습니다:
 
-* [파일 초기화](docs/init.md)
+* [파일 초기화](docs/kr/init.md)
 * 파일 형식별 커맨드
-    * [DBML](docs/dbml.md)
-    * [엑셀](docs/xlsx.md)
-    * [GORM](docs/gorm.md)
-    * [GraphQL](docs/graphql.md)  
-    * [JPA](docs/jpa.md)  
-    * [Liquibase](docs/liquibase.md)  
-    * [MySQL](docs/mysql.md)
-    * [octopus-db-tools v1](docs/ojson.md)
-    * [ProtoBuf](docs/protobuf.md)
-    * [Quick DBD](docs/quickdbd.md)
-    * [SQLAlchemy](docs/sqlalchemy.md)
-    * [StarUML](docs/staruml.md)
+    * [DBML](docs/kr/dbml.md)
+    * [엑셀](docs/kr/xlsx.md)
+    * [GORM](docs/kr/gorm.md)
+    * [GraphQL](docs/kr/graphql.md)  
+    * [JPA](docs/kr/jpa.md)  
+    * [Liquibase](docs/kr/liquibase.md)  
+    * [MySQL](docs/kr/mysql.md)
+    * [octopus-db-tools v1](docs/kr/ojson.md)
+    * [ProtoBuf](docs/kr/protobuf.md)
+    * [Quick DBD](docs/kr/quickdbd.md)
+    * [SQLAlchemy](docs/kr/sqlalchemy.md)
+    * [StarUML](docs/kr/staruml.md)
 
 
 ## 문서
