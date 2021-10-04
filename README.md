@@ -74,7 +74,7 @@ $ make compile-docker; make compile-rmi
 
 ```shell
 # show help
-$ ./oct --help
+$ oct --help
 ```
 
 See the following pages for command line options.

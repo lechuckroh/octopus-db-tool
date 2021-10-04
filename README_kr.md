@@ -75,7 +75,7 @@ $ make compile-docker; make compile-rmi
 
 ```shell
 # 도움말 표시
-$ ./oct --help
+$ oct --help
 ```
 
 각각의 파일 형식별 페이지에서 커맨드라인 옵션을 확인할 수 있습니다:
