@@ -9,7 +9,7 @@ jobs:
   build:
     strategy:
       matrix:
-        arch: [amd64]
+        arch: [amd64, arm64]
         os: [linux, darwin, windows]
     runs-on: ubuntu-20.04
     steps:

@@ -26,12 +26,16 @@ BUILD_COMPOSE_FILE=build-compose.yml
 compile:
 	@$(ENV_STATIC_BUILD) $(ENV_GOMOD_ON) $(GOBUILD) $(GOBUILD_OPT) -o $(BINARY)
 
-compile-windows:
+compile-windows-amd64:
 	@$(ENV_STATIC_BUILD) GOOS=windows GOARCH=amd64 $(ENV_GOMOD_ON) $(GOBUILD) $(GOBUILD_OPT) -o $(BINARY_WINDOWS)
-compile-linux:
+compile-linux-amd64:
 	@$(ENV_STATIC_BUILD) GOOS=linux GOARCH=amd64 $(ENV_GOMOD_ON) $(GOBUILD) $(GOBUILD_OPT) -o $(BINARY_LINUX)
-compile-macos:
+compile-linux-arm64:
+	@$(ENV_STATIC_BUILD) GOOS=linux GOARCH=arm64 $(ENV_GOMOD_ON) $(GOBUILD) $(GOBUILD_OPT) -o $(BINARY_LINUX)
+compile-darwin-amd64:
 	@$(ENV_STATIC_BUILD) GOOS=darwin GOARCH=amd64 $(ENV_GOMOD_ON) $(GOBUILD) $(GOBUILD_OPT) -o $(BINARY_MACOS)
+compile-darwin-arm64:
+	@$(ENV_STATIC_BUILD) GOOS=darwin GOARCH=arm64 $(ENV_GOMOD_ON) $(GOBUILD) $(GOBUILD_OPT) -o $(BINARY_MACOS)
 
 compile-docker:
 	@USER_NAME=`id -un` GROUP_NAME=`id -gn` docker-compose -f $(BUILD_COMPOSE_FILE) run --rm compile
@@ -39,19 +43,18 @@ compile-docker:
 compile-rmi:
 	@USER_NAME=`id -un` GROUP_NAME=`id -gn` docker-compose -f $(BUILD_COMPOSE_FILE) down --rmi local || true
 
-package: package-macos package-linux package-windows
+package: package-darwin-amd64 package-darwin-arm64 package-linux-amd64 package-linux-arm64 package-windows-amd64
 
-package-windows: compile-windows
-#	upx -9 $(BINARY_WINDOWS)
-#	zip -m oct-win64.zip $(BINARY_WINDOWS)
-	gzip $(BINARY_WINDOWS) && mv $(BINARY_WINDOWS).gz oct-win64.gz
-package-linux: compile-linux
-#	upx -9 $(BINARY_LINUX)
-#	zip -m oct-linux64.zip $(BINARY_LINUX)
-	gzip $(BINARY_LINUX) && mv $(BINARY_LINUX).gz oct-linux64.gz
-package-macos: compile-macos
-#	zip -m oct-darwin64.zip $(BINARY_MACOS)
-	gzip $(BINARY_MACOS) && mv $(BINARY_MACOS).gz oct-darwin64.gz
+package-windows-amd64: compile-windows-amd64
+	gzip $(BINARY_WINDOWS) && mv $(BINARY_WINDOWS).gz oct-windows-amd64.gz
+package-linux-amd64: compile-linux-amd64
+	gzip $(BINARY_LINUX) && mv $(BINARY_LINUX).gz oct-linux-amd64.gz
+package-linux-arm64: compile-linux-arm64
+	gzip $(BINARY_LINUX) && mv $(BINARY_LINUX).gz oct-linux-arm64.gz
+package-darwin-amd64: compile-darwin-amd64
+	gzip $(BINARY_MACOS) && mv $(BINARY_MACOS).gz oct-darwin-amd64.gz
+package-darwin-arm64: compile-darwin-arm64
+	gzip $(BINARY_MACOS) && mv $(BINARY_MACOS).gz oct-darwin-arm64.gz
 
 # Test
 test:
