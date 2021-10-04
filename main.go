@@ -23,7 +23,7 @@ import (
 	"time"
 )
 
-const VERSION = "2.0.0-beta3"
+const VERSION = "2.0.0"
 
 var buildDateVersion string
 

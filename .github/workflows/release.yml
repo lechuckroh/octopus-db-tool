@@ -6,11 +6,11 @@ on:
       - "v*"
 
 jobs:
-  build:
+  build-nix:
     strategy:
       matrix:
         arch: [amd64, arm64]
-        os: [linux, darwin, windows]
+        os: [linux, darwin]
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
@@ -18,13 +18,9 @@ jobs:
       - name: Set version
         run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
 
-      - name: Set non-windows environments
+      - name: Set environments
         if: ${{ matrix.os != 'windows' }}
         run: echo "BINARY=oct" >> $GITHUB_ENV
-
-      - name: Set windows environments
-        if: ${{ matrix.os == 'windows' }}
-        run: echo "BINARY=oct.exe" >> $GITHUB_ENV
 
       - name: Build ${{ matrix.os }}-${{ matrix.arch }}
         run: |
