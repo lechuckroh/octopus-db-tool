@@ -39,6 +39,15 @@ octopus-db-tools provides:
 * [Quick DBD](https://www.quickdatabasediagrams.com/)
 * SQLAlchemy (`*.py`)
 
+## Install
+
+```shell
+$ brew tap lechuckroh/tap
+$ brew install octopus-db-tool
+```
+
+To download binaries: see [Releases](https://github.com/lechuckroh/octopus-db-tool/releases) page.
+
 ## Build
 ### Local Build
 Requirements:
@@ -60,10 +69,6 @@ $ make compile-macos
 ```shell
 $ make compile-docker; make compile-rmi
 ```
-
-### Downloads
-
-See [Releases](https://github.com/lechuckroh/octopus-db-tool/releases) page.
 
 ## Run
 

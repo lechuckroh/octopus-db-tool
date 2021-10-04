@@ -39,6 +39,15 @@ octopus-db-tools 기능:
 * [Quick DBD](https://www.quickdatabasediagrams.com/)
 * SQLAlchemy (`*.py`)
 
+## 설치
+
+```shell
+$ brew tap lechuckroh/tap
+$ brew install octopus-db-tool
+```
+
+혹은 [Releases](https://github.com/lechuckroh/octopus-db-tool/releases) 페이지에서 실행파일 다운로드할 수 있습니다.
+
 ## 빌드
 
 ### 로컬 빌드
@@ -61,10 +70,6 @@ $ make compile-macos
 ```shell
 $ make compile-docker; make compile-rmi
 ```
-
-### 다운로드
-
-[Releases](https://github.com/lechuckroh/octopus-db-tool/releases) 페이지에서 실행파일 다운로드할 수 있습니다.
 
 ## 실행방법
 
