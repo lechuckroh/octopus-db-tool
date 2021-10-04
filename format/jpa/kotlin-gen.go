@@ -32,7 +32,6 @@ type KtGenerator struct {
 	option  *KtOption
 }
 
-// TODO: remove this
 func NewKtGenerator(
 	schema *octopus.Schema,
 	option *KtOption,
@@ -291,20 +290,29 @@ func (c *KtGenerator) getClassNameByTableName(tableName string) string {
 }
 
 func (c *KtGenerator) Generate(outputPath string) error {
+	if err := c.generateEntities(outputPath); err != nil {
+		return err
+	}
+
+	if c.option.ReposPackage != "" {
+		if err := c.generateRepositories(outputPath); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (c *KtGenerator) generateEntities(outputPath string) error {
 	outputPackage := c.option.Package
-	reposPackage := c.option.ReposPackage
 
 	entityDir, err := util.MkdirPackage(outputPath, outputPackage)
 	if err != nil {
 		return err
 	}
-	reposDir, err := util.MkdirPackage(outputPath, reposPackage)
-	if err != nil {
-		return err
-	}
-
 	classes := c.classes
 
+	// generate entity
 	for _, class := range classes {
 		// write entity class
 		buf := new(bytes.Buffer)
@@ -315,9 +323,25 @@ func (c *KtGenerator) Generate(outputPath string) error {
 		if err := util.WriteStringToFile(filename, buf.String()); err != nil {
 			return err
 		}
+	}
 
-		// write repository
-		buf = new(bytes.Buffer)
+	return nil
+}
+
+
+func (c *KtGenerator) generateRepositories(outputPath string) error {
+	outputPackage := c.option.Package
+	reposPackage := c.option.ReposPackage
+
+	classes := c.classes
+
+	reposDir, err := util.MkdirPackage(outputPath, reposPackage)
+	if err != nil {
+		return err
+	}
+
+	for _, class := range classes {
+		buf := new(bytes.Buffer)
 		if err := c.generateRepository(buf, class, outputPackage, reposPackage); err != nil {
 			return err
 		}
