@@ -6,11 +6,20 @@ on:
       - "v*"
 
 jobs:
-  build-nix:
+  build:
     strategy:
       matrix:
-        arch: [amd64, arm64]
-        os: [linux, darwin]
+        include:
+          - arch: amd64
+            os: linux
+          - arch: arm64
+            os: linux
+          - arch: amd64
+            os: darwin
+          - arch: arm64
+            os: darwin
+          - arch: amd64
+            os: windows
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
@@ -23,15 +32,23 @@ jobs:
       - name: Set version
         run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
 
-      - name: Set environments
+      - name: Set non-windows environments
         if: ${{ matrix.os != 'windows' }}
         run: echo "BINARY=oct" >> $GITHUB_ENV
+
+      - name: Set windows environments
+        if: ${{ matrix.os == 'windows' }}
+        run: echo "BINARY=oct.exe" >> $GITHUB_ENV
+
+      - name: Set common environments
+        run: echo "TARGET_BASENAME=oct-${{ matrix.os }}-${{ matrix.arch }}-${{ env.RELEASE_VERSION }}" >> $GITHUB_ENV
 
       - name: Build ${{ matrix.os }}-${{ matrix.arch }}
         run: |
           go mod vendor
           go build -ldflags "-s -w -X main.buildDateVersion=`date -u +.b%y%m%d-%H%M%S`" -v -o ${{ env.BINARY }}
-          zip oct-${{ matrix.os }}-${{ matrix.arch }}-${{ env.RELEASE_VERSION }}.zip ${{ env.BINARY }}
+          zip ${{ env.TARGET_BASENAME }}.zip ${{ env.BINARY }}
+          sha256sum ${{ env.TARGET_BASENAME }}.zip >> ${{ env.TARGET_BASENAME }}.sha256.txt
         env:
           GOOS: ${{ matrix.os }}
           GOARCH: ${{ matrix.arch }}
@@ -40,7 +57,8 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: oct-${{ matrix.os }}-${{ matrix.arch }}-${{ env.RELEASE_VERSION }}.zip
+          file: ${{ env.TARGET_BASENAME }}.*
+          file_glob: true
           tag: ${{ github.ref }}
           overwrite: true
           body: octopus-db-tools release ${{ env.RELEASE_VERSION }}
