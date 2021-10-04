@@ -102,7 +102,7 @@ func (t *Generator) generateProto(
 	tplText := `{{"" -}}
 syntax = "proto3";
 
-package {{.Package}};
+{{if .Package}}package {{.Package}};{{end}}
 {{range .Options}}
 option {{.}};
 {{end}}

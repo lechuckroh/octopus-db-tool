@@ -167,7 +167,7 @@ var protobufTplTestSchema = &octopus.Schema{
 				},
 			},
 			Description: "",
-			Group:       "common",
+			Group:       "group",
 		},
 	},
 }
@@ -213,10 +213,46 @@ message CUser {
   double doubleNull = 21;
   google.protobuf.Timestamp createdAt = 22;
   google.protobuf.Timestamp updatedAt = 23;
-  CGroup cGroup = 100;
+  Group group = 100;
 }
 
-message CGroup {
+message Group {
+  int64 id = 1;
+  string name = 2;
+  google.protobuf.Timestamp createdAt = 3;
+  google.protobuf.Timestamp updatedAt = 4;
+}
+`
+
+		buf := new(bytes.Buffer)
+		gen := newGenerator(protobufTplTestSchema, option)
+		if err := gen.Generate(buf); err != nil {
+			t.Error(err)
+		}
+		actual := buf.String()
+		if diff := cmp.Diff(expected, actual); diff != "" {
+			log.Println(diff)
+		}
+		So(actual, ShouldEqual, expected)
+	})
+}
+
+func TestProtobufTpl_NoPackage(t *testing.T) {
+	Convey("No package", t, func() {
+		option := &Option{
+			PrefixMapper:     common.NewPrefixMapper(""),
+			RelationTagStart: 100,
+			TableFilter: func(table *octopus.Table) bool {
+				return table.Group == "group"
+			},
+		}
+		expected := `syntax = "proto3";
+
+
+
+import "google/protobuf/timestamp.proto";
+
+message Group {
   int64 id = 1;
   string name = 2;
   google.protobuf.Timestamp createdAt = 3;
