@@ -44,8 +44,23 @@ func (s *StringSet) ContainsAny(keys []string) bool {
 	return false
 }
 
+func (s *StringSet) ContainsAll(keys []string) bool {
+	for _, key := range keys {
+		if _, ok := s.valueMap[key]; !ok {
+			return false
+		}
+	}
+	return true
+}
+
 func (s *StringSet) Remove(key string) {
 	delete(s.valueMap, key)
+}
+
+func (s *StringSet) RemoveAll(keys []string) {
+	for _, key := range keys {
+		delete(s.valueMap, key)
+	}
 }
 
 func (s *StringSet) Clear() {

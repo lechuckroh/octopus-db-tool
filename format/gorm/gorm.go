@@ -16,13 +16,13 @@ type GoAssocationField struct {
 }
 
 type GoStruct struct {
-	table             *octopus.Table
-	Name              string
-	EmbedModel        bool
-	Fields            []*GoField
-	PKFields          []*GoField
-	UniqueFields      []*GoField
-	AssociationFields []*GoAssocationField
+	table              *octopus.Table
+	Name               string
+	EmbeddedModelNames []string
+	Fields             []*GoField
+	PKFields           []*GoField
+	UniqueFields       []*GoField
+	AssociationFields  []*GoAssocationField
 }
 
 type IProcessor interface {
@@ -38,7 +38,6 @@ func NewGoStruct(
 	var pkFields []*GoField
 	var uniqueFields []*GoField
 	var associationFields []*GoAssocationField
-	gormModelColumnCount := 0
 	for _, column := range table.Columns {
 		field := NewGoField(column)
 		fields = append(fields, field)
@@ -48,10 +47,6 @@ func NewGoStruct(
 		}
 		if column.UniqueKey {
 			uniqueFields = append(uniqueFields, field)
-		}
-
-		if isGormModelColumn(column.Name) {
-			gormModelColumnCount++
 		}
 
 		// reference
@@ -69,15 +64,24 @@ func NewGoStruct(
 			}
 		}
 	}
+	embeddedModels := extractEmbeddedModels(fields)
+
+	// exclude embedded fields
+	var finalFields []*GoField
+	for _, field := range fields {
+		if !embeddedModels.ContainsColumnName(field.Column.Name) {
+			finalFields = append(finalFields, field)
+		}
+	}
 
 	return &GoStruct{
-		table:             table,
-		Name:              p.StructName(table),
-		EmbedModel:        gormModelColumnCount == len(gormModelColumns),
-		Fields:            fields,
-		PKFields:          pkFields,
-		UniqueFields:      uniqueFields,
-		AssociationFields: associationFields,
+		table:              table,
+		Name:               p.StructName(table),
+		EmbeddedModelNames: embeddedModels.Names(),
+		Fields:             finalFields,
+		PKFields:           pkFields,
+		UniqueFields:       uniqueFields,
+		AssociationFields:  associationFields,
 	}
 }
 
@@ -218,15 +222,4 @@ func NewGoField(column *octopus.Column) *GoField {
 		OverrideName: overrideName,
 		Imports:      importSet.Slice(),
 	}
-}
-
-var gormModelColumns = [...]string{"id", "created_at", "updated_at", "deleted_at"}
-
-func isGormModelColumn(column string) bool {
-	for _, gormModelColumn := range gormModelColumns {
-		if column == gormModelColumn {
-			return true
-		}
-	}
-	return false
 }

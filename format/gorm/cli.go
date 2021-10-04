@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	FlagGormModel          = "gormModel"
+	FlagEmbed              = "embed"
 	FlagGroups             = "groups"
 	FlagInput              = "input"
 	FlagOutput             = "output"
@@ -31,7 +31,7 @@ func Action(c *cli.Context) error {
 	gen := Generator{
 		schema: schema,
 		option: &Option{
-			GormModel:          c.String(FlagGormModel),
+			Embed:              c.String(FlagEmbed),
 			Package:            c.String(FlagPackage),
 			PointerAssociation: c.Bool(FlagPointerAssociation),
 			PrefixMapper:       common.NewPrefixMapper(c.String(FlagPrefix)),
@@ -84,10 +84,10 @@ var CliFlags = []cli.Flag{
 		EnvVars: []string{"OCTOPUS_POINTER_ASSOCIATION"},
 	},
 	&cli.StringFlag{
-		Name:    FlagGormModel,
-		Aliases: []string{"m"},
-		Usage:   "set embedded base model for GORM model",
-		EnvVars: []string{"OCTOPUS_GORM_MODEL"},
+		Name:    FlagEmbed,
+		Aliases: []string{"e"},
+		Usage:   "define embedded structs for GORM model",
+		EnvVars: []string{"OCTOPUS_EMBED"},
 	},
 	&cli.StringFlag{
 		Name:    FlagGroups,

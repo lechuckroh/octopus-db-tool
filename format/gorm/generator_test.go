@@ -178,7 +178,7 @@ var table1 = &octopus.Table{
 		},
 	},
 	Description: "",
-	Group:       "common",
+	Group:       "group1",
 }
 
 var table2 = &octopus.Table{
@@ -244,7 +244,7 @@ var table2 = &octopus.Table{
 		},
 	},
 	Description: "",
-	Group:       "common",
+	Group:       "group2",
 	Indices: []*octopus.Index{
 		{
 			Name:    "dec_idx",
@@ -267,7 +267,7 @@ func TestGorm_Generate(t *testing.T) {
 
 		for _, pkg := range packages {
 			option := &Option{
-				PrefixMapper:       common.NewPrefixMapper("common:C"),
+				PrefixMapper:       common.NewPrefixMapper("group1:G1,group2:G2"),
 				RemovePrefixes:     []string{"tbl_"},
 				Package:            pkg,
 				PointerAssociation: true,
@@ -284,7 +284,7 @@ func TestGorm_Generate(t *testing.T) {
 				"	\"time\"",
 				")",
 				"",
-				"type CUser1 struct {",
+				"type G1User1 struct {",
 				"	gorm.Model",
 				"	Name string `gorm:\"type:varchar(100);unique;not null\"`",
 				"	_1Decimal decimal.Decimal `gorm:\"column:1_decimal;type:decimal(20,5);not null\"`",
@@ -316,9 +316,9 @@ func TestGorm_Generate(t *testing.T) {
 				"	Invalid interface{}",
 				"}",
 				"",
-				"func (c *CUser1) TableName() string { return \"tbl_user1\" }",
+				"func (c *G1User1) TableName() string { return \"tbl_user1\" }",
 				"",
-				"type CUser2 struct {",
+				"type G2User2 struct {",
 				"	ID int64 `gorm:\"primary_key;auto_increment\"`",
 				"	UserID int64 `gorm:\"not null\"`",
 				"	Name string `gorm:\"type:varchar(100);unique_index:user2_uq;index:idx2,priority:2;not null\"`",
@@ -328,10 +328,69 @@ func TestGorm_Generate(t *testing.T) {
 				"	TimeNotnull time.Time `gorm:\"not null\"`",
 				"	CreatedAt time.Time `gorm:\"not null\"`",
 				"	UpdatedAt time.Time `gorm:\"not null\"`",
-				"	CUser1 *CUser1 `gorm:\"foreignKey:UserID;references:ID\"`",
+				"	G1User1 *G1User1 `gorm:\"foreignKey:UserID;references:ID\"`",
 				"}",
 				"",
-				"func (c *CUser2) TableName() string { return \"user2\" }",
+				"func (c *G2User2) TableName() string { return \"user2\" }",
+				"",
+				"",
+			}
+			expected := strings.Join(expectedStrings, "\n")
+
+			gen := Generator{schema: testSchema, option: option}
+
+			buf := new(bytes.Buffer)
+			if err := gen.Generate(buf); err != nil {
+				t.Error(err)
+			}
+			actual := buf.String()
+			if diff := cmp.Diff(expected, actual); diff != "" {
+				log.Println(diff)
+			}
+			So(actual, ShouldResemble, expected)
+		}
+	})
+}
+
+func TestGorm_CustomEmbeddedStruct(t *testing.T) {
+	Convey("Custom embedded struct", t, func() {
+		packages := []string{"lechuck", ""}
+
+		for _, pkg := range packages {
+			option := &Option{
+				PrefixMapper:       common.NewPrefixMapper(""),
+				RemovePrefixes:     []string{"tbl_"},
+				Package:            pkg,
+				PointerAssociation: true,
+				UniqueNameSuffix:   "_uq",
+				Embed:              "IdName:id,name",
+				TableFilter: func(table *octopus.Table) bool {
+					return table.Group == "group2"
+				},
+			}
+
+			expectedStrings := []string{
+				"package " + util.IfThenElseString(pkg != "", pkg, "main"),
+				"",
+				"import (",
+				"	\"github.com/shopspring/decimal\"",
+				"	\"gopkg.in/guregu/null.v4\"",
+				"	\"time\"",
+				")",
+				"",
+				"type User2 struct {",
+				"	IdName",
+				"	UserID int64 `gorm:\"not null\"`",
+				"	PassportNo string `gorm:\"type:varchar(20);unique_index:user2_uq;not null\"`",
+				"	Ch null.String `gorm:\"type:char(10)\"`",
+				"	Dec decimal.Decimal `gorm:\"type:decimal(20,5);index:dec_idx;index:idx2,priority:1;not null\"`",
+				"	TimeNotnull time.Time `gorm:\"not null\"`",
+				"	CreatedAt time.Time `gorm:\"not null\"`",
+				"	UpdatedAt time.Time `gorm:\"not null\"`",
+				"	User1 *User1 `gorm:\"foreignKey:UserID;references:ID\"`",
+				"}",
+				"",
+				"func (c *User2) TableName() string { return \"user2\" }",
 				"",
 				"",
 			}

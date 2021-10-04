@@ -65,20 +65,20 @@ func IsDateType(typ string) bool {
 // returns name, size, scale
 func ParseType(str string) (string, uint16, uint16) {
 	r := regexp.MustCompile(`(?m)([a-zA-Z]+)\(([0-9]+)[\s,]*([0-9]*)\)`)
-	matches := r.FindStringSubmatch(str)
-	matchLen := len(matches)
+	groups, _ := MatchRegexGroups(r, str)
+	groupCount := len(groups)
 
 	var name string
 	var size, scale int
 
-	if matchLen >= 2 {
-		name = matches[1]
+	if groupCount >= 1 {
+		name = groups[0]
 
-		if matchLen >= 3 {
-			size, _ = strconv.Atoi(matches[2])
+		if groupCount >= 2 {
+			size, _ = strconv.Atoi(groups[1])
 		}
-		if matchLen == 4 {
-			scale, _ = strconv.Atoi(matches[3])
+		if groupCount == 3 {
+			scale, _ = strconv.Atoi(groups[2])
 		}
 	} else {
 		name = str

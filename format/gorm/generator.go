@@ -16,7 +16,7 @@ import (
 type Option struct {
 	PrefixMapper       *common.PrefixMapper
 	TableFilter        octopus.TableFilterFn
-	GormModel          string
+	Embed              string
 	Package            string
 	PointerAssociation bool
 	RemovePrefixes     []string
@@ -59,33 +59,37 @@ type Generator struct {
 
 func (g *Generator) Generate(wr io.Writer) error {
 	option := g.option
-	gormModel := option.GormModel
-	if gormModel == "" {
-		gormModel = "gorm.Model"
+	embed := option.Embed
+	if embed != "" {
+		if name, columnNames := parseEmbeddedModelDefinition(embed); columnNames != nil {
+			registerEmbeddedModel(name, columnNames)
+		}
 	}
 	pkg := option.Package
 	if pkg == "" {
 		pkg = "main"
 	}
 
-	var gormStructs []*GoStruct
+	var goStructs []*GoStruct
 	tableFilter := option.TableFilter
 	p := GoStructProcessor{schema: g.schema, option: option}
 	for _, table := range g.schema.Tables {
 		if tableFilter == nil || tableFilter(table) {
 			goStruct := NewGoStruct(table, &p)
-			gormStructs = append(gormStructs, goStruct)
+			goStructs = append(goStructs, goStruct)
 		}
 	}
 
 	// create import set
 	importSet := util.NewStringSet()
-	for _, gormStruct := range gormStructs {
-		if gormStruct.EmbedModel {
-			importSet.Add("github.com/jinzhu/gorm")
+	for _, goStruct := range goStructs {
+		for _, modelName := range goStruct.EmbeddedModelNames {
+			if modelName == "gorm.Model" {
+				importSet.Add("github.com/jinzhu/gorm")
+			}
 		}
 
-		for _, field := range gormStruct.Fields {
+		for _, field := range goStruct.Fields {
 			for _, imp := range field.Imports {
 				importSet.Add(imp)
 			}
@@ -117,9 +121,9 @@ import (
 	}
 
 	// write structs
-	for _, gormStruct := range gormStructs {
+	for _, goStruct := range goStructs {
 		// write GORM struct
-		if err := g.GenerateStruct(wr, gormStruct); err != nil {
+		if err := g.GenerateStruct(wr, goStruct); err != nil {
 			return err
 		}
 	}
@@ -184,7 +188,7 @@ func getGormIndexTag(indices *[]*octopus.Index, field *GoField) []*IndexTag {
 
 func (g *Generator) GenerateStruct(
 	wr io.Writer,
-	gormStruct *GoStruct,
+	goStruct *GoStruct,
 ) error {
 	funcMap := template.FuncMap{
 		"join": strings.Join,
@@ -196,22 +200,18 @@ func (g *Generator) GenerateStruct(
 	// unique constraint name
 	uniqueCstName := ""
 	var uniqueFieldNames []string
-	for _, field := range gormStruct.UniqueFields {
+	for _, field := range goStruct.UniqueFields {
 		uniqueFieldNames = append(uniqueFieldNames, util.Quote(field.Name, "'"))
 	}
 	if len(uniqueFieldNames) > 1 {
-		uniqueCstName = gormStruct.table.Name + g.option.UniqueNameSuffix
+		uniqueCstName = goStruct.table.Name + g.option.UniqueNameSuffix
 	}
 
 	// fields
 	var tplFields []*TplFieldData
-	for _, field := range gormStruct.Fields {
-		column := field.Column
 
-		// embedded model column
-		if gormStruct.EmbedModel && isGormModelColumn(column.Name) {
-			continue
-		}
+	for _, field := range goStruct.Fields {
+		column := field.Column
 
 		// Column gormTags
 		var gormTags []string
@@ -237,7 +237,7 @@ func (g *Generator) GenerateStruct(
 			}
 		}
 		// Index
-		for _, indexTag := range getGormIndexTag(&gormStruct.table.Indices, field) {
+		for _, indexTag := range getGormIndexTag(&goStruct.table.Indices, field) {
 			if indexTag.SingleIndex {
 				gormTags = append(gormTags, fmt.Sprintf("index:%s", indexTag.IndexName))
 			} else {
@@ -262,7 +262,7 @@ func (g *Generator) GenerateStruct(
 	}
 
 	// association fields
-	for _, associationField := range gormStruct.AssociationFields {
+	for _, associationField := range goStruct.AssociationFields {
 		fieldType := associationField.Type
 		if associationField.Array {
 			fieldType = "[]" + associationField.Type
@@ -285,16 +285,16 @@ func (g *Generator) GenerateStruct(
 	// populate template data
 	data := TplData{
 		Package:       g.option.Package,
-		Struct:        gormStruct,
-		Table:         gormStruct.table,
+		Struct:        goStruct,
+		Table:         goStruct.table,
 		UniqueCstName: uniqueCstName,
 		Fields:        tplFields,
 	}
 
 	tplString := `{{"" -}}
 type {{.Struct.Name}} struct {
-{{- if .Struct.EmbedModel}}
-	gorm.Model
+{{- range .Struct.EmbeddedModelNames}}
+	{{.}}
 {{- end}}
 {{- range .Fields}}
 	{{fieldToString .}}
