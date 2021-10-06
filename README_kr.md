@@ -61,9 +61,11 @@ $ make vendor
 $ make compile
 
 # 특정 플랫폼용 실행파일 생성을 위한 크로스 컴파일
-$ make compile-windows
-$ make compile-linux
-$ make compile-macos
+$ make compile-windows-amd64
+$ make compile-linux-amd64
+$ make compile-linux-arm64
+$ make compile-macos-amd64
+$ make compile-macos-arm64
 ```
 
 ### 도커 컨테이너 내부에서 빌드

@@ -60,9 +60,11 @@ $ make vendor
 $ make compile
 
 # build os-specific binary
-$ make compile-windows
-$ make compile-linux
-$ make compile-macos
+$ make compile-windows-amd64
+$ make compile-linux-amd64
+$ make compile-linux-arm64
+$ make compile-macos-amd64
+$ make compile-macos-arm64
 ```
 
 ### Docker Build
